@@ -80,22 +80,24 @@ inline QString formatPtr(const void* ptr)
         return;                                                                           \
     }}
 
-#define ASSERT_IS_NULL(ptr) {                                                             \
-    if ((void*)(ptr) != nullptr)                                                          \
-    {                                                                                     \
-        test->setResult(false);                                                           \
-        test->setMessage("Some value is assigned");                                       \
-        test->logAssertion("IS NULL", #ptr, "NULL", formatPtr(ptr), __FILE__, __LINE__);  \
-        return;                                                                           \
+#define ASSERT_IS_NULL(expr_ptr) { \
+    void *__test_var_ptr__ = (void*)(expr_ptr); \
+    if (__test_var_ptr__ != nullptr) \
+    { \
+        test->setResult(false); \
+        test->setMessage("Some value is assigned"); \
+        test->logAssertion("IS NULL", #expr_ptr, "NULL", formatPtr(__test_var_ptr__), __FILE__, __LINE__); \
+        return; \
     }}
 
-#define ASSERT_IS_NOT_NULL(ptr) {                                                         \
-    if ((void*)(ptr) == nullptr)                                                          \
-    {                                                                                     \
-        test->setResult(false);                                                           \
-        test->setMessage("Value is not assigned");                                        \
-        test->logAssertion("IS NOT NULL", #ptr, "NOT NULL", "NULL", __FILE__, __LINE__);  \
-        return;                                                                           \
+#define ASSERT_IS_NOT_NULL(expr_ptr) { \
+    void *__test_var_ptr__ = (void*)(expr_ptr); \
+    if (__test_var_ptr__ == nullptr) \
+    { \
+        test->setResult(false); \
+        test->setMessage("Value is not assigned"); \
+        test->logAssertion("IS NOT NULL", #expr_ptr, "NOT NULL", "NULL", __FILE__, __LINE__); \
+        return; \
     }}
 
 #define ASSERT_IS_TYPE(obj, type) {                                                       \
@@ -107,69 +109,79 @@ inline QString formatPtr(const void* ptr)
         return;                                                                           \
     }}
 
-#define ASSERT_EQ_STR(value, expected) {                                                  \
-    if (QString(value) != QString(expected))                                              \
-    {                                                                                     \
-        test->setResult(false);                                                           \
-        test->setMessage("Value is not equal to expected" );                              \
-        test->logAssertion("ARE STRINGS EQUAL",                                           \
-                           QString("%1 == %2").arg(#value).arg(#expected),                \
-                           QString(expected),                                             \
-                           QString(value), __FILE__, __LINE__);                           \
-        return;                                                                           \
+#define ASSERT_EQ_STR(expr_value, expr_expected) { \
+    QString __test_var_value__(expr_value); \
+    QString __test_var_expected__(expr_expected); \
+    if (__test_var_value__ != __test_var_expected__)                                                                \
+    { \
+        test->setResult(false); \
+        test->setMessage("Value is not equal to expected" ); \
+        test->logAssertion("ARE STRINGS EQUAL", \
+                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           QString(__test_var_expected__), \
+                           QString(__test_var_value__), __FILE__, __LINE__); \
+        return; \
     }}
 
-#define ASSERT_EQ_PTR(value, expected) {                                                  \
-    if ((value) != (expected))                                                            \
-    {                                                                                     \
-        test->setResult(false);                                                           \
-        test->setMessage("Pointer is not equal to expected" );                            \
-        test->logAssertion("ARE POINTERS EQUAL",                                          \
-                           QString("%1 == %2").arg(#value).arg(#expected),                \
-                           formatPtr(expected),                                           \
-                           formatPtr(value),                                              \
-                           __FILE__, __LINE__);                                           \
-        return;                                                                           \
+#define ASSERT_EQ_PTR(expr_value, expr_expected) { \
+    void *__test_var_value__ = (void*)(expr_value); \
+    void *__test_var_expected__ = (void*)(expr_expected); \
+    if (__test_var_value__ != __test_var_expected__) \
+    { \
+        test->setResult(false); \
+        test->setMessage("Pointer is not equal to expected" ); \
+        test->logAssertion("ARE POINTERS EQUAL", \
+                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           formatPtr(__test_var_expected__), \
+                           formatPtr(__test_var_value__), \
+                           __FILE__, __LINE__); \
+        return; \
     }}
 
-#define ASSERT_EQ_INT(value, expected) {                                                  \
-    if ((value) != (expected))                                                            \
-    {                                                                                     \
-        test->setResult(false);                                                           \
-        test->setMessage("Value is not equal to expected" );                              \
-        test->logAssertion("ARE INTEGERS EQUAL",                                          \
-                           QString("%1 == %2").arg(#value).arg(#expected),                \
-                           QString::number(expected),                                     \
-                           QString::number(value),                                        \
-                           __FILE__, __LINE__);                                           \
-        return;                                                                           \
+#define ASSERT_EQ_INT(expr_value, expr_expected) { \
+    int __test_var_value__ = int(expr_value); \
+    int __test_var_expected__ = int(expr_expected); \
+    if (__test_var_value__ != __test_var_expected__) \
+    { \
+        test->setResult(false); \
+        test->setMessage("Value is not equal to expected" ); \
+        test->logAssertion("ARE INTEGERS EQUAL", \
+                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           QString::number(__test_var_expected__), \
+                           QString::number(__test_var_value__), \
+                           __FILE__, __LINE__); \
+        return; \
     }}
 
-#define ASSERT_EQ_DBL(value, expected) {                                                  \
-    if (!SAME_DOUBLE((value), (expected)))                                                \
-    {                                                                                     \
-        test->setResult(false);                                                           \
-        test->setMessage("Value is not equal to expected" );                              \
-        test->logAssertion("ARE DOUBLES EQUAL",                                           \
-                           QString("%1 == %2").arg(#value).arg(#expected),                \
-                           QString::number(double(expected), 'g', 16),                    \
-                           QString::number(double(value), 'g', 16),                       \
-                           __FILE__, __LINE__);                                           \
-        return;                                                                           \
+#define ASSERT_EQ_DBL(expr_value, expr_expected) { \
+    double __test_var_value__ = double(expr_value); \
+    double __test_var_expected__ = double(expr_expected); \
+    if (!SAME_DOUBLE(__test_var_value__, __test_var_expected__)) \
+    { \
+        test->setResult(false); \
+        test->setMessage("Value is not equal to expected" ); \
+        test->logAssertion("ARE DOUBLES EQUAL", \
+                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           QString::number(__test_var_expected__, 'g', 16), \
+                           QString::number(__test_var_value__, 'g', 16), \
+                           __FILE__, __LINE__); \
+        return; \
     }}
 
-#define ASSERT_NEQ_DBL(value, expected) {                                                 \
-    if (SAME_DOUBLE((value), (expected)))                                                 \
-    {                                                                                     \
-        test->setResult(false);                                                           \
-        test->setMessage("Values are equal" );                                            \
-        test->logAssertion("ARE DOUBLES NOT EQUAL",                                       \
-                           QString("%1 != %2").arg(#value).arg(#expected),                \
-                           QString("Any value other than %1")                             \
-                                .arg(double(expected), 0, 'g', 16),                       \
-                           QString::number(double(value), 'g', 16),                       \
-                           __FILE__, __LINE__);                                           \
-        return;                                                                           \
+#define ASSERT_NEQ_DBL(expr_value, expr_expected) { \
+    double __test_var_value__ = double(expr_value); \
+    double __test_var_expected__ = double(expr_expected); \
+    if (SAME_DOUBLE(__test_var_value__, __test_var_expected__)) \
+    { \
+        test->setResult(false); \
+        test->setMessage("Values are equal" ); \
+        test->logAssertion("ARE DOUBLES NOT EQUAL", \
+                           QString("%1 != %2").arg(#expr_value).arg(#expr_expected), \
+                           QString("Any value other than %1") \
+                                .arg(__test_var_expected__, 0, 'g', 16), \
+                           QString::number(__test_var_value__, 'g', 16), \
+                           __FILE__, __LINE__); \
+        return; \
     }}
 
 #define ASSERT_FAIL(msg) {                                                                \
@@ -189,6 +201,16 @@ inline QString formatPtr(const void* ptr)
 
 #define TEST_METHOD(name)                                                                 \
     void name(Ori::Test::TestBase *test)
+
+#define TEST_CASE_METHOD(name, ...)                                                       \
+    void name(Ori::Test::TestBase *test, __VA_ARGS__)
+
+#define TEST_CASE(name, method, ...)                                                      \
+    void name(Ori::Test::TestBase *test)                                                  \
+    {                                                                                     \
+        method(test, __VA_ARGS__);                                                        \
+    }
+
 
 #define TEST_GROUP(name, ...)                                                             \
     Ori::Test::TestGroup* tests()                                                         \
@@ -286,6 +308,7 @@ public:
     QString path() const;
     TestBase* parent() const { return _parent; }
     QMap<QString, QVariant>& data() { return _data; }
+    QVariant& data(const QString& key) { return _data[key]; }
     void logMessage(const QString& msg);
     void logMessage(const QStringList& list);
     void logAssertion(const QString& assertion, const QString& condition,
