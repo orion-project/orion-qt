@@ -100,9 +100,24 @@ TestWindow::~TestWindow()
     {
         QTreeWidgetItem* it = testsTree->topLevelItem(i);
         s.setValue(it->text(0), it->isExpanded());
+        saveExpandedStates(it, it->text(0), s);
     }
 
     s.storeWindowGeometry("testWindow", this);
+}
+
+void TestWindow::saveExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings)
+{
+    for (int i = 0; i < root->childCount(); i++)
+    {
+        auto item = root->child(i);
+        if (item->childCount() > 0)
+        {
+            auto path = QString("%1/%2").arg(rootPath, item->text(0));
+            settings.setValue(path, item->isExpanded());
+            saveExpandedStates(item, path, settings);
+        }
+    }
 }
 
 TestGroup* getGroupByName(const TestSuite &tests, const QString& name)
@@ -151,6 +166,21 @@ void TestWindow::setTests(const TestSuite &tests)
     {
         QTreeWidgetItem* it = testsTree->topLevelItem(i);
         it->setExpanded(s.value(it->text(0), true).toBool());
+        loadExpandedStates(it, it->text(0), s);
+    }
+}
+
+void TestWindow::loadExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings)
+{
+    for (int i = 0; i < root->childCount(); i++)
+    {
+        auto item = root->child(i);
+        if (item->childCount() > 0)
+        {
+            auto path = QString("%1/%2").arg(rootPath, item->text(0));
+            item->setExpanded(settings.value(path, true).toBool());
+            loadExpandedStates(item, path, settings);
+        }
     }
 }
 

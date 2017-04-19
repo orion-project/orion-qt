@@ -18,6 +18,7 @@ QT_END_NAMESPACE
 namespace Ori {
 
 class Translator;
+class Settings;
 
 namespace Test {
 
@@ -57,6 +58,9 @@ private:
     void runTest(QTreeWidgetItem *item, TestSession &session);
     TestBase* getTest(QTreeWidgetItem *item);
     int testsCount(QTreeWidgetItem *item);
+
+    void saveExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings);
+    void loadExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings);
 
 private slots:
     void runAll();
