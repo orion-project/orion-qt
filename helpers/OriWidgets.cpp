@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QBoxLayout>
 #include <QComboBox>
+#include <QDebug>
 #include <QGroupBox>
 #include <QHeaderView>
 #include <QLabel>
@@ -220,21 +221,25 @@ void append(QToolBar* toolbar, QObject* item)
 
 QBoxLayout* layoutH(const std::initializer_list<QObject*>& items)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
     return populate(new QHBoxLayout, items);
 }
 
 QBoxLayout* layoutV(const std::initializer_list<QObject*>& items)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
     return populate(new QVBoxLayout, items);
 }
 
 QBoxLayout* layoutH(QWidget* parent, const std::initializer_list<QObject*>& items)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
     return populate(new QHBoxLayout(parent), items);
 }
 
 QBoxLayout* layoutV(QWidget* parent, const std::initializer_list<QObject*>& items)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
     return populate(new QVBoxLayout(parent), items);
 }
 
@@ -247,26 +252,31 @@ QBoxLayout* initGeometry(QBoxLayout* layout, int margin, int spacing)
 
 QBoxLayout* layoutH(QWidget* parent, int margin, int spacing, const std::initializer_list<QObject*>& items)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
     return initGeometry(layoutH(parent, items), margin, spacing);
 }
 
 QBoxLayout* layoutV(QWidget* parent, int margin, int spacing, const std::initializer_list<QObject*>& items)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
     return initGeometry(layoutV(parent, items), margin, spacing);
 }
 
 QBoxLayout* layoutH(int margin, int spacing, const std::initializer_list<QObject*>& items)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
     return initGeometry(layoutH(items), margin, spacing);
 }
 
 QBoxLayout* layoutV(int margin, int spacing, const std::initializer_list<QObject*>& items)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
     return initGeometry(layoutV(items), margin, spacing);
 }
 
 QBoxLayout* populate(QBoxLayout* layout, const std::initializer_list<QObject*>& items)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
     if (!layout) return nullptr;
 
     for (auto item: items)
@@ -277,6 +287,7 @@ QBoxLayout* populate(QBoxLayout* layout, const std::initializer_list<QObject*>& 
 
 void append(QBoxLayout* layout, QObject* item)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
     if (!item)
     {
         layout->addStretch();
@@ -301,8 +312,17 @@ void append(QBoxLayout* layout, QObject* item)
     }
 }
 
-QObject* spacing(int size) { return (QObject*)qintptr(size); }
-QObject* defaultSpacing(int factor) { return spacing(factor * layoutSpacing()); }
+QObject* spacing(int size)
+{
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
+    return (QObject*)qintptr(size);
+}
+
+QObject* defaultSpacing(int factor)
+{
+    qDebug() << "This function is obsolete and should be removed. Please use stuff from OriLayout.h instead.";
+    return spacing(factor * layoutSpacing());
+}
 
 //--------------------------------------------------------------------------------------------------
 

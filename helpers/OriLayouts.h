@@ -3,11 +3,6 @@
 
 #include <QWidget>
 #include <QBoxLayout>
-#include <QDebug>
-
-QT_BEGIN_NAMESPACE
-class QWidget;
-QT_END_NAMESPACE
 
 namespace Ori {
 namespace Layouts {
