@@ -53,7 +53,8 @@ HEADERS += \
     $$PWD/widgets/OriBackWidget.h \
     $$PWD/widgets/OriTableWidgetBase.h \
     $$PWD/widgets/OriFlowLayout.h \
-    $$PWD/core/OriFilter.h
+    $$PWD/core/OriFilter.h \
+    $$PWD/helpers/OriLayouts.h
 
 SOURCES += \
     $$PWD/widgets/OriActions.cpp \
