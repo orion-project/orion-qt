@@ -7,6 +7,7 @@ QT_BEGIN_NAMESPACE
 class QObject;
 class QDialog;
 class QWidget;
+class QVBoxLayout;
 QT_END_NAMESPACE
 
 namespace Ori {
@@ -70,6 +71,24 @@ void prepareDialog(QDialog *dlg, QWidget *widget, QObject *receiver);
 /// Inserts a widget and dialog buttons panel into a dialog.
 /// Widget should have slot apply() to process OK button click.
 void prepareDialog(QDialog *dlg, QWidget *widget);
+
+/*class Dialog
+{
+public:
+    Dialog(QWidget* content, bool ownContent);
+    ~Dialog();
+
+    Dialog& setTitle(const QString& title);
+
+    bool exec();
+
+private:
+    QDialog* _dialog;
+    QWidget* _content;
+    QVBoxLayout* _layout;
+    bool _isTitleSet = false;
+    bool _isOwnContent;
+};*/
 
 } // namespace Dlg
 } // namespace Ori

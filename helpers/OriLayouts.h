@@ -13,6 +13,7 @@ class LayoutItem
 {
 public:
     LayoutItem(QWidget* widget) { _mode = LayoutItemMode::Widget, _widget = widget; }
+    LayoutItem(QLayout* layout) { _mode = LayoutItemMode::Layout, _layout = layout; }
 
     void addTo(QBoxLayout* layout) const
     {
