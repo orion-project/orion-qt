@@ -13,6 +13,10 @@ typedef std::unique_ptr<QSettings> QSettingsPtr;
 typedef std::auto_ptr<QSettings> QSettingsPtr;
 #endif
 
+QT_BEGIN_NAMESPACE
+class QMainWindow;
+QT_END_NAMESPACE
+
 namespace Ori {
 
 /** Thin wrapper around QSettings.
@@ -45,6 +49,11 @@ public:
     void storeWindowGeometry(const QString& key, QWidget*);
     void restoreWindowGeometry(const QString& key, QWidget*, QSize defSize = QSize());
 
+    void storeDockState(QMainWindow*);
+    void restoreDockState(QMainWindow*);
+    void storeDockState(const QString& key, QMainWindow*);
+    void restoreDockState(const QString& key, QMainWindow*);
+
     void endGroups() { endGroups(_settings); }
     void beginGroup(const QString& name) { beginGroup(_settings, name); }
     void beginDefaultGroup() { beginGroup(_settings, "Common"); }
@@ -56,10 +65,23 @@ public:
     QVariant value(const QString& key, const QVariant& def = QVariant());
 
 public:
-    static void storeWindow(const QString& key, QWidget*);
-    static void restoreWindow(const QString& key, QWidget*, QSize defSize = QSize());
-    static void storeWindow(QWidget*);
-    static void restoreWindow(QWidget*, QSize defSize = QSize());
+    static void storeWindow(const QString& key, QWidget* w) {
+        Settings().storeWindowGeometry(key, w);
+    }
+    static void restoreWindow(const QString& key, QWidget* w, QSize defSize = QSize()) {
+        Settings().restoreWindowGeometry(key, w, defSize);
+    }
+    static void storeWindow(QWidget* w) {
+        Settings().storeWindowGeometry(w);
+    }
+    static void restoreWindow(QWidget* w, QSize defSize = QSize()) {
+        Settings().restoreWindowGeometry(w, defSize);
+    }
+
+    static void storeDocks(const QString& key, QMainWindow* w) { Settings().storeDockState(key, w); }
+    static void restoreDocks(const QString& key, QMainWindow* w) { Settings().restoreDockState(key, w); }
+    static void storeDocks(QMainWindow* w) { Settings().storeDockState(w); }
+    static void restoreDocks(QMainWindow* w) { Settings().storeDockState(w); }
 
 private:
     QSettings* _settings;

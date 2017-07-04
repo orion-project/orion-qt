@@ -2,9 +2,38 @@
 
 #include <QApplication>
 #include <QFileInfo>
+#include <QMainWindow>
 #include <QWidget>
 
 namespace Ori {
+
+class GroupResetAndBackup
+{
+public:
+    GroupResetAndBackup(QSettings* settings) : _settings(settings)
+    {
+        while (!settings->group().isEmpty())
+        {
+            _groups << settings->group();
+            settings->endGroup();
+        }
+    }
+
+    ~GroupResetAndBackup()
+    {
+        while (!_settings->group().isEmpty())
+            _settings->endGroup();
+
+        for (int i = _groups.size()-1; i >= 0; i--)
+            _settings->beginGroup(_groups.at(i));
+    }
+
+private:
+    QSettings* _settings;
+    QStringList _groups;
+};
+
+
 
 QString Settings::localIniPath()
 {
@@ -48,30 +77,29 @@ Settings::~Settings()
     delete _settings;
 }
 
-void Settings::storeWindowGeometry(QWidget* w)
-{
-    storeWindowGeometry(w->objectName(), w);
-}
+void Settings::storeWindowGeometry(QWidget* w) { storeWindowGeometry(w->objectName(), w); }
+void Settings::restoreWindowGeometry(QWidget* w, QSize defSize) { restoreWindowGeometry(w->objectName(), w, defSize); }
 
 void Settings::storeWindowGeometry(const QString& key, QWidget* w)
 {
     if (key.isEmpty()) return;
-    beginGroup(_settings, "WindowStates");
+
+    GroupResetAndBackup backup(_settings);
+
+    _settings->beginGroup("WindowStates");
     _settings->beginGroup(key);
     _settings->setValue("maximized", w->isMaximized());
     if (!w->isMaximized())
         _settings->setValue("geometry", w->geometry());
 }
 
-void Settings::restoreWindowGeometry(QWidget* w, QSize defSize)
-{
-    restoreWindowGeometry(w->objectName(), w, defSize);
-}
-
 void Settings::restoreWindowGeometry(const QString &key, QWidget* w, QSize defSize)
 {
     if (key.isEmpty()) return;
-    beginGroup(_settings, "WindowStates");
+
+    GroupResetAndBackup backup(_settings);
+
+    _settings->beginGroup("WindowStates");
     _settings->beginGroup(key);
     QRect g = _settings->value("geometry").toRect();
     if (g.width() > 0 && g.height() > 0)
@@ -81,6 +109,32 @@ void Settings::restoreWindowGeometry(const QString &key, QWidget* w, QSize defSi
     if (_settings->value("maximized").toBool())
         w->setWindowState(w->windowState() | Qt::WindowMaximized);
 }
+
+void Settings::storeDockState(QMainWindow* w) { storeDockState(w->objectName(), w); }
+void Settings::restoreDockState(QMainWindow* w) { restoreDockState(w->objectName(), w); }
+
+void Settings::storeDockState(const QString& key, QMainWindow* w)
+{
+    if (key.isEmpty()) return;
+
+    GroupResetAndBackup backup(_settings);
+
+    _settings->beginGroup("WindowStates");
+    _settings->beginGroup(key);
+    _settings->setValue("toolbars", w->saveState());
+}
+
+void Settings::restoreDockState(const QString& key, QMainWindow* w)
+{
+    if (key.isEmpty()) return;
+
+    GroupResetAndBackup backup(_settings);
+
+    _settings->beginGroup("WindowStates");
+    _settings->beginGroup(key);
+    w->restoreState(_settings->value("toolbars").toByteArray());
+}
+
 
 QString Settings::strValue(const QString& key, const QString& value)
 {
@@ -95,26 +149,6 @@ void Settings::setValue(const QString& key, const QVariant& value)
 QVariant Settings::value(const QString& key, const QVariant& def)
 {
     return _settings->value(key, def);
-}
-
-void Settings::storeWindow(const QString& key, QWidget* w)
-{
-    Settings().storeWindowGeometry(key, w);
-}
-
-void Settings::storeWindow(QWidget* w)
-{
-    Settings().storeWindowGeometry(w);
-}
-
-void Settings::restoreWindow(const QString& key, QWidget* w, QSize defSize)
-{
-    Settings().restoreWindowGeometry(key, w, defSize);
-}
-
-void Settings::restoreWindow(QWidget* w, QSize defSize)
-{
-    Settings().restoreWindowGeometry(w, defSize);
 }
 
 } // namespace Ori
