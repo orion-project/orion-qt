@@ -66,7 +66,7 @@ QString inputText(const QString& label, const QString& value, bool *ok)
                                  label, QLineEdit::Normal, value, ok);
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 bool show(QDialog* dlg)
 {
@@ -171,5 +171,39 @@ void prepareDialog(QDialog *dlg, QWidget *widget, QObject *receiver)
     dialogLayout->addWidget(buttons);
 }
 
+//------------------------------------------------------------------------------
+/*
+Dialog::Dialog(QWidget *content, bool ownContent) : _content(content), _isOwnContent(ownContent)
+{
+    _dialog = new QDialog(qApp->activeWindow());
+    auto buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    qApp->connect(buttons, &QDialogButtonBox::accepted, _dialog, &QDialog::accept);
+    qApp->connect(buttons, &QDialogButtonBox::rejected, _dialog, &QDialog::reject);
+    _layout = new QVBoxLayout(_dialog);
+    _layout->addWidget(content);
+    _layout->addWidget(buttons);
+}
+
+Dialog::~Dialog()
+{
+    if (!_isOwnContent)
+        _layout->removeWidget(_content);
+    delete _dialog;
+}
+
+Dialog& Dialog::setTitle(const QString& title)
+{
+    _dialog->setWindowTitle(title);
+    _isTitleSet = true;
+    return *this;
+}
+
+bool Dialog::exec()
+{
+    if (!_isTitleSet)
+        _dialog->setWindowTitle(qApp->applicationName());
+    return _dialog->exec() == QDialog::Accepted;
+}
+*/
 } // namespace Dlg
 } // namespace Ori
