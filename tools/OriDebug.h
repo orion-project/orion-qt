@@ -61,7 +61,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     // Messages inside of Qt-code has no context filled
     // but function info already built into the message text
     if (context.file)
-        msg += QString("<br><font color=gray>(%2:%2, %4)</font>")
+        msg += QString("<br><font color=gray>(%1:%2, %3</font>")
             .arg(context.file).arg(context.line).arg(context.function);
 
     consoleWindow()->append(msg);
