@@ -19,9 +19,10 @@ class BasicConfigDialog : public QDialog
 
 public:
     explicit BasicConfigDialog(QWidget* parent = 0);
+    ~BasicConfigDialog();
 
     virtual void populate() {}
-    virtual void collect() {}
+    virtual bool collect() { return true; }
 
     bool run() { return exec() == QDialog::Accepted; }
 
@@ -45,6 +46,8 @@ private:
     void adjustPageList();
     void adjustHelpButton();
     QString currentHelpTopic() const;
+    void storeState();
+    bool restoreState();
 };
 
 

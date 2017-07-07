@@ -8,43 +8,51 @@
 #include <QListWidget>
 #include <QStackedWidget>
 
+// TODO configurable icon size
 #define PAGE_LIST_ICON_SIZE 24
 #define PAGE_LIST_ITEM_SIZE 30
 
 namespace Ori {
 namespace Dlg {
 
-////////////////////////////////////////////////////////////////////////////////
+struct ConfigDialogState
+{
+    int currentPageIndex;
+};
+
+QMap<QString, ConfigDialogState> __savedConfigDialogStates;
+
+//------------------------------------------------------------------------------
 //                             BasicConfigDialog
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 BasicConfigDialog::BasicConfigDialog(QWidget* parent) : QDialog(parent)
 {
-    ///////// pages
+    // pages
     pageView = new QStackedWidget;
 
     pageList = new QListWidget();
     pageList->setIconSize(QSize(PAGE_LIST_ICON_SIZE, PAGE_LIST_ICON_SIZE));
     connect(pageList, SIGNAL(currentRowChanged(int)), this, SLOT(pageListItemSelected(int)));
 
-    ///////// header
+    // header
     pageHeader = new QLabel();
     QFont fnt = this->font();
     fnt.setPointSize(fnt.pointSize() + 2);
     fnt.setBold(true);
     pageHeader->setFont(fnt);
 
-    ///////// placement
+    // placement
     QVBoxLayout* layoutPage = new QVBoxLayout();
     layoutPage->addWidget(pageHeader);
     layoutPage->addWidget(pageView);
 
     QHBoxLayout* layoutPages = new QHBoxLayout;
     layoutPages->addWidget(pageList);
-    layoutPages->addSpacing(6);
+    layoutPages->addSpacing(qApp->style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing));
     layoutPages->addLayout(layoutPage);
 
-    ///////// dialog buttons
+    // dialog buttons
     QDialogButtonBox *buttonBox = new QDialogButtonBox(
         QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Help);
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
@@ -52,11 +60,16 @@ BasicConfigDialog::BasicConfigDialog(QWidget* parent) : QDialog(parent)
     connect(buttonBox, SIGNAL(helpRequested()), this, SLOT(showHelp()));
     helpButton = (QWidget*)buttonBox->button(QDialogButtonBox::Help);
 
-    ////////////// main container
+    // main container
     QVBoxLayout *layoutMain = new QVBoxLayout;
     layoutMain->addLayout(layoutPages);
     layoutMain->addWidget(buttonBox);
     setLayout(layoutMain);
+}
+
+BasicConfigDialog::~BasicConfigDialog()
+{
+    storeState();
 }
 
 void BasicConfigDialog::createPages(QList<QWidget*> pages)
@@ -76,9 +89,30 @@ void BasicConfigDialog::createPages(QList<QWidget*> pages)
 
     if (pageList->count() > 0)
     {
-        setCurrentPageIndex(0);
+        if (!restoreState())
+            setCurrentPageIndex(0);
+
         populate();
     }
+}
+
+void BasicConfigDialog::storeState()
+{
+    if (objectName().isEmpty()) return;
+    ConfigDialogState state = {};
+    state.currentPageIndex = currentPageIndex();
+    __savedConfigDialogStates[objectName()] = state;
+}
+
+bool BasicConfigDialog::restoreState()
+{
+    QString objectName = this->objectName();
+    if (objectName.isEmpty()) return false;
+    if (!__savedConfigDialogStates.contains(objectName)) return false;
+    int savedPageIndex = __savedConfigDialogStates[objectName].currentPageIndex;
+    if (savedPageIndex < 0 && savedPageIndex >= pageList->count()-1) return false;
+    setCurrentPageIndex(savedPageIndex);
+    return true;
 }
 
 /// Calculate a sensible width for the items list.
@@ -139,7 +173,7 @@ void BasicConfigDialog::pageListItemSelected(int index)
 
 void BasicConfigDialog::accept()
 {
-    collect();
+    if (!collect()) return;
     QDialog::accept();
 }
 
@@ -155,9 +189,9 @@ QString BasicConfigDialog::currentHelpTopic() const
     return page? page->helpTopic(): QString();
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                             BasicConfigPage
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 BasicConfigPage::BasicConfigPage(const QString& title,
                                  const QString& iconPath,
