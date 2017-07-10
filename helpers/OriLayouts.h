@@ -81,6 +81,7 @@ public:
     LayoutBox& setMargin(int value) { _layout->setMargin(value); return *this; }
     LayoutBox& setSpacing(int value) { boxLayout()->setSpacing(value); return *this; }
     LayoutBox& useFor(QWidget* parent) { parent->setLayout(_layout); return *this; }
+    QWidget* makeWidget() { auto w = new QWidget; w->setLayout(_layout); return w; }
 
     QBoxLayout* boxLayout() const { return (QBoxLayout*)_layout; }
 };
