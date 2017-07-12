@@ -13,6 +13,8 @@ QT_END_NAMESPACE
 namespace Ori {
 namespace Dlg {
 
+class BasicConfigPage;
+
 class BasicConfigDialog : public QDialog
 {
     Q_OBJECT
@@ -28,6 +30,7 @@ public:
 
     int currentPageIndex() const;
     void setCurrentPageIndex(int index);
+    BasicConfigPage* currentPage() const;
 
 protected:
     void createPages(QList<QWidget*>);
@@ -60,10 +63,13 @@ public:
 
     const QString& helpTopic() const { return _helpTopic; }
 
+    void setLongTitle(const QString& title) { _longTitle = title; }
+    const QString& longTitle() const { return _longTitle; }
+
     void add(std::initializer_list<QObject*> items);
 
 private:
-    QString _helpTopic;
+    QString _helpTopic, _longTitle;
     QVBoxLayout* _mainLayout;
 };
 

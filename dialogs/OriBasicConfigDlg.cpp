@@ -165,7 +165,10 @@ void BasicConfigDialog::pageListItemSelected(int index)
 {
     pageView->setCurrentIndex(index);
 
-    if (pageList->currentItem())
+    BasicConfigPage* page = currentPage();
+    if (page && !page->longTitle().isEmpty())
+        pageHeader->setText(page->longTitle());
+    else if (pageList->currentItem())
         pageHeader->setText(pageList->currentItem()->text().replace('\n', ' '));
 
     helpButton->setEnabled(!currentHelpTopic().isEmpty());
@@ -183,9 +186,14 @@ void BasicConfigDialog::showHelp()
     qWarning() << "Page help topic:" << currentHelpTopic();
 }
 
+BasicConfigPage* BasicConfigDialog::currentPage() const
+{
+    return dynamic_cast<BasicConfigPage*>(pageView->currentWidget());
+}
+
 QString BasicConfigDialog::currentHelpTopic() const
 {
-    BasicConfigPage* page = dynamic_cast<BasicConfigPage*>(pageView->currentWidget());
+    BasicConfigPage* page = currentPage();
     return page? page->helpTopic(): QString();
 }
 
