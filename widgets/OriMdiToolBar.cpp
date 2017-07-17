@@ -14,7 +14,7 @@ MdiToolBar::MdiToolBar(QMdiArea *parent) : MdiToolBar(QString(), parent)
 MdiToolBar::MdiToolBar(const QString& title, QMdiArea *parent) : QToolBar(parent), flat(false), mdiArea(parent)
 {
     setWindowTitle(title);
-    setObjectName("toolBar_" % title);
+    setObjectName("toolBar_Windows");
     setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     setIconSize(QSize(16, 16));
 
@@ -46,7 +46,6 @@ void MdiToolBar::subWindowActivated(QMdiSubWindow *window)
             return;
         }
 
-    connect(window, SIGNAL(closing()), this, SLOT(subWindowClosing()));
     connect(window, SIGNAL(destroyed(QObject*)), this, SLOT(subWindowDestroyed(QObject*)));
 
     QAction *action = new QAction(this);
@@ -58,11 +57,6 @@ void MdiToolBar::subWindowActivated(QMdiSubWindow *window)
     connect(action, SIGNAL(triggered()), this, SLOT(setActiveSubWindow()));
     actions.append(action);
     addAction(action);
-}
-
-void MdiToolBar::subWindowClosing()
-{
-    uncheckAll();
 }
 
 void MdiToolBar::subWindowDestroyed(QObject *window)

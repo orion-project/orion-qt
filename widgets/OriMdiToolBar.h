@@ -32,7 +32,6 @@ private:
 private slots:
     void subWindowActivated(QMdiSubWindow*);
     void subWindowDestroyed(QObject*window);
-    void subWindowClosing();
     void setActiveSubWindow();
 };
 
