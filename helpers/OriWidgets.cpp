@@ -178,6 +178,23 @@ void append(QMenu* menu, QObject* item)
     }
 }
 
+QMenu* makeToggleWidgetsMenu(QMenu* parent, const QString& title, std::initializer_list<QWidget*> widgets)
+{
+    QMenu* menu = parent->addMenu(title);
+    QVector<QPair<QAction*, QWidget*> > actions;
+    for (QWidget* widget : widgets)
+    {
+        QAction *action = menu->addAction(widget->windowTitle(), [widget](){ toggleWidget(widget); });
+        action->setCheckable(true);
+        actions.push_back(QPair<QAction*, QWidget*>(action, widget));
+    }
+    qApp->connect(menu, &QMenu::aboutToShow, [actions](){
+        for (const QPair<QAction*, QWidget*>& pair : actions)
+            pair.first->setChecked(pair.second->isVisible());
+    });
+    return menu;
+}
+
 //--------------------------------------------------------------------------------------------------
 
 QToolBar* toolbar(std::initializer_list<QObject*> items)
@@ -480,6 +497,12 @@ void resizeColumnToContent(QTableView *table, int col)
     #endif
 }
 
+//--------------------------------------------------------------------------------------------------
+
+void toggleWidget(QWidget* panel)
+{
+    if (panel->isVisible()) panel->hide(); else panel->show();
+}
 
 } // namespace Gui
 } // namespace Ori

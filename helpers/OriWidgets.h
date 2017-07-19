@@ -45,6 +45,8 @@ QMenu* menu(const QString& title, QWidget *parent, std::initializer_list<QObject
 QMenu* populate(QMenu* menu, std::initializer_list<QObject*> items);
 void append(QMenu* menu, QObject* item);
 
+QMenu* makeToggleWidgetsMenu(QMenu* parent, const QString& title, std::initializer_list<QWidget*> widgets);
+
 QToolBar* toolbar(std::initializer_list<QObject*> items);
 QToolBar* populate(QToolBar* toolbar, std::initializer_list<QObject*> items);
 void append(QToolBar* toolbar, QObject* item);
@@ -89,6 +91,9 @@ QTreeWidget* twoColumnTree(const QString& title1, const QString& title2);
 
 void stretchColumn(QTableView *table, int col);
 void resizeColumnToContent(QTableView *table, int col);
+
+void toggleWidget(QWidget* panel);
+
 } // namespace Gui
 } // namespace Ori
 
