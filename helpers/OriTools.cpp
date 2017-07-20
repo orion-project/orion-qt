@@ -42,7 +42,16 @@ QString formatHtml(const QColor& c)
 
 QString formatRgb(const QColor& c)
 {
-    return QString("rgb(%1, %2, %3)").arg(c.red()).arg(c.green()).arg(c.blue());
+    int R, G, B;
+    c.getRgb(&R, &G, &B);
+    return QString("rgb(%1, %2, %3)").arg(R).arg(G).arg(B);
+}
+
+QString formatHsl(const QColor& c)
+{
+    int H, S, L;
+    c.getHsl(&H, &S, &L);
+    return QString("hsl(%1, %2, %3)").arg(H).arg(S).arg(L);
 }
 
 QColor blend(const QColor& color1, const QColor& color2, qreal r)
@@ -56,6 +65,27 @@ QColor blend(const QColor& color1, const QColor& color2, qreal r)
 QColor random()
 {
     return QColor(qrand() % 255, qrand() % 255, qrand() % 255);
+}
+
+QColor random(int darkenThan, int lightenThan, int minDistance)
+{
+    static int prevH = 0, prevS = 0, prevL = 0;
+    int H, S, L, tryCount = 0;
+    while (tryCount++ < 100)
+    {
+        H = qrand() % 255;
+        S = qrand() % 255;
+        L = qrand() % 255;
+        if (L < lightenThan) continue;
+        if (L > darkenThan) continue;
+        if (qAbs(H - prevH) < minDistance &&
+            qAbs(S - prevS) < minDistance &&
+            qAbs(L - prevL) < minDistance)
+            continue;
+        break;
+    }
+    prevH = H, prevS = S, prevL = L;
+    return QColor::fromHsl(H, S, L);
 }
 
 } // namespace Color

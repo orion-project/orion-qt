@@ -13,6 +13,7 @@ class QLabel;
 class QMenu;
 class QObject;
 class QPushButton;
+class QSpinBox;
 class QSplitter;
 class QTableView;
 class QTextBrowser;
@@ -93,6 +94,8 @@ void stretchColumn(QTableView *table, int col);
 void resizeColumnToContent(QTableView *table, int col);
 
 void toggleWidget(QWidget* panel);
+
+QSpinBox* spinBox(int min, int max, int value = 0);
 
 } // namespace Gui
 } // namespace Ori

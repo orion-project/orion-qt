@@ -26,8 +26,10 @@ namespace Color {
 
 QString formatHtml(const QColor& c);
 QString formatRgb(const QColor& c);
+QString formatHsl(const QColor& c);
 QColor blend(const QColor& color1, const QColor& color2, qreal r);
 QColor random();
+QColor random(int darkenThan, int lightenThan, int minDistance);
 
 } // namespace Color
 } // namespace Ori

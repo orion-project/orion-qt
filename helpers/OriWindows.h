@@ -16,6 +16,8 @@ void setWindowIcon(QWidget*, const QString&);
 void setWindowProject(QWidget*, const QString&);
 void setWindowFilePath(QWidget*, const QString&);
 
+void moveToScreenCenter(QWidget*);
+
 } // namespace Window
 } // namespace Ori
 

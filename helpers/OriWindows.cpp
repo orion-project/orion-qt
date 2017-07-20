@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QFileInfo>
 #include <QIcon>
+#include <QScreen>
 #include <QWidget>
 
 namespace Ori {
@@ -39,6 +40,15 @@ void setWindowFilePath(QWidget *window, const QString& fileName)
         setWindowProject(window, QApplication::translate("Window title", "Untitled"));
     else
         setWindowProject(window, QFileInfo(fileName).baseName());
+}
+
+void moveToScreenCenter(QWidget* w)
+{
+    auto windowSize = w->size();
+    auto screenSize = QGuiApplication::primaryScreen()->availableSize();
+    auto x = screenSize.width()/2 - windowSize.width()/2;
+    auto y = screenSize.height()/2 - windowSize.height()/2;
+    w->move(x, y);
 }
 
 } // namespace Window

@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QPushButton>
 #include <QStyle>
+#include <QSpinBox>
 #include <QSplitter>
 #include <QTableView>
 #include <QTextBrowser>
@@ -502,6 +503,18 @@ void resizeColumnToContent(QTableView *table, int col)
 void toggleWidget(QWidget* panel)
 {
     if (panel->isVisible()) panel->hide(); else panel->show();
+}
+
+//--------------------------------------------------------------------------------------------------
+
+QSpinBox* spinBox(int min, int max, int value)
+{
+    auto sb = new QSpinBox;
+    sb->setMinimum(min);
+    sb->setMaximum(max);
+    if (value != 0)
+        sb->setValue(value);
+    return sb;
 }
 
 } // namespace Gui
