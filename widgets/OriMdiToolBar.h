@@ -20,6 +20,9 @@ public:
     explicit MdiToolBar(QMdiArea *parent);
     bool flat;
 
+public slots:
+    void subWindowActivated(QMdiSubWindow*);
+
 protected:
     void paintEvent(QPaintEvent*);
 
@@ -30,8 +33,7 @@ private:
     void uncheckAll();
 
 private slots:
-    void subWindowActivated(QMdiSubWindow*);
-    void subWindowDestroyed(QObject*window);
+    void subWindowDestroyed(QObject*);
     void setActiveSubWindow();
 };
 
