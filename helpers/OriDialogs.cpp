@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QFileDialog>
 #include <QIcon>
 #include <QInputDialog>
 #include <QLabel>
@@ -64,6 +65,21 @@ QString inputText(const QString& label, const QString& value, bool *ok)
 {
     return QInputDialog::getText(qApp->activeWindow(), qApp->applicationName(),
                                  label, QLineEdit::Normal, value, ok);
+}
+
+QString getSaveFileName(const QString& title, const QString& filter, const QString& defaultExt)
+{
+    QString fileName = QFileDialog::getSaveFileName(qApp->activeWindow(), title, QString(), filter);
+    if (fileName.isEmpty()) return QString();
+
+    if (QFileInfo(fileName).suffix().isEmpty())
+    {
+        if (fileName.endsWith('.'))
+            return fileName + defaultExt;
+        return fileName + '.' + defaultExt;
+    }
+
+    return fileName;
 }
 
 //------------------------------------------------------------------------------

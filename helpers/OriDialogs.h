@@ -24,6 +24,8 @@ int yesNoCancel(QString& msg);
 QString inputText(const QString& label, const QString& value);
 QString inputText(const QString& label, const QString& value, bool *ok);
 
+QString getSaveFileName(const QString& title, const QString& filter, const QString& defaultExt);
+
 bool show(QDialog* dlg);
 
 /// Shows a widget in a dialog with OK and Cancel buttons at bottom.
