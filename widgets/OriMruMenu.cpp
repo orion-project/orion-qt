@@ -69,8 +69,9 @@ void MruMenuPart::populate()
         _menu->insertAction(_separator, _mru->actionClearAll());
         _menu->insertAction(_mru->actionClearAll(), _mru->actionClearInvalids());
         QAction* place = _mru->actionClearInvalids();
-        for (auto action : _mru->actions())
+        for (int i = _mru->actions().size()-1; i >= 0; i--)
         {
+            auto action = _mru->actions().at(i);
             _menu->insertAction(place, action);
             place = action;
         }
