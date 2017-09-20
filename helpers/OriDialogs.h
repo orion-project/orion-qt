@@ -7,6 +7,7 @@ QT_BEGIN_NAMESPACE
 class QObject;
 class QDialog;
 class QWidget;
+class QLayout;
 class QVBoxLayout;
 QT_END_NAMESPACE
 
@@ -74,23 +75,50 @@ void prepareDialog(QDialog *dlg, QWidget *widget, QObject *receiver);
 /// Widget should have slot apply() to process OK button click.
 void prepareDialog(QDialog *dlg, QWidget *widget);
 
-/*class Dialog
+
+
+/// Shows a content in a dialog with 'OK', 'Cancel' and optional 'Help' buttons at bottom.
+class Dialog
 {
 public:
-    Dialog(QWidget* content, bool ownContent);
+    Dialog(QWidget* content);
     ~Dialog();
 
-    Dialog& setTitle(const QString& title);
+    Dialog& withTitle(const QString& title) { _title = title; return *this; }
+    Dialog& withHelpTopic(const QString& topic) { _helpTopic = topic; return *this; }
+    Dialog& withIconPath(const QString& iconPath) { _iconPath = iconPath; return *this; }
+
+    /// Content should take all available place when dialog is resized.
+    Dialog& withStretchedContent() { _fixedContentSize = false; return *this; }
+
+    /// Append additional space between content and buttons box.
+    /// Space is set as amount of default layout spacings.
+    Dialog& withContentToButtonsSpacingFactor(int factor) { _contentToButtonsSpacingFactor = factor; return *this; }
+
+    /// Content is placed in dialog alongside with a prompt in horizontal layout.
+    Dialog& withHorizontalPrompt(const QString& prompt) { _prompt = prompt, _isPromptVertical = false; return *this; }
+
+    /// Content is placed in dialog alongside with a prompt in vertical layout.
+    Dialog& withVerticalPrompt(const QString& prompt) { _prompt = prompt, _isPromptVertical = true; return *this; }
+
+    /// Widget should have slot apply() to process OK button click.
+    Dialog& connectOkToContentApply() { _connectOkToContentApply = true; return *this; }
 
     bool exec();
 
 private:
-    QDialog* _dialog;
-    QWidget* _content;
-    QVBoxLayout* _layout;
-    bool _isTitleSet = false;
-    bool _isOwnContent;
-};*/
+    QDialog* _dialog = nullptr;
+    QWidget *_content, *_backupContentParent;
+    QString _title, _helpTopic, _iconPath, _prompt;
+    QLayout* _contentLayout;
+    bool _ownContent = false;
+    bool _fixedContentSize = true;
+    int _contentToButtonsSpacingFactor = 1;
+    bool _connectOkToContentApply = false;
+    bool _isPromptVertical = false;
+
+    void makeDialog();
+};
 
 } // namespace Dlg
 } // namespace Ori
