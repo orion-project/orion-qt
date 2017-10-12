@@ -9,6 +9,7 @@
 #include <QIcon>
 #include <QInputDialog>
 #include <QLabel>
+#include <QStyle>
 #include <QMessageBox>
 
 namespace Ori {
@@ -109,6 +110,8 @@ bool showDialog(QWidget *widget, const QString& title, const QString &icon)
 
 bool showDialog(QWidget *widget, QObject *receiver, const QString& title, const QString& icon)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use features of Ori::Dlg::Dialog instead.";
+
     if (!widget) return false;
 
     auto oldParent = widget->parentWidget();
@@ -145,6 +148,8 @@ bool showDialogWithPrompt(Qt::Orientation orientation, const QString& prompt, QW
 
 bool showDialogWithPrompt(Qt::Orientation orientation, const QString& prompt, QWidget *widget, QObject * receiver, const QString& title, const QString& icon)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use features of Ori::Dlg::Dialog instead.";
+
     if (!widget) return false;
 
     auto oldParent = widget->parentWidget();
@@ -171,6 +176,8 @@ void prepareDialog(QDialog *dlg, QWidget *widget)
 
 void prepareDialog(QDialog *dlg, QWidget *widget, QObject *receiver)
 {
+    qDebug() << "This function is obsolete and should be removed. Please use features of Ori::Dlg::Dialog instead.";
+
     if (!dlg || !widget) return;
 
     auto buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -188,38 +195,74 @@ void prepareDialog(QDialog *dlg, QWidget *widget, QObject *receiver)
 }
 
 //------------------------------------------------------------------------------
-/*
-Dialog::Dialog(QWidget *content, bool ownContent) : _content(content), _isOwnContent(ownContent)
+
+Dialog::Dialog(QWidget* content): _content(content)
 {
-    _dialog = new QDialog(qApp->activeWindow());
-    auto buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    qApp->connect(buttons, &QDialogButtonBox::accepted, _dialog, &QDialog::accept);
-    qApp->connect(buttons, &QDialogButtonBox::rejected, _dialog, &QDialog::reject);
-    _layout = new QVBoxLayout(_dialog);
-    _layout->addWidget(content);
-    _layout->addWidget(buttons);
+    _backupContentParent = _content->parentWidget();
 }
 
 Dialog::~Dialog()
 {
-    if (!_isOwnContent)
-        _layout->removeWidget(_content);
-    delete _dialog;
-}
-
-Dialog& Dialog::setTitle(const QString& title)
-{
-    _dialog->setWindowTitle(title);
-    _isTitleSet = true;
-    return *this;
+    if (_dialog) delete _dialog;
 }
 
 bool Dialog::exec()
 {
-    if (!_isTitleSet)
-        _dialog->setWindowTitle(qApp->applicationName());
-    return _dialog->exec() == QDialog::Accepted;
+    if (!_dialog) makeDialog();
+    bool res = _dialog->exec() == QDialog::Accepted;
+    if (!_ownContent)
+    {
+        // Restoring ownership prevent widget deletion together with layout
+        _contentLayout->removeWidget(_content);
+        _content->setParent(_backupContentParent);
+    }
+    return res;
 }
-*/
+
+void Dialog::makeDialog()
+{
+    _dialog = new QDialog(qApp->activeWindow());
+
+    auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel |
+        (_helpTopic.isEmpty() ? QDialogButtonBox::NoButton : QDialogButtonBox::Help));
+    qApp->connect(buttonBox, &QDialogButtonBox::accepted, _dialog, &QDialog::accept);
+    qApp->connect(buttonBox, &QDialogButtonBox::rejected, _dialog, &QDialog::reject);
+    if (_connectOkToContentApply)
+        qApp->connect(buttonBox, SIGNAL(accepted()), _content, SLOT(apply()));
+    if (!_helpTopic.isEmpty()) // TODO process help
+        qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, [this](){
+            info(QString("TODO help by topic '%1'").arg(this->_helpTopic));
+        });
+
+    QVBoxLayout* dialogLayout = new QVBoxLayout(_dialog);
+    if (!_prompt.isEmpty())
+    {
+        QBoxLayout *promptLayout;
+        if (_isPromptVertical) promptLayout = new QVBoxLayout;
+        else promptLayout = new QHBoxLayout;
+        promptLayout->setMargin(0);
+        promptLayout->addWidget(new QLabel(_prompt));
+        promptLayout->addWidget(_content);
+        dialogLayout->addLayout(promptLayout);
+        _contentLayout = promptLayout;
+    }
+    else
+    {
+        dialogLayout->addWidget(_content);
+        _contentLayout = dialogLayout;
+    }
+    if (_fixedContentSize)
+        dialogLayout->addStretch();
+    if (_contentToButtonsSpacingFactor > 1)
+    {
+        int defaultSpacing = qApp->style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing);
+        dialogLayout->addSpacing(defaultSpacing * (_contentToButtonsSpacingFactor - 1));
+    }
+    dialogLayout->addWidget(buttonBox);
+
+    setDlgTitle(_dialog, _title);
+    setDlgIcon(_dialog, _iconPath);
+}
+
 } // namespace Dlg
 } // namespace Ori
