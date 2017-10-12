@@ -4,6 +4,8 @@
 #include <QMdiArea>
 #include <QMdiSubWindow>
 
+#define ACTION_DATA(window) QVariant::fromValue((void*)(window))
+
 namespace Ori {
 namespace Widgets {
 
@@ -16,10 +18,9 @@ MdiToolBar::MdiToolBar(const QString& title, QMdiArea *parent) : QToolBar(parent
     setWindowTitle(title);
     setObjectName("toolBar_Windows");
     setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    setIconSize(QSize(16, 16));
+    //setIconSize(QSize(16, 16));
 
-    connect(mdiArea, SIGNAL(subWindowActivated(QMdiSubWindow*)),
-            this, SLOT(subWindowActivated(QMdiSubWindow*)));
+    connect(mdiArea, &QMdiArea::subWindowActivated, this, &MdiToolBar::subWindowActivated);
 }
 
 void MdiToolBar::paintEvent(QPaintEvent *event)
@@ -36,24 +37,26 @@ void MdiToolBar::uncheckAll()
 void MdiToolBar::subWindowActivated(QMdiSubWindow *window)
 {
     uncheckAll();
+
     if (!window) return;
 
-    QVariant wnd = QVariant::fromValue((void*)window);
-    for (int i = 0; i < actions.size(); i++)
-        if (actions[i]->data() == wnd)
-        {
-            actions[i]->setChecked(true);
-            return;
-        }
+    auto action = findActionForWindow(window);
+    if (action)
+    {
+        action->setChecked(true);
+        return;
+    }
 
-    connect(window, SIGNAL(destroyed(QObject*)), this, SLOT(subWindowDestroyed(QObject*)));
+    connect(window, &QMdiSubWindow::destroyed, this, &MdiToolBar::subWindowDestroyed);
+    connect(window, &QMdiSubWindow::windowTitleChanged, this, &MdiToolBar::subWindowTitleChanged);
+    connect(window, &QMdiSubWindow::windowIconChanged, this, &MdiToolBar::subWindowIconChanged);
 
-    QAction *action = new QAction(this);
+    action = new QAction(this);
     action->setText(window->windowTitle());
     action->setIcon(window->windowIcon());
     action->setCheckable(true);
     action->setChecked(true);
-    action->setData(wnd);
+    action->setData(ACTION_DATA(window));
     connect(action, SIGNAL(triggered()), this, SLOT(setActiveSubWindow()));
     actions.append(action);
     addAction(action);
@@ -61,7 +64,7 @@ void MdiToolBar::subWindowActivated(QMdiSubWindow *window)
 
 void MdiToolBar::subWindowDestroyed(QObject *window)
 {
-    QVariant wnd = QVariant::fromValue((void*)window);
+    QVariant wnd = ACTION_DATA(window);
     for (int i = 0; i < actions.size(); i++)
         if (actions[i]->data() == wnd)
         {
@@ -71,18 +74,45 @@ void MdiToolBar::subWindowDestroyed(QObject *window)
         }
 }
 
+QAction* MdiToolBar::findActionForWindow(QMdiSubWindow *window)
+{
+    QVariant data = ACTION_DATA(window);
+    for (auto action : actions)
+        if (action->data() == data)
+            return action;
+    return nullptr;
+}
+
 void MdiToolBar::setActiveSubWindow()
 {
     QAction *action = qobject_cast<QAction*>(sender());
     if (action->isChecked())
     {
-        QMdiSubWindow *window = (QMdiSubWindow*)(action->data().value<void*>());
+        QMdiSubWindow *window = qvariant_cast<QMdiSubWindow*>(action->data());
         if (!window->isVisible()) window->show();
         if (window->windowState() | Qt::WindowMinimized) window->showNormal();
         mdiArea->setActiveSubWindow(window);
     }
     else
         mdiArea->setActiveSubWindow(0);
+}
+
+void MdiToolBar::subWindowTitleChanged(const QString& title)
+{
+    auto window = qobject_cast<QMdiSubWindow*>(sender());
+    if (!window) return;
+    auto action = findActionForWindow(window);
+    if (!action) return;
+    action->setText(title);
+}
+
+void MdiToolBar::subWindowIconChanged(const QIcon& icon)
+{
+    auto window = qobject_cast<QMdiSubWindow*>(sender());
+    if (!window) return;
+    auto action = findActionForWindow(window);
+    if (!action) return;
+    action->setIcon(icon);
 }
 
 } // namespace Widgets

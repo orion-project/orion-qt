@@ -31,9 +31,12 @@ private:
     QList<QAction*> actions;
 
     void uncheckAll();
+    QAction* findActionForWindow(QMdiSubWindow *window);
 
 private slots:
     void subWindowDestroyed(QObject*);
+    void subWindowTitleChanged(const QString& title);
+    void subWindowIconChanged(const QIcon& icon);
     void setActiveSubWindow();
 };
 
