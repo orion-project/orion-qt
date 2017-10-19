@@ -1,10 +1,11 @@
 #include "OriMdiToolBar.h"
 
 #include <QAction>
+#include <QDebug>
 #include <QMdiArea>
 #include <QMdiSubWindow>
 
-#define ACTION_DATA(window) QVariant::fromValue((void*)(window))
+#define ACTION_DATA(window) QVariant::fromValue(window)
 
 namespace Ori {
 namespace Widgets {
@@ -43,7 +44,8 @@ void MdiToolBar::subWindowActivated(QMdiSubWindow *window)
     auto action = findActionForWindow(window);
     if (action)
     {
-        action->setChecked(true);
+        if (!action->isChecked())
+            action->setChecked(true);
         return;
     }
 
@@ -86,15 +88,22 @@ QAction* MdiToolBar::findActionForWindow(QMdiSubWindow *window)
 void MdiToolBar::setActiveSubWindow()
 {
     QAction *action = qobject_cast<QAction*>(sender());
-    if (action->isChecked())
+    action->setChecked(true);
+    QMdiSubWindow *window = qvariant_cast<QMdiSubWindow*>(action->data());
+    if (!window)
     {
-        QMdiSubWindow *window = qvariant_cast<QMdiSubWindow*>(action->data());
-        if (!window->isVisible()) window->show();
-        if (window->windowState() | Qt::WindowMinimized) window->showNormal();
-        mdiArea->setActiveSubWindow(window);
+        qCritical() << "Invalid app state: no window is attached to action";
+        return;
     }
-    else
-        mdiArea->setActiveSubWindow(0);
+    auto activeWindow = mdiArea->activeSubWindow();
+    // Do nothing if window is already active
+    if (window == activeWindow) return;
+    if (!window->isVisible()) window->show();
+    if (window->windowState() | Qt::WindowMinimized) window->showNormal();
+    auto isMaximized = activeWindow && activeWindow->windowState() & Qt::WindowMaximized;
+    mdiArea->setActiveSubWindow(window);
+    if (isMaximized && !(window->windowState() & Qt::WindowMaximized))
+        window->setWindowState(Qt::WindowMaximized);
 }
 
 void MdiToolBar::subWindowTitleChanged(const QString& title)
