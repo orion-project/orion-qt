@@ -4,6 +4,7 @@
 #include <QString>
 
 QT_BEGIN_NAMESPACE
+class QScreen;
 class QWidget;
 QT_END_NAMESPACE
 
@@ -16,7 +17,8 @@ void setWindowIcon(QWidget*, const QString&);
 void setWindowProject(QWidget*, const QString&);
 void setWindowFilePath(QWidget*, const QString&);
 
-void moveToScreenCenter(QWidget*);
+void moveToScreenCenter(QWidget*, QWidget* = nullptr);
+QScreen* findScreenOrPrimary(QWidget* w);
 
 } // namespace Window
 } // namespace Ori

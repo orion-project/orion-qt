@@ -1,6 +1,8 @@
 #include "OriWindows.h"
 
 #include <QApplication>
+#include <QDebug>
+#include <QDesktopWidget>
 #include <QFileInfo>
 #include <QIcon>
 #include <QScreen>
@@ -42,13 +44,24 @@ void setWindowFilePath(QWidget *window, const QString& fileName)
         setWindowProject(window, QFileInfo(fileName).baseName());
 }
 
-void moveToScreenCenter(QWidget* w)
+QScreen* findScreenOrPrimary(QWidget* w)
+{
+    if (!w)
+        return QGuiApplication::primaryScreen();
+    int screenNumber = qApp->desktop()->screenNumber(w);
+    if (screenNumber < 0)
+        return QGuiApplication::primaryScreen();
+    return QGuiApplication::screens().at(screenNumber);
+}
+
+void moveToScreenCenter(QWidget* w, QWidget* screenOfThisWidget)
 {
     auto windowSize = w->size();
-    auto screenSize = QGuiApplication::primaryScreen()->availableSize();
-    auto x = screenSize.width()/2 - windowSize.width()/2;
-    auto y = screenSize.height()/2 - windowSize.height()/2;
-    w->move(x, y);
+    auto screen = findScreenOrPrimary(screenOfThisWidget);
+    auto screenRect = screen->availableGeometry();
+    auto x = screenRect.width()/2 - windowSize.width()/2;
+    auto y = screenRect.height()/2 - windowSize.height()/2;
+    w->move(screenRect.left() + x, screenRect.top() + y);
 }
 
 } // namespace Window
