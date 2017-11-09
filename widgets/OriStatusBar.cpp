@@ -4,15 +4,12 @@
 namespace Ori {
 namespace Widgets {
 
-////////////////////////////////////////////////////////////////////////////////
-//                                StatusBar
-////////////////////////////////////////////////////////////////////////////////
-
 StatusBar::StatusBar(int count, QWidget *parent) : QStatusBar(parent)
 {
     for (int i = 0; i < count; i++)
     {
         auto label = new ClickableLabel;
+        label->setContentsMargins(6, 0, 6, 0);
         _sections.push_back(label);
         addWidget(label);
     }
@@ -21,7 +18,7 @@ StatusBar::StatusBar(int count, QWidget *parent) : QStatusBar(parent)
 
 void StatusBar::setText(int index, const QString &text)
 {
-    _sections[index]->setText(QString("  %1  ").arg(text));
+    _sections[index]->setText(text);
 }
 
 void StatusBar::setText(int index, const QString& text, const QString& tooltip)
