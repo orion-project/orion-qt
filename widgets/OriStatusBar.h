@@ -25,8 +25,10 @@ public:
     void clear();
     void highlightError(int index);
     void highlightReset(int index);
+    void setIconSize(const QSize& size);
 private:
     QVector<QLabel*> _sections;
+    QSize _iconSize;
 };
 
 } // namespace Widgets

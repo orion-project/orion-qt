@@ -1,11 +1,15 @@
 #include "OriStatusBar.h"
 #include "OriLabels.h"
 
+#include <QIcon>
+
 namespace Ori {
 namespace Widgets {
 
 StatusBar::StatusBar(int count, QWidget *parent) : QStatusBar(parent)
 {
+    _iconSize = QSize(16, 16);
+
     for (int i = 0; i < count; i++)
     {
         auto label = new ClickableLabel;
@@ -29,7 +33,7 @@ void StatusBar::setText(int index, const QString& text, const QString& tooltip)
 
 void StatusBar::setIcon(int index, const QString &path)
 {
-    _sections[index]->setPixmap(QPixmap(path));
+    _sections[index]->setPixmap(QIcon(path).pixmap(_iconSize));
 }
 
 void StatusBar::setToolTip(int index, const QString& tooltip)
@@ -57,12 +61,17 @@ void StatusBar::connect(int index, const char *signal, const QObject *receiver, 
 
 void StatusBar::highlightError(int index)
 {
-    _sections[index]->setStyleSheet("background:red;color:white;font-weight:bold");
+    _sections[index]->setStyleSheet("QLabel{background:red;color:white;font-weight:bold}");
 }
 
 void StatusBar::highlightReset(int index)
 {
     _sections[index]->setStyleSheet(QString());
+}
+
+void StatusBar::setIconSize(const QSize& size)
+{
+    _iconSize = size;
 }
 
 } // namespace Widgets
