@@ -27,7 +27,7 @@ public slots:
     void load(const QString& resource);
 
 protected:
-  virtual void paintEvent(QPaintEvent *event);
+  virtual void paintEvent(QPaintEvent *event) override;
 
 private:
     QSvgRenderer *renderer;

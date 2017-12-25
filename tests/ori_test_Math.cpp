@@ -1,6 +1,11 @@
 #include "../testing/OriTestBase.h"
 #include "../core/OriFloatingPoint.h"
 
+#ifdef Q_OS_MACOS
+#include <cmath>
+#define __isnan std::isnan
+#endif
+
 namespace Ori {
 namespace Test {
 namespace MathTests {
