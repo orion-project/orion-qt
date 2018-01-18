@@ -95,12 +95,26 @@ void setDlgTitle(QWidget *dlg, const QString& title)
     dlg->setWindowTitle(title.isEmpty()? qApp->applicationName(): title);
 }
 
+/**
+    Assign dialog window icon.
+
+    On MacOS the icon of active dialog overrides application icon on the dock.
+    It is not what we want. As no icon is displayed in window titlebar so we have nothing to do.
+
+    Ubuntu Unity does not display icons in window titlebar,
+    but there are another desktops that can show icons (xfce, KDE).
+*/
 void setDlgIcon(QWidget *dlg, const QString &path)
 {
+#ifdef Q_OS_MACOS
+    Q_UNUSED(dlg)
+    Q_UNUSED(path)
+#else
     if (path.isEmpty()) return;
     QIcon icon(path);
     if (icon.isNull()) return;
     dlg->setWindowIcon(icon);
+#endif
 }
 
 bool showDialog(QWidget *widget, const QString& title, const QString &icon)
@@ -212,7 +226,7 @@ bool Dialog::exec()
     bool res = _dialog->exec() == QDialog::Accepted;
     if (!_ownContent)
     {
-        // Restoring ownership prevent widget deletion together with layout
+        // Restoring ownership prevents widget deletion together with layout
         _contentLayout->removeWidget(_content);
         _content->setParent(_backupContentParent);
     }
@@ -221,36 +235,30 @@ bool Dialog::exec()
 
 void Dialog::makeDialog()
 {
+    // Dialog window
     _dialog = new QDialog(qApp->activeWindow());
-
-    auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel |
-        (_helpTopic.isEmpty() ? QDialogButtonBox::NoButton : QDialogButtonBox::Help));
-    qApp->connect(buttonBox, &QDialogButtonBox::accepted, _dialog, &QDialog::accept);
-    qApp->connect(buttonBox, &QDialogButtonBox::rejected, _dialog, &QDialog::reject);
-    if (_connectOkToContentApply)
-        qApp->connect(buttonBox, SIGNAL(accepted()), _content, SLOT(apply()));
-    if (!_helpTopic.isEmpty()) // TODO process help
-        qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, [this](){
-            info(QString("TODO help by topic '%1'").arg(this->_helpTopic));
-        });
-
+    setDlgTitle(_dialog, _title);
+    setDlgIcon(_dialog, _iconPath);
     QVBoxLayout* dialogLayout = new QVBoxLayout(_dialog);
+
+    // Dialog content
     if (!_prompt.isEmpty())
     {
-        QBoxLayout *promptLayout;
-        if (_isPromptVertical) promptLayout = new QVBoxLayout;
-        else promptLayout = new QHBoxLayout;
-        promptLayout->setMargin(0);
-        promptLayout->addWidget(new QLabel(_prompt));
-        promptLayout->addWidget(_content);
-        dialogLayout->addLayout(promptLayout);
-        _contentLayout = promptLayout;
+        if (_isPromptVertical)
+            _contentLayout = new QVBoxLayout;
+        else
+            _contentLayout = new QHBoxLayout;
+        _contentLayout->setMargin(0);
+        _contentLayout->addWidget(new QLabel(_prompt));
+        dialogLayout->addLayout(_contentLayout);
     }
     else
     {
-        dialogLayout->addWidget(_content);
         _contentLayout = dialogLayout;
     }
+    _contentLayout->addWidget(_content);
+
+    // Content-to-buttons space
     if (_fixedContentSize)
         dialogLayout->addStretch();
     if (_contentToButtonsSpacingFactor > 1)
@@ -258,10 +266,33 @@ void Dialog::makeDialog()
         int defaultSpacing = qApp->style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing);
         dialogLayout->addSpacing(defaultSpacing * (_contentToButtonsSpacingFactor - 1));
     }
-    dialogLayout->addWidget(buttonBox);
 
-    setDlgTitle(_dialog, _title);
-    setDlgIcon(_dialog, _iconPath);
+    // Dialog buttons
+    auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel |
+        (_helpTopic.isEmpty() ? QDialogButtonBox::NoButton : QDialogButtonBox::Help));
+    qApp->connect(buttonBox, &QDialogButtonBox::accepted, [this](){ this->acceptDialog(); });
+    qApp->connect(buttonBox, &QDialogButtonBox::rejected, _dialog, &QDialog::reject);
+    if (_connectOkToContentApply)
+        qApp->connect(_dialog, SIGNAL(accepted()), _content, SLOT(apply()));
+    if (!_helpTopic.isEmpty()) // TODO process help
+        qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, [this](){
+            info(QString("TODO help by topic '%1'").arg(this->_helpTopic));
+        });
+    dialogLayout->addWidget(buttonBox);
+}
+
+void Dialog::acceptDialog()
+{
+    if (_verify)
+    {
+        QString res = _verify();
+        if (!res.isEmpty())
+        {
+            warning(res);
+            return;
+        }
+    }
+    _dialog->accept();
 }
 
 } // namespace Dlg

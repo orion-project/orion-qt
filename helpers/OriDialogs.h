@@ -3,11 +3,14 @@
 
 #include <QString>
 
+#include <functional>
+
 QT_BEGIN_NAMESPACE
 class QObject;
 class QDialog;
 class QWidget;
 class QLayout;
+class QBoxLayout;
 class QVBoxLayout;
 QT_END_NAMESPACE
 
@@ -81,6 +84,8 @@ void prepareDialog(QDialog *dlg, QWidget *widget);
 class Dialog
 {
 public:
+    typedef std::function<QString()> VerificationFunc;
+
     Dialog(QWidget* content);
     ~Dialog();
 
@@ -104,20 +109,24 @@ public:
     /// Widget should have slot apply() to process OK button click.
     Dialog& connectOkToContentApply() { _connectOkToContentApply = true; return *this; }
 
+    Dialog& withVerification(VerificationFunc verify) { _verify = verify; return *this; }
+
     bool exec();
 
 private:
     QDialog* _dialog = nullptr;
     QWidget *_content, *_backupContentParent;
     QString _title, _helpTopic, _iconPath, _prompt;
-    QLayout* _contentLayout;
+    QBoxLayout* _contentLayout;
     bool _ownContent = false;
     bool _fixedContentSize = true;
     int _contentToButtonsSpacingFactor = 1;
     bool _connectOkToContentApply = false;
     bool _isPromptVertical = false;
+    VerificationFunc _verify;
 
     void makeDialog();
+    void acceptDialog();
 };
 
 } // namespace Dlg
