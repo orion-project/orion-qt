@@ -2,6 +2,7 @@
 #define ORI_DIALOGS_H
 
 #include <QString>
+#include <QVector>
 
 #include <functional>
 
@@ -109,6 +110,8 @@ public:
     /// Widget should have slot apply() to process OK button click.
     Dialog& connectOkToContentApply() { _connectOkToContentApply = true; return *this; }
 
+    Dialog& withOkSignal(const char* signal) { _okSignals << signal; return *this; }
+
     Dialog& withVerification(VerificationFunc verify) { _verify = verify; return *this; }
 
     bool exec();
@@ -122,6 +125,7 @@ private:
     bool _fixedContentSize = true;
     int _contentToButtonsSpacingFactor = 1;
     bool _connectOkToContentApply = false;
+    QVector<const char*> _okSignals;
     bool _isPromptVertical = false;
     VerificationFunc _verify;
 

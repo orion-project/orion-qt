@@ -274,6 +274,8 @@ void Dialog::makeDialog()
     qApp->connect(buttonBox, &QDialogButtonBox::rejected, _dialog, &QDialog::reject);
     if (_connectOkToContentApply)
         qApp->connect(_dialog, SIGNAL(accepted()), _content, SLOT(apply()));
+    for (auto signal: _okSignals)
+        qApp->connect(_content, signal, _dialog, SLOT(accept()));
     if (!_helpTopic.isEmpty()) // TODO process help
         qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, [this](){
             info(QString("TODO help by topic '%1'").arg(this->_helpTopic));
