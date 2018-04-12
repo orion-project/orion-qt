@@ -72,10 +72,9 @@ class LayoutBox : public LayoutItem
 public:
     LayoutBox(QBoxLayout* layout, LayoutItems items)
     {
-        _mode = LayoutItemMode::Layout, _layout = layout;
-
-        for (const LayoutItem& item : items)
-            item.addTo(layout);
+        _mode = LayoutItemMode::Layout;
+        _layout = layout;
+        add(items);
     }
 
     LayoutBox& setMargin(int value) { _layout->setMargin(value); return *this; }
@@ -83,17 +82,30 @@ public:
     LayoutBox& useFor(QWidget* parent) { parent->setLayout(_layout); return *this; }
     QWidget* makeWidget() { auto w = new QWidget; w->setLayout(_layout); return w; }
 
-    QBoxLayout* boxLayout() const { return (QBoxLayout*)_layout; }
+    QBoxLayout* boxLayout() const { return qobject_cast<QBoxLayout*>(_layout); }
+
+    void add(LayoutItem item)
+    {
+        item.addTo(boxLayout());
+    }
+
+    void add(LayoutItems items)
+    {
+        for (const LayoutItem& item : items)
+            item.addTo(boxLayout());
+    }
 };
 
 
-class LayoutH : public LayoutBox {
+class LayoutH : public LayoutBox
+{
 public:
     LayoutH(LayoutItems items) : LayoutBox(new QHBoxLayout, items) {}
 };
 
 
-class LayoutV : public LayoutBox {
+class LayoutV : public LayoutBox
+{
 public:
     LayoutV(LayoutItems items) : LayoutBox(new QVBoxLayout, items) {}
 };
