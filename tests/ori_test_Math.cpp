@@ -1,8 +1,9 @@
 #include "../testing/OriTestBase.h"
 #include "../core/OriFloatingPoint.h"
 
-#ifdef Q_OS_MACOS
 #include <cmath>
+
+#ifdef Q_OS_MACOS
 #define __isnan std::isnan
 #endif
 
