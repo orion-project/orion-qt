@@ -53,14 +53,19 @@ void setFontSizePt(QWidget *w, int sizePt)
 void setFontMonospace(QWidget *w, int sizePt)
 {
     QFont f = w->font();
-#ifdef Q_OS_WIN
-    f.setPointSize(10);
+
+#if defined(Q_OS_WIN)
     f.setFamily("Courier New");
+    f.setPointSize(10);
+#elif defined(Q_OS_MAC)
+    f.setFamily("Monaco");
+    f.setPointSize(13);
 #else
     f.setFamily("monospace");
+    f.setPointSize(11);
 #endif
     if (sizePt > 0)
-        f.setPointSize(10);
+        f.setPointSize(sizePt);
     w->setFont(f);
 }
 

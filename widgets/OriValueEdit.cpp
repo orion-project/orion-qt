@@ -99,7 +99,7 @@ void ValueEdit::processInput(const QString& text)
 
 QString ValueEdit::toString(const double& value) const
 {
-    auto s = _locale.toString(value);
+    auto s = _locale.toString(value, 'g', _numberPrecision);
     // thousand separator for C-locale is comma, need not it
     return s.replace(_locale.groupSeparator(), QString());
 }

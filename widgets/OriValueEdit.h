@@ -19,6 +19,9 @@ public:
     void setValue(const double &value);
     bool ok() const { return _ok; }
 
+    int numberPrecision() const { return _numberPrecision; }
+    void setNumberPrecision(int value) { _numberPrecision = value; }
+
     QSize sizeHint() const { return QSize(128, 21); }
 
 signals:
@@ -36,6 +39,7 @@ private:
     QLocale _locale;
     double _value = 0;
     bool _ok;
+    int _numberPrecision = 6;
 
     QString toString(const double& value) const;
 
