@@ -2,9 +2,9 @@
     <qresource prefix="/toolbar">
         <file alias="run_test">img/run_24.png</file>
         <file alias="run_tests">img/run_all_24.png</file>
-        <file alias="expand_tests">img/expand_all_24.png</file>
-        <file alias="collapse_tests">img/collapse_all_24.png</file>
-        <file alias="reset_tests">img/reset_all_24.png</file>
+        <file alias="expand_tests">img/expand_all.svg</file>
+        <file alias="collapse_tests">img/collapse_all.svg</file>
+        <file alias="reset_tests">img/reset_all.svg</file>
     </qresource>
     <qresource prefix="/tests/states">
         <file alias="pass">img/test_pass_16.png</file>
