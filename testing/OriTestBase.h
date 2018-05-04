@@ -168,6 +168,22 @@ inline QString formatPtr(const void* ptr)
         return; \
     }}
 
+#define ASSERT_NEAR_DBL(expr_value, expr_expected, epsilon) { \
+    double __test_var_value__ = double(expr_value); \
+    double __test_var_expected__ = double(expr_expected); \
+    double __test_var_delta__ = qAbs(__test_var_value__ - __test_var_expected__); \
+    if (__test_var_delta__ > epsilon) \
+    { \
+        test->setResult(false); \
+        test->setMessage("Value is not equal to expected" ); \
+        test->logAssertion("ARE DOUBLES NEAR EQUAL", \
+                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           QString::number(__test_var_expected__, 'g', 16), \
+                           QString::number(__test_var_value__, 'g', 16), \
+                           __FILE__, __LINE__); \
+        return; \
+    }}
+
 #define ASSERT_NEQ_DBL(expr_value, expr_expected) { \
     double __test_var_value__ = double(expr_value); \
     double __test_var_expected__ = double(expr_expected); \
