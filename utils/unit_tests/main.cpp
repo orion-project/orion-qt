@@ -10,8 +10,8 @@ int main(int argc, char* argv[])
     // It is used as settings storage location.
     app.setOrganizationName("orion_examples");
 
-    return Ori::Test::run(app, {
-        ADD_SUITE(Ori::Test),
+    return Ori::Testing::run(app, {
+        ADD_SUITE(Ori::Tests),
     });
 }
 

@@ -4,11 +4,9 @@
 #include <QVector>
 #include <QWaitCondition>
 
-using namespace Ori::Test;
+using namespace Ori::Testing;
 
-////////////////////////////////////////////////////////////////////////////////
-//                      Tests for testing the test window
-
+/// Tests for testing the test window
 namespace TestWindowTests {
 
 // Causes the current thread to sleep for msecs milliseconds.
@@ -122,8 +120,6 @@ TEST_CLASS(TestClassFailed)
         ASSERT_IS_TRUE(2 == 3);
     }
 TEST_CLASS_END
-
-////////////////////////////////////////////////////////////////////////////////
 
 namespace GroupSuccessed {
     TEST_GROUP("Successed Group",

@@ -2,16 +2,16 @@
 #include "../core/OriFilter.h"
 
 namespace Ori {
-namespace Test {
+namespace Tests {
 namespace FilterTests {
 
 class TestCondition {
 public:
     QString id;
-    Ori::Test::TestBase* test;
+    Ori::Testing::TestBase* test;
     bool result;
 
-    TestCondition(const QString& id, Ori::Test::TestBase *test, bool result = true)
+    TestCondition(const QString& id, Ori::Testing::TestBase *test, bool result = true)
         : id(id), test(test), result(result) {}
 
     ~TestCondition()
@@ -76,7 +76,7 @@ TEST_METHOD(check_must_return_false_when_one_condition_failed)
     ASSERT_IS_FALSE(result)
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 TEST_GROUP("Filter",
     ADD_TEST(destructor_must_delete_all_conditions),
@@ -85,5 +85,5 @@ TEST_GROUP("Filter",
 )
 
 } // namespace TemplatesTests
-} // namespace Test
+} // namespace Tests
 } // namespace Ori

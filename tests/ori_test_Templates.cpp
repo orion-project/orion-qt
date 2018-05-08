@@ -2,10 +2,10 @@
 #include "../core/OriTemplates.h"
 
 namespace Ori {
-namespace Test {
+namespace Tests {
 namespace TemplatesTests {
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 class TestSingleton : public Singleton<TestSingleton>
 {
@@ -24,7 +24,7 @@ TEST_METHOD(singleton)
     ASSERT_IS_FALSE(ref.constructed)
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 class TestListener
 {
@@ -55,7 +55,7 @@ TEST_METHOD(notifier)
     ASSERT_IS_FALSE(listener.notified)
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 DECLARE_ENUM(TestEnum, 145, TestEnum_1, TestEnum_2, TestEnum_3)
 
@@ -92,7 +92,7 @@ TEST_METHOD(declare_enum)
     ASSERT_EQ_INT(val, TestEnum_1)
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 TEST_METHOD(breakable_block)
 {
@@ -134,7 +134,7 @@ TEST_METHOD(nested_breakable_block)
     ASSERT_EQ_INT(counter4, 1)
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 TEST_GROUP("Templates",
     ADD_TEST(singleton),
@@ -145,5 +145,5 @@ TEST_GROUP("Templates",
 )
 
 } // namespace TemplatesTests
-} // namespace Test
+} // namespace Tests
 } // namespace Ori

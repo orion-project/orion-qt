@@ -4,7 +4,7 @@
 #include "../testing/OriTestBase.h"
 
 namespace Ori {
-namespace Test {
+namespace Tests {
 
 USE_GROUP(MathTests)        // ori_test_math.cpp
 USE_GROUP(TemplatesTests)   // ori_test_Templates.cpp
@@ -27,7 +27,7 @@ namespace All {
     )
 }
 
-} // namespace Test
+} // namespace Tests
 } // namespace Ori
 
 #endif // ORI_TESTS_H

@@ -8,7 +8,7 @@
 #include <QDateTime>
 
 namespace Ori {
-namespace Test {
+namespace Testing {
 
 bool isTesting()
 {
@@ -59,7 +59,7 @@ int run(QApplication& app, std::initializer_list<TestSuite> suites)
     return run(app, tests);
 }
 
-} // namespace Test
+} // namespace Testing
 } // namespace Ori
 
 #endif // ORI_TEST_MANAGER_H

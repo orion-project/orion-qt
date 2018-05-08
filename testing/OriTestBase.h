@@ -216,41 +216,41 @@ inline QString formatPtr(const void* ptr)
 
 
 #define TEST_METHOD(name)                                                                 \
-    void name(Ori::Test::TestBase *test)
+    void name(Ori::Testing::TestBase *test)
 
 #define TEST_CASE_METHOD(name, ...)                                                       \
-    void name(Ori::Test::TestBase *test, __VA_ARGS__)
+    void name(Ori::Testing::TestBase *test, __VA_ARGS__)
 
 #define TEST_CASE(name, method, ...)                                                      \
-    void name(Ori::Test::TestBase *test)                                                  \
+    void name(Ori::Testing::TestBase *test)                                               \
     {                                                                                     \
         method(test, __VA_ARGS__);                                                        \
     }
 
 
 #define TEST_GROUP(name, ...)                                                             \
-    Ori::Test::TestGroup* tests()                                                         \
+    Ori::Testing::TestGroup* tests()                                                      \
     {                                                                                     \
-        return new Ori::Test::TestGroup(name, { __VA_ARGS__ });                           \
+        return new Ori::Testing::TestGroup(name, { __VA_ARGS__ });                        \
     }
 
 #define TEST_SUITE(...)                                                                   \
-    Ori::Test::TestSuite tests()                                                          \
+    Ori::Testing::TestSuite tests()                                                       \
     {                                                                                     \
         return {__VA_ARGS__};                                                             \
     }
 
 #define USE_GROUP(name)                                                                   \
-    namespace name { Ori::Test::TestGroup* tests(); }
+    namespace name { Ori::Testing::TestGroup* tests(); }
 
 #define USE_SUITE(name)                                                                   \
-    namespace name { Ori::Test::TestSuite tests(); }
+    namespace name { Ori::Testing::TestSuite tests(); }
 
 #define ADD_SUITE(name)                                                                   \
     name::tests()
 
 #define ADD_TEST(method)                                                                  \
-    new Ori::Test::TestBase(#method, method)
+    new Ori::Testing::TestBase(#method, method)
 
 #define ADD_GROUP(name)                                                                   \
     name::tests()
@@ -259,10 +259,10 @@ inline QString formatPtr(const void* ptr)
     new name()
 
 #define TEST_CLASS(name)                                                                  \
-    class name : public Ori::Test::TestBase                                               \
+    class name : public Ori::Testing::TestBase                                            \
     {                                                                                     \
     public:                                                                               \
-        name() : Ori::Test::TestBase(#name, nullptr) {}
+        name() : Ori::Testing::TestBase(#name, nullptr) {}
 
 #define TEST_CLASS_END                                                                    \
     };
@@ -275,7 +275,7 @@ inline QString formatPtr(const void* ptr)
 
 
 namespace Ori {
-namespace Test {
+namespace Testing {
 
 class TestBase;
 class TestGroup;
@@ -286,7 +286,6 @@ typedef QVector<TestBase*> TestSuite;
 void free(const TestSuite& tests);
 TestGroup* asGroup(TestBase* test);
 
-////////////////////////////////////////////////////////////////////////////////
 
 class TestLogger
 {
@@ -301,11 +300,9 @@ private:
     static bool _enabled;
 };
 
-////////////////////////////////////////////////////////////////////////////////
 
 typedef void (*TestMethod) (TestBase *test);
 
-////////////////////////////////////////////////////////////////////////////////
 
 class TestBase
 {
@@ -342,7 +339,6 @@ private:
     friend class TestGroup;
 };
 
-////////////////////////////////////////////////////////////////////////////////
 
 class TestGroup : public TestBase
 {
@@ -363,7 +359,6 @@ private:
     TestSuite _tests;
 };
 
-////////////////////////////////////////////////////////////////////////////////
 
 class TestSession
 {
@@ -381,9 +376,7 @@ private:
     int _testsRun, _testsPass, _testsFail;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-
-} // namespace Test
+} // namespace Testing
 } // namespace Ori
 
 #endif // ORI_TEST_BASE_H

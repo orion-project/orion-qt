@@ -1,5 +1,5 @@
-#ifndef TESTWINDOW_H
-#define TESTWINDOW_H
+#ifndef ORI_TEST_WINDOW_H
+#define ORI_TEST_WINDOW_H
 
 #include <QMainWindow>
 
@@ -20,7 +20,7 @@ namespace Ori {
 class Translator;
 class Settings;
 
-namespace Test {
+namespace Testing {
 
 class TestWindow : public QMainWindow
 {
@@ -69,7 +69,7 @@ private slots:
     void testSelected(QTreeWidgetItem*, QTreeWidgetItem*);
 };
 
-} // namespace Test
+} // namespace Testing
 } // namespace Ori
 
-#endif // TESTWINDOW_H
+#endif // ORI_TEST_WINDOW_H

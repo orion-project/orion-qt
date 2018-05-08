@@ -1,7 +1,5 @@
-#ifndef ORI_TEST_WINDOW_H
-#define ORI_TEST_WINDOW_H
-
 #include "OriTestWindow.h"
+
 #include "../tools/OriSettings.h"
 #include "../tools/OriTranslator.h"
 #include "../helpers/OriWidgets.h"
@@ -23,9 +21,7 @@
 #include <QTreeWidget>
 
 namespace Ori {
-namespace Test {
-
-////////////////////////////////////////////////////////////////////////////////
+namespace Testing {
 
 TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
 {
@@ -379,7 +375,5 @@ int TestWindow::testsCount(QTreeWidgetItem *item)
     return 1;
 }
 
-} // namespace Test
+} // namespace Testing
 } // namespace Ori
-
-#endif // ORI_TEST_WINDOW_H

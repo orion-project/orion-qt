@@ -6,7 +6,7 @@
 #include <QTextStream>
 
 namespace Ori {
-namespace Test {
+namespace Testing {
 
 void free(const TestSuite& tests)
 {
@@ -18,7 +18,9 @@ TestGroup* asGroup(TestBase* test)
     return dynamic_cast<TestGroup*>(test);
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+//                                 TestLogger
+//------------------------------------------------------------------------------
 
 bool TestLogger::_enabled = false;
 
@@ -44,7 +46,10 @@ void TestLogger::write(const QString& msg)
     file.close();
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+//                                 TestSession
+//------------------------------------------------------------------------------
+
 // *************** SESSION ***************
 // STAT: tests: 99, passed: 99, failed: 99
 // ***************** END ******************
@@ -103,7 +108,9 @@ void TestSession::run(TestBase *test)
         run(group->tests());
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+//                                 TestGroup
+//------------------------------------------------------------------------------
 
 TestGroup::TestGroup(const char *name, std::initializer_list<TestBase*> args) : TestGroup(name)
 {
@@ -144,7 +151,9 @@ void TestGroup::run()
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+//                                 TestBase
+//------------------------------------------------------------------------------
 
 TestBase::TestBase(const char *name, TestMethod method)
 {
@@ -206,5 +215,5 @@ void TestBase::logMessage(const QStringList& list)
     foreach (const QString& s, list) logMessage(s);
 }
 
-} // namespace Test
+} // namespace Tests
 } // namespace Ori

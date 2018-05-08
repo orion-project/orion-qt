@@ -2,10 +2,10 @@
 #include "../core/OriVersion.h"
 
 namespace Ori {
-namespace Test {
+namespace Tests {
 namespace VersionTests {
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 TEST_METHOD(constructors)
 {
@@ -46,7 +46,7 @@ TEST_METHOD(operators)
     ASSERT_IS_TRUE(v3 >= v1)
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 TEST_GROUP("Version",
     ADD_TEST(constructors),
@@ -55,5 +55,5 @@ TEST_GROUP("Version",
 )
 
 } // namespace VersionTests
-} // namespace Test
+} // namespace Tests
 } // namespace Ori
