@@ -1,6 +1,7 @@
 #ifndef ORI_DIALOGS_H
 #define ORI_DIALOGS_H
 
+#include <QSize>
 #include <QString>
 #include <QVector>
 
@@ -114,7 +115,11 @@ public:
 
     Dialog& withVerification(VerificationFunc verify) { _verify = verify; return *this; }
 
+    Dialog& withInitialSize(const QSize& size) { _initialSize = size; return *this; }
+
     bool exec();
+
+    QSize size() const;
 
 private:
     QDialog* _dialog = nullptr;
@@ -128,6 +133,7 @@ private:
     QVector<const char*> _okSignals;
     bool _isPromptVertical = false;
     VerificationFunc _verify;
+    QSize _initialSize;
 
     void makeDialog();
     void acceptDialog();

@@ -239,6 +239,8 @@ void Dialog::makeDialog()
     _dialog = new QDialog(qApp->activeWindow());
     setDlgTitle(_dialog, _title);
     setDlgIcon(_dialog, _iconPath);
+    if (!_initialSize.isEmpty())
+        _dialog->resize(_initialSize);
     QVBoxLayout* dialogLayout = new QVBoxLayout(_dialog);
 
     // Dialog content
@@ -295,6 +297,11 @@ void Dialog::acceptDialog()
         }
     }
     _dialog->accept();
+}
+
+QSize Dialog::size() const
+{
+    return _dialog ? _dialog->size() : QSize();
 }
 
 } // namespace Dlg
