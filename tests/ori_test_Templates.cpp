@@ -29,30 +29,45 @@ TEST_METHOD(singleton)
 class TestListener
 {
 public:
-    void method() { notified = true; }
+    void listen() { notified = true; }
+    void listen1(int param) { notified = true, listenedParam = param; }
     bool notified = false;
+    int listenedParam = 0;
 };
 
-class TestNotifier : public Notifier<TestListener>
-{
-public:
-    void notify() { NOTIFY_LISTENERS(method); }
-};
-
-TEST_METHOD(notifier)
+TEST_METHOD(notifier_no_params)
 {
     TestListener listener;
-    TestNotifier notifier;
+    Notifier<TestListener> notifier;
 
     listener.notified = false;
     notifier.registerListener(&listener);
-    notifier.notify();
+    notifier.notify(&TestListener::listen);
     ASSERT_IS_TRUE(listener.notified)
 
     listener.notified = false;
     notifier.unregisterListener(&listener);
-    notifier.notify();
+    notifier.notify(&TestListener::listen);
     ASSERT_IS_FALSE(listener.notified)
+}
+
+TEST_METHOD(notifier_with_params)
+{
+    TestListener listener;
+    Notifier<TestListener> notifier;
+
+    listener.notified = false;
+    listener.listenedParam = 0;
+    notifier.registerListener(&listener);
+    notifier.notify(&TestListener::listen1, 10);
+    ASSERT_IS_TRUE(listener.notified)
+    ASSERT_EQ_INT(listener.listenedParam, 10)
+
+    listener.notified = false;
+    notifier.unregisterListener(&listener);
+    notifier.notify(&TestListener::listen1, 20);
+    ASSERT_IS_FALSE(listener.notified)
+    ASSERT_EQ_INT(listener.listenedParam, 10)
 }
 
 //------------------------------------------------------------------------------
@@ -138,7 +153,8 @@ TEST_METHOD(nested_breakable_block)
 
 TEST_GROUP("Templates",
     ADD_TEST(singleton),
-    ADD_TEST(notifier),
+    ADD_TEST(notifier_no_params),
+    ADD_TEST(notifier_with_params),
     ADD_TEST(declare_enum),
     ADD_TEST(breakable_block),
     ADD_TEST(nested_breakable_block),

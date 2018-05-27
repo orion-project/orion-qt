@@ -232,6 +232,13 @@ void append(QToolBar* toolbar, QObject* item)
         toolbar->addAction(action);
         return;
     }
+    auto group = qobject_cast<QActionGroup*>(item);
+    if (group)
+    {
+        for (auto action : group->actions())
+            toolbar->addAction(action);
+        return;
+    }
     auto widget = qobject_cast<QWidget*>(item);
     if (widget)
     {
@@ -436,7 +443,7 @@ QAction* action(const QString& title, QObject* receiver, const char* slot, const
 {
     auto action = new QAction(title, receiver);
     action->setShortcut(shortcut);
-    if (icon) action->setIcon(QPixmap(icon));
+    if (icon) action->setIcon(QIcon(icon));
     qApp->connect(action, SIGNAL(triggered()), receiver, slot);
     return action;
 }
@@ -446,7 +453,7 @@ QAction* toggledAction(const QString& title, QObject* receiver, const char* slot
     auto action = new QAction(title, receiver);
     action->setShortcut(shortcut);
     action->setCheckable(true);
-    if (icon) action->setIcon(QPixmap(icon));
+    if (icon) action->setIcon(QIcon(icon));
     if (slot) qApp->connect(action, SIGNAL(toggled(bool)), receiver, slot);
     return action;
 }

@@ -5,7 +5,9 @@
 #include <QStringList>
 #include <QVector>
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+//                               Singleton
+//------------------------------------------------------------------------------
 
 template <typename T> class Singleton
 {
@@ -25,33 +27,35 @@ protected:
     Singleton() {}
 };
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+//                               Notifier
+//------------------------------------------------------------------------------
 
 template <typename T> class Notifier
 {
 public:
     void registerListener(T *listener)
     {
-        for (int i = 0; i < _listeners.size(); i++)
-            if (_listeners.at(i) == listener)
-                return;
-        _listeners.push_back(listener);
+        if (!_listeners.contains(listener))
+            _listeners.push_back(listener);
     }
 
     void unregisterListener(T *listener)
     {
-        for (int i = 0; i < _listeners.size(); i++)
-            if (_listeners.at(i) == listener)
-            {
-                _listeners.erase(_listeners.begin()+i);
-                break;
-            }
+        _listeners.removeOne(listener);
     }
 
-    const QVector<T*>& listeners() const { return _listeners; }
+    const QList<T*>& listeners() const { return _listeners; }
+
+    template <typename TMethod, typename ...Args>
+    void notify(TMethod method, Args ...args)
+    {
+        for (auto listener : _listeners)
+            (listener->*method)(args...);
+    }
 
 protected:
-    QVector<T*> _listeners;
+    QList<T*> _listeners;
 };
 
 #define NOTIFY_LISTENERS(method)                      \
@@ -70,7 +74,7 @@ protected:
     for (int _i = 0; _i < _listeners.size(); _i++)    \
         _listeners.at(_i)->method(arg1, arg2, arg3)
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 // This macro counts number of arguments in variadic macro, up to 15 items.
 // http://efesx.com/2010/07/17/variadic-macro-to-count-number-of-arguments
@@ -123,12 +127,12 @@ protected:
 #define ENUM_ITEM_NAME(enum_type, item) enum_type##_ItemName(enum_type(item))
 #define ENUM_ITEM_BY_NAME(enum_type, item_name, ok) enum_type##_GetItemByName(item_name, ok)
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 #define BREAKABLE_BLOCK \
     int __breakable_block_counter = 0; \
     while (__breakable_block_counter++ < 1)
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 #endif // ORI_TEMPLATES_H
