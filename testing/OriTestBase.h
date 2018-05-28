@@ -172,7 +172,7 @@ inline QString formatPtr(const void* ptr)
     double __test_var_value__ = double(expr_value); \
     double __test_var_expected__ = double(expr_expected); \
     double __test_var_delta__ = qAbs(__test_var_value__ - __test_var_expected__); \
-    if (__test_var_delta__ > epsilon) \
+    if (std::isinf(__test_var_value__) || std::isnan(__test_var_value__) || __test_var_delta__ > epsilon) \
     { \
         test->setResult(false); \
         test->setMessage("Value is not equal to expected" ); \
