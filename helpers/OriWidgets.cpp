@@ -120,6 +120,15 @@ QToolButton* menuToolButton(QMenu* menu, QAction* action)
     return button;
 }
 
+QToolButton* iconToolButton(const QString& tooltip, const QString& iconPath, QObject* receiver, const char* slot)
+{
+    auto button = new QToolButton;
+    button->setToolTip(tooltip);
+    button->setIcon(QIcon(iconPath));
+    button->connect(button, SIGNAL(clicked()), receiver, slot);
+    return button;
+}
+
 QToolButton* iconToolButton(const QString& tooltip, const QString& iconPath, int iconSize, QObject* receiver, const char* slot)
 {
     auto button = new QToolButton;
@@ -370,7 +379,7 @@ int borderWidth() { return qApp->style()->pixelMetric(QStyle::PM_DefaultFrameWid
 
 //--------------------------------------------------------------------------------------------------
 
-QGroupBox* group(const QString& title, QBoxLayout* layout)
+QGroupBox* group(const QString& title, QLayout *layout)
 {
     auto group = new QGroupBox(title);
     group->setLayout(layout);
@@ -412,6 +421,16 @@ QPushButton* button(const QString& title, QObject *receiver, const char* slot)
 {
     auto button = new QPushButton(title);
     button->connect(button, SIGNAL(clicked(bool)), receiver, slot);
+    return button;
+}
+
+QPushButton* iconButton(const QString& tooltip, const QString& iconPath, QObject* receiver, const char* slot, bool flat)
+{
+    auto button = new QPushButton;
+    button->setIcon(QIcon(iconPath));
+    button->setToolTip(tooltip);
+    button->connect(button, SIGNAL(clicked(bool)), receiver, slot);
+    button->setFlat(flat);
     return button;
 }
 

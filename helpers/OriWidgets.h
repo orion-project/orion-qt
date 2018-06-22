@@ -10,6 +10,7 @@ class QBoxLayout;
 class QComboBox;
 class QGroupBox;
 class QLabel;
+class QLayout;
 class QMenu;
 class QObject;
 class QPushButton;
@@ -37,6 +38,7 @@ QSplitter* splitterV(QWidget*, QWidget*, int size1, int size2);
 
 QToolButton* textToolButton(QAction* action);
 QToolButton* menuToolButton(QMenu* menu, QAction* action = nullptr);
+QToolButton* iconToolButton(const QString& tooltip, const QString& iconPath, QObject* receiver, const char* slot);
 QToolButton* iconToolButton(const QString& tooltip, const QString& iconPath, int iconSize, QObject* receiver, const char* slot);
 
 QMenu* menu(std::initializer_list<QObject*> items);
@@ -70,7 +72,7 @@ QLabel* stretchedLabel(const QString& text);
 int layoutSpacing();
 int borderWidth();
 
-QGroupBox* group(const QString& title, QBoxLayout* layout);
+QGroupBox* group(const QString& title, QLayout* layout);
 QGroupBox* groupV(const QString& title, const std::initializer_list<QObject*>& items);
 QGroupBox* groupH(const QString& title, const std::initializer_list<QObject*>& items);
 
@@ -79,6 +81,7 @@ QWidget* widgetV(const std::initializer_list<QObject*>& items);
 QWidget* widgetH(const std::initializer_list<QObject*>& items);
 
 QPushButton* button(const QString& title, QObject* receiver, const char* slot);
+QPushButton* iconButton(const QString& tooltip, const QString& iconPath, QObject* receiver, const char* slot, bool flat = false);
 
 void setSelectedId(QComboBox *combo, int id);
 int getSelectedId(const QComboBox *combo, int def = -1);
