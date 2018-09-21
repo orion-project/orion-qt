@@ -158,9 +158,13 @@ void TestGroup::run()
 TestBase::TestBase(const char *name, TestMethod method)
 {
     _result = true;
-    _parent = NULL;
+    _parent = nullptr;
     _name = name;
     _method = method;
+}
+
+TestBase::~TestBase()
+{
 }
 
 QString TestBase::path() const

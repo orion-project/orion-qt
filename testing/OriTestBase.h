@@ -81,7 +81,7 @@ inline QString formatPtr(const void* ptr)
     }}
 
 #define ASSERT_IS_NULL(expr_ptr) { \
-    void *__test_var_ptr__ = (void*)(expr_ptr); \
+    auto __test_var_ptr__ = reinterpret_cast<const void*>(expr_ptr); \
     if (__test_var_ptr__ != nullptr) \
     { \
         test->setResult(false); \
@@ -91,7 +91,7 @@ inline QString formatPtr(const void* ptr)
     }}
 
 #define ASSERT_IS_NOT_NULL(expr_ptr) { \
-    void *__test_var_ptr__ = (void*)(expr_ptr); \
+    auto __test_var_ptr__ = reinterpret_cast<const void*>(expr_ptr); \
     if (__test_var_ptr__ == nullptr) \
     { \
         test->setResult(false); \
@@ -112,7 +112,7 @@ inline QString formatPtr(const void* ptr)
 #define ASSERT_EQ_STR(expr_value, expr_expected) { \
     QString __test_var_value__(expr_value); \
     QString __test_var_expected__(expr_expected); \
-    if (__test_var_value__ != __test_var_expected__)                                                                \
+    if (__test_var_value__ != __test_var_expected__) \
     { \
         test->setResult(false); \
         test->setMessage("Value is not equal to expected" ); \
@@ -124,8 +124,8 @@ inline QString formatPtr(const void* ptr)
     }}
 
 #define ASSERT_EQ_PTR(expr_value, expr_expected) { \
-    void *__test_var_value__ = (void*)(expr_value); \
-    void *__test_var_expected__ = (void*)(expr_expected); \
+    auto __test_var_value__ = reinterpret_cast<const void*>(expr_value); \
+    auto __test_var_expected__ = reinterpret_cast<const void*>(expr_expected); \
     if (__test_var_value__ != __test_var_expected__) \
     { \
         test->setResult(false); \
@@ -308,7 +308,7 @@ class TestBase
 {
 public:
     TestBase(const char *name, TestMethod method);
-    virtual ~TestBase() {}
+    virtual ~TestBase();
 
     const char* name() const { return _name; }
     virtual void run() { if (_method) _method(this); }
