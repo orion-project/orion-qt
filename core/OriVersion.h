@@ -20,6 +20,8 @@ public:
         _minor = ver.section('.', 1, 1).toInt();
     }
 
+    #undef major // disable GNU C Lib macro
+    #undef minor // disable GNU C Lib macro
     int major() const { return _major; }
     int minor() const { return _minor; }
 
