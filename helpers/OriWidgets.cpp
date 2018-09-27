@@ -479,15 +479,6 @@ QAction* toggledAction(const QString& title, QObject* receiver, const char* slot
 
 //--------------------------------------------------------------------------------------------------
 
-QTextBrowser* logView(int sizePt)
-{
-    auto log = new QTextBrowser;
-    setFontMonospace(log, sizePt);
-    return log;
-}
-
-//--------------------------------------------------------------------------------------------------
-
 QTreeWidget* twoColumnTree(const QString& title1, const QString& title2)
 {
     auto tree = new QTreeWidget;

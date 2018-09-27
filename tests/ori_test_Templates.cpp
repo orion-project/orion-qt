@@ -22,6 +22,10 @@ TEST_METHOD(singleton)
 
     auto ref = TestSingleton::instance();
     ASSERT_IS_FALSE(ref.constructed)
+
+    // This test can be run properly only once, by definition of singletion.
+    // But to avoid failing of second run we have to reset state to 'just created'.
+    ptr->constructed = true;
 }
 
 //------------------------------------------------------------------------------

@@ -89,8 +89,6 @@ int getSelectedId(const QComboBox *combo, int def = -1);
 QAction* action(const QString& title, QObject* receiver, const char* slot, const char* icon = 0, const QKeySequence& shortcut = QKeySequence());
 QAction* toggledAction(const QString& title, QObject* receiver, const char* slot, const char* icon = 0, const QKeySequence& shortcut = QKeySequence());
 
-QTextBrowser* logView(int sizePt = 0);
-
 QTreeWidget* twoColumnTree(const QString& title1, const QString& title2);
 
 void stretchColumn(QTableView *table, int col);
