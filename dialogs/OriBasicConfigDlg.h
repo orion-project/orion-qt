@@ -20,7 +20,7 @@ class BasicConfigDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit BasicConfigDialog(QWidget* parent = 0);
+    explicit BasicConfigDialog(QWidget* parent = nullptr);
     ~BasicConfigDialog();
 
     virtual void populate() {}
@@ -33,6 +33,7 @@ public:
     BasicConfigPage* currentPage() const;
 
 protected:
+    void setTitleAndIcon(const QString& title, const QString& iconPath);
     void createPages(QList<QWidget*>);
 
 protected slots:
