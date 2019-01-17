@@ -8,13 +8,12 @@
 namespace Ori {
 namespace Widgets {
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                                  Label
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
-Label::Label(QWidget *parent, Qt::WindowFlags f) : QLabel(parent, f)
+Label::Label(QWidget *parent, Qt::WindowFlags f) : Label(QString(), parent, f)
 {
-    _sizeHint = QLabel::sizeHint();
 }
 
 Label::Label(const QString &text, QWidget *parent, Qt::WindowFlags f) : QLabel(text, parent, f)
@@ -22,35 +21,61 @@ Label::Label(const QString &text, QWidget *parent, Qt::WindowFlags f) : QLabel(t
     _sizeHint = QLabel::sizeHint();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//                             ClickableLabel
-////////////////////////////////////////////////////////////////////////////////
-
-ClickableLabel::ClickableLabel(QWidget *parent, Qt::WindowFlags f) :Label(parent, f)
+void Label::setSizeHint(QSize size)
 {
+    _sizeHint = size;
 }
 
-ClickableLabel::ClickableLabel(const QString &text, QWidget *parent, Qt::WindowFlags f)
-    : Label(text, parent, f)
+void Label::setSizeHint(int w, int h)
 {
+    _sizeHint = QSize(w, h);
 }
 
-void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
+void Label::setHorizontalSizeHint(int w)
+{
+    _sizeHint = QSize(w, _sizeHint.height());
+}
+
+void Label::setVerticalSizeHint(int h)
+{
+    _sizeHint = QSize(_sizeHint.width(), h);
+}
+
+void Label::setHorizontalSizePolicy(QSizePolicy::Policy policy)
+{
+    setSizePolicy(policy, sizePolicy().verticalPolicy());
+}
+
+void Label::setVerticalSizePolicy(QSizePolicy::Policy policy)
+{
+    setSizePolicy(sizePolicy().horizontalPolicy(), policy);
+}
+
+void Label::mouseReleaseEvent(QMouseEvent *event)
 {
     QLabel::mouseReleaseEvent(event);
+
     if (event->button() == Qt::LeftButton)
         emit clicked();
 }
 
-////////////////////////////////////////////////////////////////////////////////
+void Label::mouseDoubleClickEvent(QMouseEvent* event)
+{
+    QLabel::mouseDoubleClickEvent(event);
+
+    if (event->button() == Qt::LeftButton)
+        emit doubleClicked();
+}
+
+//------------------------------------------------------------------------------
 //                             LabelSeparator
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
-LabelSeparator::LabelSeparator(QWidget *parent, Qt::WindowFlags f) :
-    QLabel(parent, f) {}
+LabelSeparator::LabelSeparator(QWidget *parent, Qt::WindowFlags f) : LabelSeparator(QString(), parent, f)
+{
+}
 
-LabelSeparator::LabelSeparator(const QString &text, QWidget *parent,
-                               Qt::WindowFlags f) : QLabel(text, parent, f)
+LabelSeparator::LabelSeparator(const QString &text, QWidget *parent, Qt::WindowFlags f) : QLabel(text, parent, f)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 }
@@ -76,10 +101,10 @@ void LabelSeparator::paintEvent(QPaintEvent*)
     if (!text.isEmpty())
     {
         QStyle *style = QWidget::style();
-        int align = QStyle::visualAlignment(layoutDirection(), alignment());
+        int align = static_cast<int>(QStyle::visualAlignment(layoutDirection(), alignment()));
         style->drawItemText(&p, cr, align, palette, true, text, foregroundRole());
         p.setClipRegion(QRegion(cr) - style->itemTextRect(
-                            QFontMetrics(font()), cr, align, true, text).adjusted(-4, 0, 4, 0));
+            QFontMetrics(font()), cr, align, true, text).adjusted(-4, 0, 4, 0));
     }
     int y = (cr.bottom() + cr.top()) / 2;
     p.setPen(palette.color(QPalette::Mid));
@@ -88,9 +113,9 @@ void LabelSeparator::paintEvent(QPaintEvent*)
     p.drawLine(cr.left(), y+1, cr.right(), y+1);
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 //                              ImagedLabel
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 
 ImagedLabel::ImagedLabel(QWidget *parent, Qt::WindowFlags f) : QWidget(parent, f)
 {
@@ -105,12 +130,18 @@ ImagedLabel::ImagedLabel(QWidget *parent, Qt::WindowFlags f) : QWidget(parent, f
     setLayout(layout);
 }
 
-void ImagedLabel::setContent(const QString& text, const QString& path)
+void ImagedLabel::setContent(const QString& text, const QString& imagePath)
 {
     _text->setText(text);
-    if (path.isEmpty())
+    if (imagePath.isEmpty())
         _icon->clear();
-    else _icon->setPixmap(QIcon(path).pixmap(16, 16));
+    else _icon->setPixmap(QIcon(imagePath).pixmap(16, 16));
+}
+
+void ImagedLabel::clear()
+{
+    _icon->clear();
+    _text->clear();
 }
 
 } // namespace Widgets

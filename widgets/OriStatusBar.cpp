@@ -12,7 +12,7 @@ StatusBar::StatusBar(int count, QWidget *parent) : QStatusBar(parent)
 
     for (int i = 0; i < count; i++)
     {
-        auto label = new ClickableLabel;
+        auto label = new Label;
         label->setContentsMargins(6, 0, 6, 0);
         _sections.push_back(label);
         addWidget(label);
