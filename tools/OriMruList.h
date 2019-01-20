@@ -10,14 +10,12 @@ QT_END_NAMESPACE
 
 namespace Ori {
 
-////////////////////////////////////////////////////////////////////////////////
-
 class MruList : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit MruList(QObject *parent = 0);
+    explicit MruList(QObject *parent = nullptr);
 
     /// Load mru-list from default settings group and specified or default key
     /// Default group and key later used for saving list when new item is appended.
@@ -31,6 +29,9 @@ public:
     const QList<QAction*>& actions() const { return _actions; }
     QAction* actionClearAll() const { return _actionClearAll; }
     QAction* actionClearInvalids() const { return _actionClearInvalids; }
+
+    int maxCount() const { return _maxCount; }
+    void setMaxCount(int value);
 
 public slots:
     void append(const QString& item);
@@ -48,6 +49,7 @@ private:
     QString _settingGroup, _settingsKey;
     QList<QAction*> _actions;
     QAction *_actionClearAll, *_actionClearInvalids;
+    int _maxCount = -1;
 
     void update();
     void save();
@@ -56,6 +58,7 @@ private:
     QAction* action(const QString& item) const;
     QAction* makeAction(const QString& item);
     QList<QAction*> invalidItems() const;
+    void trimActions();
 
 private slots:
     void actionTriggered();
@@ -63,22 +66,19 @@ private slots:
     void clearAll();
 };
 
-////////////////////////////////////////////////////////////////////////////////
 
 class MruFileList : public MruList
 {
     Q_OBJECT
 
 public:
-    explicit MruFileList(QObject *parent = 0) : MruList(parent) {}
+    explicit MruFileList(QObject *parent = nullptr) : MruList(parent) {}
 
 protected:
     bool sameItems(const QString& item1, const QString& item2) const override;
     bool validateItem(const QString& item) const override;
     bool canClick(const QString& item) const override;
 };
-
-////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Ori
 

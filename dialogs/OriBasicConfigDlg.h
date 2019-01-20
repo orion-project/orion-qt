@@ -28,9 +28,16 @@ public:
 
     bool run() { return exec() == QDialog::Accepted; }
 
+    /// Returns help topic for the whole dialog.
+    /// It is used when there is no help topic for current page available.
+    virtual QString helpTopic() const { return QString(); }
+
     int currentPageIndex() const;
     void setCurrentPageIndex(int index);
     BasicConfigPage* currentPage() const;
+
+signals:
+    void helpRequested(const QString& topic);
 
 protected:
     void setTitleAndIcon(const QString& title, const QString& iconPath);

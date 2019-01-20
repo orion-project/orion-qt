@@ -171,7 +171,9 @@ void BasicConfigDialog::adjustHelpButton()
         BasicConfigPage* page = dynamic_cast<BasicConfigPage*>(pageView->widget(i));
         if (page && !page->helpTopic().isEmpty()) return;
     }
-    helpButton->setVisible(false);
+
+    if (helpTopic().isEmpty())
+        helpButton->setVisible(false);
 }
 
 int BasicConfigDialog::currentPageIndex() const
@@ -205,8 +207,9 @@ void BasicConfigDialog::accept()
 
 void BasicConfigDialog::showHelp()
 {
-    // TODO help system
-    qWarning() << "Page help topic:" << currentHelpTopic();
+    auto topic = currentHelpTopic();
+    if (!topic.isEmpty())
+        emit helpRequested(topic);
 }
 
 BasicConfigPage* BasicConfigDialog::currentPage() const
@@ -217,7 +220,7 @@ BasicConfigPage* BasicConfigDialog::currentPage() const
 QString BasicConfigDialog::currentHelpTopic() const
 {
     BasicConfigPage* page = currentPage();
-    return page? page->helpTopic(): QString();
+    return page? page->helpTopic(): helpTopic();
 }
 
 //------------------------------------------------------------------------------
