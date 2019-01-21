@@ -374,7 +374,16 @@ QLabel* stretchedLabel(const QString& text)
 
 //--------------------------------------------------------------------------------------------------
 
-int layoutSpacing() { return qApp->style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing); }
+int layoutSpacing()
+{
+    int spacing = qApp->style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
+    // MacOS's style "macintosh" has spacing -1, sic!
+    // It is not what we want adjusting widgets using layoutSpacing()
+    // Fusion style gets 6 and it's most reasonable style in Qt
+    if (spacing < 0) spacing = 6;
+    return spacing;
+}
+
 int borderWidth() { return qApp->style()->pixelMetric(QStyle::PM_DefaultFrameWidth); }
 
 //--------------------------------------------------------------------------------------------------
