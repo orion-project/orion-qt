@@ -93,8 +93,6 @@ void BasicConfigDialog::createPages(QList<QWidget*> pages)
     for (int i = 0; i < pages.length(); i++)
     {
         QWidget *page = pages.at(i);
-        auto basicPage = qobject_cast<BasicConfigPage*>(page);
-        if (basicPage) basicPage->mainLayout()->addStretch();
         pageList->addItem(page->windowTitle());
         pageList->item(i)->setIcon(page->windowIcon());
         pageList->item(i)->setSizeHint(itemSize);
@@ -242,6 +240,11 @@ void BasicConfigPage::add(std::initializer_list<QObject*> items)
 {
     for (auto item: items)
     {
+        if (item == &_stretchDummy)
+        {
+            _mainLayout->addStretch();
+            continue;
+        }
         auto widget = qobject_cast<QWidget*>(item);
         if (widget)
         {
