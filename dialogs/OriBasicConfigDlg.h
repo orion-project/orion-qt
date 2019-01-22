@@ -28,10 +28,6 @@ public:
 
     bool run() { return exec() == QDialog::Accepted; }
 
-    /// Returns help topic for the whole dialog.
-    /// It is used when there is no help topic for current page available.
-    virtual QString helpTopic() const { return QString(); }
-
     int currentPageIndex() const;
     void setCurrentPageIndex(int index);
     BasicConfigPage* currentPage() const;
@@ -40,8 +36,15 @@ signals:
     void helpRequested(const QString& topic);
 
 protected:
+    QSize pageListIconSize = QSize(24, 24);
+    int pageListSpacing = 3;
+
     void setTitleAndIcon(const QString& title, const QString& iconPath);
     void createPages(QList<QWidget*>);
+
+    /// Returns help topic for the whole dialog.
+    /// It is used when there is no help topic for current page available.
+    virtual QString helpTopic() const { return QString(); }
 
 protected slots:
     void pageListItemSelected(int index);
@@ -64,6 +67,8 @@ private:
 
 class BasicConfigPage : public QWidget
 {
+    Q_OBJECT
+
 public:
     explicit BasicConfigPage(const QString& title,
                              const QString& iconPath = QString(),
@@ -75,6 +80,8 @@ public:
     const QString& longTitle() const { return _longTitle; }
 
     void add(std::initializer_list<QObject*> items);
+
+    QVBoxLayout* mainLayout() { return _mainLayout; }
 
 private:
     QString _helpTopic, _longTitle;

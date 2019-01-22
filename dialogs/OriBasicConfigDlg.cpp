@@ -9,10 +9,6 @@
 #include <QPushButton>
 #include <QStackedWidget>
 
-// TODO configurable icon size
-#define PAGE_LIST_ICON_SIZE 24
-#define PAGE_LIST_ITEM_SIZE 30
-
 namespace Ori {
 namespace Dlg {
 
@@ -36,7 +32,6 @@ BasicConfigDialog::BasicConfigDialog(QWidget* parent) : QDialog(parent)
     pageView = new QStackedWidget;
 
     pageList = new QListWidget();
-    pageList->setIconSize(QSize(PAGE_LIST_ICON_SIZE, PAGE_LIST_ICON_SIZE));
     connect(pageList, SIGNAL(currentRowChanged(int)), this, SLOT(pageListItemSelected(int)));
 
     // header
@@ -93,10 +88,13 @@ void BasicConfigDialog::setTitleAndIcon(const QString& title, const QString& ico
 
 void BasicConfigDialog::createPages(QList<QWidget*> pages)
 {
-    QSize itemSize(0, PAGE_LIST_ITEM_SIZE);
+    pageList->setIconSize(pageListIconSize);
+    QSize itemSize(0, pageListIconSize.height() + 2 * pageListSpacing);
     for (int i = 0; i < pages.length(); i++)
     {
         QWidget *page = pages.at(i);
+        auto basicPage = qobject_cast<BasicConfigPage*>(page);
+        if (basicPage) basicPage->mainLayout()->addStretch();
         pageList->addItem(page->windowTitle());
         pageList->item(i)->setIcon(page->windowIcon());
         pageList->item(i)->setSizeHint(itemSize);
@@ -153,7 +151,7 @@ void BasicConfigDialog::adjustPageList()
         }
     }
     QStyle* style = qApp->style();
-    max_width += PAGE_LIST_ICON_SIZE +
+    max_width += pageListIconSize.width() +
                  style->pixelMetric(QStyle::PM_ScrollBarExtent) +
                  style->pixelMetric(QStyle::PM_DefaultFrameWidth) * 2 +
                  style->pixelMetric(QStyle::PM_LayoutLeftMargin) +
