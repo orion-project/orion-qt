@@ -13,19 +13,32 @@ namespace Widgets {
 class StatusBar : public QStatusBar
 {
     Q_OBJECT
+
 public:
-    StatusBar(int count, QWidget *parent = 0);
+    StatusBar(int count, QWidget *parent = nullptr);
+
     void connect(int index, const char *signal, const QObject *receiver, const char *method);
+
+    template <typename Func1, typename Func2>
+    void connect(int index, Func1 func1, Func2 func2) {
+        QStatusBar::connect(_sections[index], func1, func2); }
+
     void setText(int index, const QString& text);
     void setText(int index, const QString& text, const QString& tooltip);
     void setIcon(int index, const QString& path);
     void setHint(int index, const QString& hint) { setToolTip(index, hint); }
     void setToolTip(int index, const QString& tooltip);
+
     void clear(int index);
     void clear();
+
     void highlightError(int index);
     void highlightReset(int index);
+
     void setIconSize(const QSize& size);
+
+    QPoint mapToGlobal(int index, const QPoint& p);
+
 private:
     QVector<QLabel*> _sections;
     QSize _iconSize;
