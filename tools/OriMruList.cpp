@@ -67,8 +67,8 @@ void MruList::load(QSettings* settings, const QString& key)
     _settingGroup = settings->group();
     _settingsKey = key.isEmpty()? "mru": key;
     auto items = settings->value(_settingsKey).toStringList();
-    foreach (const QString& item, items)
-        if (_actions.size() < _maxCount)
+    for (const QString& item : items)
+        if (_maxCount < 0 || _actions.size() < _maxCount)
             _actions.append(makeAction(item));
     update();
 }
