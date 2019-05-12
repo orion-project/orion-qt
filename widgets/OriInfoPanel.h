@@ -15,12 +15,16 @@ class InfoPanel : public QFrame
     Q_OBJECT
 
 public:
-    explicit InfoPanel(QWidget *parent = 0);
+    explicit InfoPanel(QWidget *parent = nullptr);
 
+    void setInfo(const QString& title, const QString& text);
     void setInfo(const QString& text);
 
+    void setMargin(int value);
+    void setSpacing(int value);
+
 private:
-    QLabel *labelDescr;
+    QLabel *_labelTitle, *_labelDescr;
 };
 
 } // namespace Widgets

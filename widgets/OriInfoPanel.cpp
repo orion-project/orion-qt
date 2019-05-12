@@ -8,31 +8,46 @@ namespace Widgets {
 
 InfoPanel::InfoPanel(QWidget *parent) : QFrame(parent)
 {
-    ///////// description layout
     QLabel *labelImage = new QLabel;
     labelImage->setPixmap(QPixmap(":/toolbar/info")); // TODO extract to orion images
     labelImage->setMaximumWidth(24);
     labelImage->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
-    labelDescr = new QLabel;
-    labelDescr->setWordWrap(true);
-    labelDescr->setAlignment(Qt::AlignVCenter);
-    labelDescr->setForegroundRole(QPalette::Text);
+    _labelTitle = new QLabel;
+    _labelTitle->setWordWrap(true);
+    _labelTitle->setStyleSheet(QStringLiteral("font-weight:bold"));
 
-    QHBoxLayout *layoutDescr = new QHBoxLayout;
-    layoutDescr->addWidget(labelImage);
-    layoutDescr->addWidget(labelDescr);
+    _labelDescr = new QLabel;
+    _labelDescr->setWordWrap(true);
+    _labelDescr->setForegroundRole(QPalette::Text);
 
-    ///////// description frame
-    setFrameStyle(QFrame::Sunken | QFrame::Panel);
+    QVBoxLayout *layoutDescr = new QVBoxLayout;
+    layoutDescr->setMargin(0);
+    layoutDescr->setSpacing(6);
+    layoutDescr->addWidget(_labelTitle);
+    layoutDescr->addWidget(_labelDescr);
+
+    QHBoxLayout *mainLayout = new QHBoxLayout(this);
+    mainLayout->addWidget(labelImage);
+    mainLayout->addLayout(layoutDescr);
+
+    setFrameStyle(QFrame::StyledPanel);
     setBackgroundRole(QPalette::ToolTipBase);
     setAutoFillBackground(true);
-    setLayout(layoutDescr);
+}
+
+void InfoPanel::setInfo(const QString &title, const QString& text)
+{
+    _labelTitle->setVisible(true);
+    _labelTitle->setText(title);
+    _labelDescr->setVisible(!text.isEmpty());
+    _labelDescr->setText(text);
 }
 
 void InfoPanel::setInfo(const QString& text)
 {
-    labelDescr->setText(text);
+    _labelTitle->setVisible(false);
+    _labelDescr->setText(text);
 }
 
 } // namespace Widgets
