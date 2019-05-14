@@ -237,6 +237,11 @@ void Dialog::makeDialog()
 {
     // Dialog window
     _dialog = new QDialog(qApp->activeWindow());
+
+    auto flags = _dialog->windowFlags();
+    flags.setFlag(Qt::WindowContextHelpButtonHint, false);
+    _dialog->setWindowFlags(flags);
+
     setDlgTitle(_dialog, _title);
     setDlgIcon(_dialog, _iconPath);
     if (!_initialSize.isEmpty())
