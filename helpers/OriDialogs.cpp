@@ -282,7 +282,7 @@ void Dialog::makeDialog()
     if (_connectOkToContentApply)
         qApp->connect(_dialog, SIGNAL(accepted()), _content, SLOT(apply()));
     for (auto signal: _okSignals)
-        qApp->connect(_content, signal, _dialog, SLOT(accept()));
+        qApp->connect(signal.first ? signal.first : _content, signal.second, _dialog, SLOT(accept()));
     if (!_helpTopic.isEmpty()) // TODO process help
         qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, [this](){
             info(QString("TODO help by topic '%1'").arg(this->_helpTopic));
@@ -308,6 +308,19 @@ QSize Dialog::size() const
 {
     return _dialog ? _dialog->size() : QSize();
 }
+
+Dialog& Dialog::withOkSignal(const char* signal)
+{
+    _okSignals << QPair<QObject*, const char*>(nullptr, signal);
+    return *this;
+}
+
+Dialog& Dialog::withOkSignal(QObject* sender, const char* signal)
+{
+    _okSignals << QPair<QObject*, const char*>(sender, signal);
+    return *this;
+}
+
 
 } // namespace Dlg
 } // namespace Ori

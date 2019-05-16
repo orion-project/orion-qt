@@ -31,6 +31,7 @@ HEADERS += \
     $$PWD/widgets/OriMruMenu.h \
     $$PWD/widgets/OriOptionsGroup.h \
     $$PWD/widgets/OriPopupButton.h \
+    $$PWD/widgets/OriSelectableTile.h \
     $$PWD/widgets/OriStatusBar.h \
     $$PWD/widgets/OriStylesMenu.h \
     $$PWD/widgets/OriValueEdit.h \
@@ -67,6 +68,7 @@ SOURCES += \
     $$PWD/widgets/OriMruMenu.cpp \
     $$PWD/widgets/OriOptionsGroup.cpp \
     $$PWD/widgets/OriPopupButton.cpp \
+    $$PWD/widgets/OriSelectableTile.cpp \
     $$PWD/widgets/OriStatusBar.cpp \
     $$PWD/widgets/OriStylesMenu.cpp \
     $$PWD/widgets/OriValueEdit.cpp \

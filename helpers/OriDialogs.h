@@ -103,15 +103,16 @@ public:
     Dialog& withContentToButtonsSpacingFactor(int factor) { _contentToButtonsSpacingFactor = factor; return *this; }
 
     /// Content is placed in dialog alongside with a prompt in horizontal layout.
-    Dialog& withHorizontalPrompt(const QString& prompt) { _prompt = prompt, _isPromptVertical = false; return *this; }
+    Dialog& withHorizontalPrompt(const QString& prompt) { _prompt = prompt; _isPromptVertical = false; return *this; }
 
     /// Content is placed in dialog alongside with a prompt in vertical layout.
-    Dialog& withVerticalPrompt(const QString& prompt) { _prompt = prompt, _isPromptVertical = true; return *this; }
+    Dialog& withVerticalPrompt(const QString& prompt) { _prompt = prompt; _isPromptVertical = true; return *this; }
 
     /// Widget should have slot apply() to process OK button click.
     Dialog& connectOkToContentApply() { _connectOkToContentApply = true; return *this; }
 
-    Dialog& withOkSignal(const char* signal) { _okSignals << signal; return *this; }
+    Dialog& withOkSignal(const char* signal);
+    Dialog& withOkSignal(QObject* sender, const char* signal);
 
     Dialog& withVerification(VerificationFunc verify) { _verify = verify; return *this; }
 
@@ -130,7 +131,7 @@ private:
     bool _fixedContentSize = true;
     int _contentToButtonsSpacingFactor = 1;
     bool _connectOkToContentApply = false;
-    QVector<const char*> _okSignals;
+    QVector<QPair<QObject*, const char*>> _okSignals;
     bool _isPromptVertical = false;
     VerificationFunc _verify;
     QSize _initialSize;
