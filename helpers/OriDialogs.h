@@ -27,60 +27,24 @@ bool ok(const QString& msg);
 int yesNoCancel(const QString& msg);
 int yesNoCancel(QString& msg);
 
+/// Shows a dialog for entering a string value.
+/// Returns empty string if the dialog was canceled.
 QString inputText(const QString& label, const QString& value);
+
+/// Shows a dialog for entering a string value.
+/// Assigns the dialog result to `ok` parameter.
+/// Returns the initial string if the dialog was canceled.
 QString inputText(const QString& label, const QString& value, bool *ok);
 
 QString getSaveFileName(const QString& title, const QString& filter, const QString& defaultExt);
 
-bool show(QDialog* dlg);
-
-/// Shows a widget in a dialog with OK and Cancel buttons at bottom.
-/// Receiver should have slot apply() to process OK button click.
-bool showDialog(QWidget *widget, QObject *receiver, const QString& title = QString(), const QString& icon = QString());
-
-/// Shows a widget in a dialog with OK and Cancel buttons at bottom.
-/// Widget should have slot apply() to process OK button click.
-bool showDialog(QWidget *widget, const QString& title = QString(), const QString& icon = QString());
-
-/// Shows a widget in a dialog with OK and Cancel buttons at bottom.
-/// Widget is placed in dialog alongside with a prompt in a horizontal or vertical layout.
-/// Receiver should have slot apply() to process OK button click.
-bool showDialogWithPrompt(Qt::Orientation orientation, const QString& prompt, QWidget *widget, QObject *receiver, const QString& title = QString(), const QString &icon = QString());
-
-/// Shows a widget in a dialog with OK and Cancel buttons at bottom.
-/// Widget is placed in dialog alongside with a prompt in a horizontal or vertical layout.
-/// Widget should have slot apply() to process OK button click.
+/// Shows a widget in a dialog with OK and Cancel buttons at the bottom.
+/// The widget is placed in the dialog alongside with a prompt in a horizontal or vertical layout.
 bool showDialogWithPrompt(Qt::Orientation orientation, const QString& prompt, QWidget *widget, const QString& title = QString(), const QString &icon = QString());
+bool showDialogWithPromptH(const QString& prompt, QWidget *widget, const QString& title = QString(), const QString &icon = QString());
+bool showDialogWithPromptV(const QString& prompt, QWidget *widget, const QString& title = QString(), const QString &icon = QString());
 
-inline bool showDialogWithPromptH(const QString& prompt, QWidget *widget, QObject *receiver, const QString& title = QString(), const QString &icon = QString())
-{
-    return showDialogWithPrompt(Qt::Horizontal, prompt, widget, receiver, title, icon);
-}
-
-inline bool showDialogWithPromptH(const QString& prompt, QWidget *widget, const QString& title = QString(), const QString &icon = QString())
-{
-    return showDialogWithPrompt(Qt::Horizontal, prompt, widget, title, icon);
-}
-
-inline bool showDialogWithPromptV(const QString& prompt, QWidget *widget, QObject *receiver, const QString& title = QString(), const QString &icon = QString())
-{
-    return showDialogWithPrompt(Qt::Vertical, prompt, widget, receiver, title, icon);
-}
-
-inline bool showDialogWithPromptV(const QString& prompt, QWidget *widget, const QString& title = QString(), const QString &icon = QString())
-{
-    return showDialogWithPrompt(Qt::Vertical, prompt, widget, title, icon);
-}
-
-/// Inserts a widget and dialog buttons panel into a dialog.
-/// Receiver should have slot apply() to process OK button click.
-void prepareDialog(QDialog *dlg, QWidget *widget, QObject *receiver);
-
-/// Inserts a widget and dialog buttons panel into a dialog.
-/// Widget should have slot apply() to process OK button click.
-void prepareDialog(QDialog *dlg, QWidget *widget);
-
-
+bool show(QDialog* dlg);
 
 /// Shows a content in a dialog with 'OK', 'Cancel' and optional 'Help' buttons at bottom.
 class Dialog
@@ -118,6 +82,8 @@ public:
 
     Dialog& withInitialSize(const QSize& size) { _initialSize = size; return *this; }
 
+    Dialog& withActiveWidget(QWidget* w) { _activeWidget = w; return *this; }
+
     bool exec();
 
     QSize size() const;
@@ -135,6 +101,7 @@ private:
     bool _isPromptVertical = false;
     VerificationFunc _verify;
     QSize _initialSize;
+    QWidget* _activeWidget = nullptr;
 
     void makeDialog();
     void acceptDialog();

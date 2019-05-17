@@ -7,8 +7,8 @@
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QIcon>
-#include <QInputDialog>
 #include <QLabel>
+#include <QLineEdit>
 #include <QStyle>
 #include <QMessageBox>
 
@@ -54,19 +54,58 @@ int yesNoCancel(QString& msg)
         QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
 }
 
+//------------------------------------------------------------------------------
+//                            Ori::Dlg::inputText
+//------------------------------------------------------------------------------
+
+namespace {
+class InputTextEditor : public QLineEdit
+{
+public:
+    InputTextEditor() {}
+
+    QSize sizeHint() const override
+    {
+        auto s = QLineEdit::sizeHint();
+        s.setWidth(s.width() * 2);
+        return s;
+    }
+};
+}
+
 QString inputText(const QString& label, const QString& value)
 {
     bool ok;
-    QString text = QInputDialog::getText(qApp->activeWindow(), qApp->applicationName(),
-                                         label, QLineEdit::Normal, value, &ok);
+    QString text = inputText(label, value, &ok);
     return ok? text: QString();
 }
 
 QString inputText(const QString& label, const QString& value, bool *ok)
 {
-    return QInputDialog::getText(qApp->activeWindow(), qApp->applicationName(),
-                                 label, QLineEdit::Normal, value, ok);
+    auto newValue = value;
+
+    auto editor = new InputTextEditor();
+    editor->setText(value);
+    auto s = editor->size();
+    editor->resize(s.width() * 2, s.height());
+
+    QWidget content;
+    auto layout = new QVBoxLayout(&content);
+    layout->setMargin(0);
+    layout->addWidget(new QLabel(label));
+    layout->addWidget(editor);
+
+    *ok = Dialog(&content)
+            .withContentToButtonsSpacingFactor(2)
+            .exec();
+
+    if (*ok)
+        newValue = editor->text();
+
+    return newValue;
 }
+
+//------------------------------------------------------------------------------
 
 QString getSaveFileName(const QString& title, const QString& filter, const QString& defaultExt)
 {
@@ -81,6 +120,45 @@ QString getSaveFileName(const QString& title, const QString& filter, const QStri
     }
 
     return fileName;
+}
+
+//------------------------------------------------------------------------------
+//                        Ori::Dlg::showDialogWithPrompt
+//------------------------------------------------------------------------------
+
+bool showDialogWithPrompt(Qt::Orientation orientation, const QString& prompt, QWidget *widget, const QString& title, const QString &icon)
+{
+    auto oldParent = qobject_cast<QWidget*>(widget->parent());
+
+    QWidget content;
+    QBoxLayout *layout;
+    if (orientation == Qt::Vertical)
+        layout = new QVBoxLayout(&content);
+    else
+        layout = new QHBoxLayout(&content);
+    layout->setMargin(0);
+    layout->addWidget(new QLabel(prompt));
+    layout->addWidget(widget);
+    bool ok = Dialog(&content)
+            .withTitle(title)
+            .withIconPath(icon)
+            .withContentToButtonsSpacingFactor(2)
+            .exec();
+
+    // Restore parent to prevent the layout from deletion the widget
+    widget->setParent(oldParent);
+
+    return ok;
+}
+
+bool showDialogWithPromptH(const QString& prompt, QWidget *widget, const QString& title, const QString &icon)
+{
+    return showDialogWithPrompt(Qt::Horizontal, prompt, widget, title, icon);
+}
+
+bool showDialogWithPromptV(const QString& prompt, QWidget *widget, const QString& title, const QString &icon)
+{
+    return showDialogWithPrompt(Qt::Vertical, prompt, widget, title, icon);
 }
 
 //------------------------------------------------------------------------------
@@ -117,97 +195,8 @@ void setDlgIcon(QWidget *dlg, const QString &path)
 #endif
 }
 
-bool showDialog(QWidget *widget, const QString& title, const QString &icon)
-{
-    return showDialog(widget, widget, title, icon);
-}
-
-bool showDialog(QWidget *widget, QObject *receiver, const QString& title, const QString& icon)
-{
-    qDebug() << "This function is obsolete and should be removed. Please use features of Ori::Dlg::Dialog instead.";
-
-    if (!widget) return false;
-
-    auto oldParent = widget->parentWidget();
-
-    QDialog dlg(qApp->activeWindow());
-    setDlgTitle(&dlg, title);
-    setDlgIcon(&dlg, icon);
-    prepareDialog(&dlg, widget, receiver);
-    bool ok = show(&dlg);
-
-    // Restoring ownership prevent widget deletion together with layout
-    dlg.layout()->removeWidget(widget);
-    widget->setParent(oldParent);
-
-    return ok;
-}
-
-QBoxLayout* makePromptLayout(Qt::Orientation orientation)
-{
-    switch (orientation)
-    {
-    case Qt::Horizontal: return new QHBoxLayout;
-    case Qt::Vertical: return new QVBoxLayout;
-    default:
-        qCritical() << "Unsupported orientation" << orientation;
-        return nullptr;
-    }
-}
-
-bool showDialogWithPrompt(Qt::Orientation orientation, const QString& prompt, QWidget *widget, const QString& title, const QString &icon)
-{
-    return showDialogWithPrompt(orientation, prompt, widget, widget, title, icon);
-}
-
-bool showDialogWithPrompt(Qt::Orientation orientation, const QString& prompt, QWidget *widget, QObject * receiver, const QString& title, const QString& icon)
-{
-    qDebug() << "This function is obsolete and should be removed. Please use features of Ori::Dlg::Dialog instead.";
-
-    if (!widget) return false;
-
-    auto oldParent = widget->parentWidget();
-
-    auto layout = makePromptLayout(orientation);
-    if (!layout) return false;
-    layout->setMargin(0);
-    layout->addWidget(new QLabel(prompt));
-    layout->addWidget(widget);
-
-    QWidget w; w.setLayout(layout);
-    bool ok = showDialog(&w, receiver, title, icon);
-
-    // Restoring ownership prevent widget deletion together with layout
-    widget->setParent(oldParent);
-
-    return ok;
-}
-
-void prepareDialog(QDialog *dlg, QWidget *widget)
-{
-    prepareDialog(dlg, widget, widget);
-}
-
-void prepareDialog(QDialog *dlg, QWidget *widget, QObject *receiver)
-{
-    qDebug() << "This function is obsolete and should be removed. Please use features of Ori::Dlg::Dialog instead.";
-
-    if (!dlg || !widget) return;
-
-    auto buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    qApp->connect(buttons, SIGNAL(accepted()), dlg, SLOT(accept()));
-    qApp->connect(buttons, SIGNAL(rejected()), dlg, SLOT(reject()));
-    if (receiver)
-        qApp->connect(buttons, SIGNAL(accepted()), receiver, SLOT(apply()));
-
-    // We will have margins already in dialogLayout, these are excessed
-    if (widget->layout()) widget->layout()->setMargin(0);
-
-    auto dialogLayout = new QVBoxLayout(dlg);
-    dialogLayout->addWidget(widget);
-    dialogLayout->addWidget(buttons);
-}
-
+//------------------------------------------------------------------------------
+//                             Ori::Dlg::Dialog
 //------------------------------------------------------------------------------
 
 Dialog::Dialog(QWidget* content): _content(content)
@@ -223,6 +212,7 @@ Dialog::~Dialog()
 bool Dialog::exec()
 {
     if (!_dialog) makeDialog();
+    if (_activeWidget) _activeWidget->setFocus();
     bool res = _dialog->exec() == QDialog::Accepted;
     if (!_ownContent)
     {
@@ -320,7 +310,6 @@ Dialog& Dialog::withOkSignal(QObject* sender, const char* signal)
     _okSignals << QPair<QObject*, const char*>(sender, signal);
     return *this;
 }
-
 
 } // namespace Dlg
 } // namespace Ori

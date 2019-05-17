@@ -67,7 +67,7 @@ public:
     QVariant selectedData() const;
     void selectData(const QVariant& data);
 
-    bool selectionFollowsArrows = true;
+    bool selectionFollowsArrows = false;
 
 signals:
     void dataSelected(const QVariant& data);
