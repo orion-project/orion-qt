@@ -61,7 +61,7 @@ private:
     void setState(QTreeWidgetItem *item, TestState state);
     void setStatusInfo(StatusInfoKind kind, int value);
     void runTestSession(QList<QTreeWidgetItem *> items);
-    void runTest(QTreeWidgetItem *item, TestSession &session);
+    void runTest(QTreeWidgetItem *item, TestSession &session, bool isLastInGroup);
     TestBase* getTest(QTreeWidgetItem *item);
     int testsCount(QTreeWidgetItem *item);
 

@@ -1,5 +1,7 @@
 #include "testing/OriTestBase.h"
 
+#include <QtMath>
+
 // This is cpp-file containing test group.
 
 // Put your test group in a separate namespace:

@@ -27,6 +27,16 @@ bool ok(const QString& msg);
 int yesNoCancel(const QString& msg);
 int yesNoCancel(QString& msg);
 
+
+namespace Mock {
+
+enum class DialogKind { none, info, warning, error, yes, ok, yesNoCancel };
+void setActive(bool on);
+void resetLastDialog();
+DialogKind getLastDialog();
+void setNextResult(int res);
+}
+
 /// Shows a dialog for entering a string value.
 /// Returns empty string if the dialog was canceled.
 QString inputText(const QString& label, const QString& value);

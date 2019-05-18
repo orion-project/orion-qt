@@ -138,6 +138,21 @@ inline QString formatPtr(const void* ptr)
         return; \
     }}
 
+#define ASSERT_NEQ_PTR(expr_value, expr_expected) { \
+    auto __test_var_value__ = reinterpret_cast<const void*>(expr_value); \
+    auto __test_var_expected__ = reinterpret_cast<const void*>(expr_expected); \
+    if (__test_var_value__ == __test_var_expected__) \
+    { \
+        test->setResult(false); \
+        test->setMessage("Pointers are equal" ); \
+        test->logAssertion("ARE NOT POINTERS EQUAL", \
+                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           formatPtr(__test_var_expected__), \
+                           formatPtr(__test_var_value__), \
+                           __FILE__, __LINE__); \
+        return; \
+    }}
+
 #define ASSERT_EQ_INT(expr_value, expr_expected) { \
     int __test_var_value__ = int(expr_value); \
     int __test_var_expected__ = int(expr_expected); \
@@ -252,6 +267,18 @@ inline QString formatPtr(const void* ptr)
 #define ADD_TEST(method)                                                                  \
     new Ori::Testing::TestBase(#method, method)
 
+#define BEFORE_ALL(method)                                                                \
+    new Ori::Testing::TestBase(#method, method, TestKind::BeforeAll)
+
+#define AFTER_ALL(method)                                                                 \
+    new Ori::Testing::TestBase(#method, method, TestKind::AfterAll)
+
+#define BEFORE_EACH(method)                                                               \
+    new Ori::Testing::TestBase(#method, method, TestKind::BeforeEach)
+
+#define AFTER_EACH(method)                                                                \
+    new Ori::Testing::TestBase(#method, method, TestKind::AfterEach)
+
 #define ADD_GROUP(name)                                                                   \
     name::tests()
 
@@ -283,7 +310,6 @@ class TestSession;
 
 typedef QVector<TestBase*> TestSuite;
 
-void free(const TestSuite& tests);
 TestGroup* asGroup(TestBase* test);
 
 
@@ -303,16 +329,18 @@ private:
 
 typedef void (*TestMethod) (TestBase *test);
 
+enum class TestKind {Test, BeforeAll, AfterAll, BeforeEach, AfterEach};
 
 class TestBase
 {
 public:
-    TestBase(const char *name, TestMethod method);
+    TestBase(const char *name, TestMethod method, TestKind kind = TestKind::Test);
     virtual ~TestBase();
 
     const char* name() const { return _name; }
-    virtual void run() { if (_method) _method(this); }
-    void reset();
+    virtual void run();
+    virtual void reset();
+    bool hasRun() const { return _hasRun; }
     bool result() const { return _result; }
     void setResult(bool value);
     QString message() const { return _message; }
@@ -322,41 +350,46 @@ public:
     TestBase* parent() const { return _parent; }
     QMap<QString, QVariant>& data() { return _data; }
     QVariant& data(const QString& key) { return _data[key]; }
+    TestKind kind() const { return _kind; }
     void logMessage(const QString& msg);
     void logMessage(const QStringList& list);
     void logAssertion(const QString& assertion, const QString& condition,
                       const QString& expected, const QString& actual,
                       const QString& file, int line);
 private:
-    bool _result;
-    const char *_name;
+    bool _result = true;
+    const char *_name = "";
     QString _message;
     QString _log;
-    TestBase *_parent;
-    TestMethod _method;
+    TestBase *_parent = nullptr;
+    TestMethod _method = nullptr;
+    bool _hasRun = false;
     QMap<QString, QVariant> _data;
+    TestKind _kind = TestKind::Test;
 
     friend class TestGroup;
+    friend class TestSession;
 };
-
 
 class TestGroup : public TestBase
 {
 public:
-    TestGroup(const char *name) : TestBase(name, nullptr) {}
-#ifdef Q_COMPILER_INITIALIZER_LISTS
     TestGroup(const char *name, std::initializer_list<TestBase*> args);
-#endif
-    ~TestGroup() { free(_tests); }
-
-    static TestGroup* create(const char *name, ...);
+    ~TestGroup() override { qDeleteAll(_tests); }
 
     const TestSuite& tests() const { return _tests; }
+    void reset() override;
+
     void append(TestBase *test);
-    void run();
 
 private:
     TestSuite _tests;
+    TestBase* _beforeAll = nullptr;
+    TestBase* _afterAll = nullptr;
+    TestBase* _beforeEach = nullptr;
+    TestBase* _afterEach = nullptr;
+
+    friend class TestSession;
 };
 
 
@@ -366,8 +399,10 @@ public:
     TestSession();
     ~TestSession();
 
+    void reset(const TestSuite &tests);
     void run(const TestSuite& tests);
-    void run(TestBase *test);
+    void run(TestBase *test, bool isLastInGroup);
+
     int testsRun() const { return _testsRun; }
     int testsPass() const { return _testsPass; }
     int testsFail() const { return _testsFail; }

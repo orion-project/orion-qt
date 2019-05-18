@@ -57,69 +57,17 @@ TEST_METHOD(TestAssertIsFalseFailed)
     ASSERT_IS_FALSE(2 != 3)
 }
 
-TEST_METHOD(RunSuccessfulGroup)
-{
-    TestGroup *group = new TestGroup("", {
-        ADD_TEST(TestSuccessed),
-        ADD_TEST(TestSuccessed) });
-    group->run();
-    ASSERT_IS_TRUE(group->result());
+namespace GroupOneSuccessed {
+    TEST_GROUP("Group with one successed item",
+        ADD_TEST(TestSuccessed)
+    )
 }
 
-TEST_METHOD(RunSuccessfulCompoundGroup)
-{
-    TestGroup *innerGroup = new TestGroup("", {
-        ADD_TEST(TestSuccessed),
-        ADD_TEST(TestSuccessed) });
-
-    TestGroup *group = new TestGroup("", {
-        ADD_TEST(TestSuccessed),
-        ADD_TEST(TestSuccessed) });
-    group->append(innerGroup);
-
-    group->run();
-    ASSERT_IS_TRUE(group->result());
+namespace GroupOneFailed {
+    TEST_GROUP("Group with one failed item",
+        ADD_TEST(TestFailed)
+    )
 }
-
-TEST_METHOD(RunFailureGroup)
-{
-    TestGroup *group = new TestGroup("", {
-        ADD_TEST(TestSuccessed),
-        ADD_TEST(TestFailed) });
-    group->run();
-    ASSERT_IS_TRUE(group->result());
-}
-
-TEST_METHOD(RunFailureCompoundGroup)
-{
-    TestGroup *innerGroup = new TestGroup("");
-    innerGroup->append(ADD_TEST(TestSuccessed));
-    innerGroup->append(ADD_TEST(TestFailed));
-
-    TestGroup *group = new TestGroup("");
-    group->append(ADD_TEST(TestSuccessed));
-    group->append(ADD_TEST(TestSuccessed));
-    group->append(innerGroup);
-
-    group->run();
-    ASSERT_IS_TRUE(group->result());
-}
-
-TEST_CLASS(TestClassSuccessed)
-    void run()
-    {
-        TestBase *test = this;
-        ASSERT_IS_TRUE(2 == 2);
-    }
-TEST_CLASS_END
-
-TEST_CLASS(TestClassFailed)
-    void run()
-    {
-        TestBase *test = this;
-        ASSERT_IS_TRUE(2 == 3);
-    }
-TEST_CLASS_END
 
 namespace GroupSuccessed {
     TEST_GROUP("Successed Group",
@@ -163,27 +111,6 @@ namespace GroupFailedComposite {
     )
 }
 
-namespace GroupOneSuccessed {
-    TEST_GROUP("Group with one successed item",
-        ADD_TEST(TestSuccessed)
-    )
-}
-
-namespace GroupOneFailed {
-    TEST_GROUP("Group with one failed item",
-        ADD_TEST(TestFailed)
-    )
-}
-
-namespace GroupRun {
-    TEST_GROUP("Standalone Group Run",
-        ADD_TEST(RunSuccessfulGroup),
-        ADD_TEST(RunFailureGroup),
-        ADD_TEST(RunSuccessfulCompoundGroup),
-        ADD_TEST(RunFailureCompoundGroup),
-    )
-}
-
 namespace ConditionAssertion {
     TEST_GROUP("Condition Assertion",
         ADD_TEST(TestAssertIsTruePassed),
@@ -193,18 +120,71 @@ namespace ConditionAssertion {
     )
 }
 
+namespace {
+TEST_CLASS(TestClassSuccessed)
+    void run()
+    {
+        TestBase::run();
+        TestBase *test = this;
+        ASSERT_IS_TRUE(2 == 2);
+    }
+TEST_CLASS_END
+
+TEST_CLASS(TestClassFailed)
+    void run()
+    {
+        TestBase::run();
+        TestBase *test = this;
+        ASSERT_IS_TRUE(2 == 3);
+    }
+TEST_CLASS_END
+}
+
+namespace GroupWithBeforeAndAfterAll {
+    TEST_METHOD(before_all) {
+        TEST_LOG("Before all 1")
+    }
+
+    TEST_METHOD(after_all) {
+        TEST_LOG("After all 1")
+    }
+
+    TEST_GROUP("Group with before and after",
+        BEFORE_ALL(before_all),
+        ADD_TEST(TestSuccessed),
+        ADD_TEST(TestSuccessed),
+        ADD_TEST(TestSuccessed),
+        AFTER_ALL(after_all),
+    )
+}
+
+namespace GroupWithBeforeAllFailed {
+    TEST_METHOD(before_all) {
+        ASSERT_FAIL("Failed BEFORE_ALL must stop its group")
+    }
+
+    TEST_GROUP("Group with failed BEFORE_ALL",
+        BEFORE_ALL(before_all),
+        ADD_TEST(TestSuccessed),
+        ADD_TEST(TestSuccessed),
+        ADD_TEST(TestSuccessed),
+    )
+}
+
 TEST_SUITE(
     ADD_TEST(TestSuccessed),
     ADD_TEST(TestFailed),
-    ADD_CLASS(TestClassSuccessed),
-    ADD_CLASS(TestClassFailed),
-    ADD_GROUP(GroupSuccessed),
-    ADD_GROUP(GroupSuccessedComposite),
-    ADD_GROUP(GroupFailedComposite),
     ADD_GROUP(GroupOneSuccessed),
     ADD_GROUP(GroupOneFailed),
-    ADD_GROUP(GroupRun),
+    ADD_GROUP(GroupSuccessed),
+    ADD_GROUP(GroupFailed),
+    ADD_GROUP(GroupSuccessedComposite),
+    ADD_GROUP(GroupFailedComposite),
     ADD_GROUP(ConditionAssertion),
+    ADD_CLASS(TestClassSuccessed),
+    ADD_CLASS(TestClassFailed),
+    ADD_GROUP(GroupWithBeforeAndAfterAll),
+    ADD_GROUP(GroupWithBeforeAllFailed),
 )
 
 } // namespace TestWindowTests

@@ -15,41 +15,96 @@
 namespace Ori {
 namespace Dlg {
 
+namespace Mock {
+
+static bool isActive = false;
+static DialogKind lastDialog = DialogKind::none;
+static int nextResult = QMessageBox::StandardButton::NoButton;
+
+void setActive(bool on) { isActive = on; }
+void resetLastDialog() { lastDialog = DialogKind::none; }
+DialogKind getLastDialog() { return lastDialog; }
+void setNextResult(int res) { nextResult = res; }
+
+} // namespace Mock
+
 void info(const QString& msg)
 {
+    if (Mock::isActive)
+    {
+        Mock::lastDialog = Mock::DialogKind::info;
+        return;
+    }
+
     QMessageBox::information(qApp->activeWindow(), qApp->applicationName(), msg, QMessageBox::Ok, QMessageBox::Ok);
 }
 
 void warning(const QString& msg)
 {
+    if (Mock::isActive)
+    {
+        Mock::lastDialog = Mock::DialogKind::warning;
+        return;
+    }
+
     QMessageBox::warning(qApp->activeWindow(), qApp->applicationName(), msg, QMessageBox::Ok, QMessageBox::Ok);
 }
 
 void error(const QString& msg)
 {
+    if (Mock::isActive)
+    {
+        Mock::lastDialog = Mock::DialogKind::error;
+        return;
+    }
+
     QMessageBox::critical(qApp->activeWindow(), qApp->applicationName(), msg, QMessageBox::Ok, QMessageBox::Ok);
 }
 
 bool yes(const QString& msg)
 {
+    if (Mock::isActive)
+    {
+        Mock::lastDialog = Mock::DialogKind::yes;
+        return Mock::nextResult == QMessageBox::Yes;
+    }
+
     return (QMessageBox::question(qApp->activeWindow(), qApp->applicationName(), msg,
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes);
 }
 
 bool ok(const QString& msg)
 {
+    if (Mock::isActive)
+    {
+        Mock::lastDialog = Mock::DialogKind::ok;
+        return Mock::nextResult == QMessageBox::Ok;
+    }
+
     return (QMessageBox::question(qApp->activeWindow(), qApp->applicationName(), msg,
         QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel) == QMessageBox::Ok);
 }
 
 int yesNoCancel(const QString& msg)
 {
+    if (Mock::isActive)
+    {
+        Mock::lastDialog = Mock::DialogKind::yesNoCancel;
+        return Mock::nextResult;
+    }
+
     return QMessageBox::question(qApp->activeWindow(), qApp->applicationName(), msg,
         QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
 }
 
 int yesNoCancel(QString& msg)
 {
+    if (Mock::isActive)
+    {
+        Mock::lastDialog = Mock::DialogKind::yesNoCancel;
+        return Mock::nextResult;
+    }
+
     return QMessageBox::question(qApp->activeWindow(), qApp->applicationName(), msg,
         QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
 }

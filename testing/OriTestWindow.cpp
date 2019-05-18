@@ -162,6 +162,8 @@ void TestWindow::setTests(const TestSuite &tests)
         it->setExpanded(s.value(it->text(0), true).toBool());
         loadExpandedStates(it, it->text(0), s);
     }
+
+    resetState();
 }
 
 void TestWindow::loadExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings)
@@ -198,8 +200,6 @@ void TestWindow::setTests(QTreeWidgetItem *root, const TestSuite &tests)
         else
             testsTotal++;
 
-        resetState(item);
-
         if (root)
             root->addChild(item);
         else
@@ -210,7 +210,11 @@ void TestWindow::setTests(QTreeWidgetItem *root, const TestSuite &tests)
 void TestWindow::resetState()
 {
     for (int i = 0; i < testsTree->topLevelItemCount(); i++)
-        resetState(testsTree->topLevelItem(i));
+    {
+        auto item = testsTree->topLevelItem(i);
+        getTest(item)->reset();
+        resetState(item);
+    }
 }
 
 void TestWindow::resetState(QTreeWidgetItem *root)
@@ -302,12 +306,16 @@ void TestWindow::runTestSession(QList<QTreeWidgetItem*> items)
     setStatusInfo(CountPass, 0);
     setStatusInfo(CountFail, 0);
     for (auto item : items)
+    {
+        getTest(item)->reset();
         resetState(item);
+    }
 
     // run tests
     TestSession session;
-    for (auto item : items)
-        runTest(item, session);
+    int count = items.size();
+    for (int i = 0; i < count; i++)
+        runTest(items.at(i), session, i == count-1);
 
     // show results
     auto currentItem = testsTree->currentItem();
@@ -318,15 +326,15 @@ void TestWindow::runTestSession(QList<QTreeWidgetItem*> items)
         QTimer::singleShot(500, progress, SLOT(hide()));
 }
 
-void TestWindow::runTest(QTreeWidgetItem *item, TestSession &session)
+void TestWindow::runTest(QTreeWidgetItem *item, TestSession &session, bool isLastInGroup)
 {
     TestBase *test = getTest(item);
-    test->reset();
 
-    if (item->childCount() > 0) // it is a group
+    int count = item->childCount();
+    if (count > 0) // it is a group
     {
-        for (int i = 0; i < item->childCount(); i++)
-            runTest(item->child(i), session);
+        for (int i = 0; i < count; i++)
+            runTest(item->child(i), session, i == count-1);
     }
     else
     {
@@ -336,12 +344,12 @@ void TestWindow::runTest(QTreeWidgetItem *item, TestSession &session)
         // Processing events on MacOS leads to some icons are not repainted
         QApplication::processEvents();
 #endif
-        session.run(test);
+        session.run(test, isLastInGroup);
 
         progress->setValue(progress->value()+1);
     }
 
-    setState(item, test->result() ? TestSuccess : TestFail);
+    setState(item, test->hasRun() ? (test->result() ? TestSuccess : TestFail) : TestUnknown);
     item->setText(1, test->message());
     setStatusInfo(CountRun, session.testsRun());
     setStatusInfo(CountPass, session.testsPass());
