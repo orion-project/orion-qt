@@ -1,9 +1,8 @@
 #include "OriTestWindow.h"
 
 #include "../tools/OriSettings.h"
-#include "../tools/OriTranslator.h"
 #include "../helpers/OriWidgets.h"
-#include "../widgets/OriLangsMenu.h"
+#include "../widgets/OriFlatToolBar.h"
 
 #include <QAction>
 #include <QApplication>
@@ -26,32 +25,33 @@ namespace Testing {
 TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
 {
     setWindowTitle(qApp->applicationName() + " Tests");
+    setWindowIcon(QIcon(":/ori_test_window/icon"));
 
     Ori::Settings s;
     s.restoreWindowGeometry("testWindow", this, QSize(640, 640));
-
-    s.beginGroup("View");
-    _translator = new Ori::Translator(s.strValue("language"), this);
 
     testsTree = Ori::Gui::twoColumnTree(tr("Test"), tr("Message"));
     connect(testsTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
             this, SLOT(testSelected(QTreeWidgetItem*,QTreeWidgetItem*)));
 
-    auto actionRunAll = Ori::Gui::action(tr("Run &All"), this, SLOT(runAll()), ":/toolbar/run_tests");
-    auto actionRunSelected = Ori::Gui::action(tr("Run &Selected"), this, SLOT(runSelected()), ":/toolbar/run_test");
-    auto actionResetState = Ori::Gui::action(tr("&Reset All"), this, SLOT(resetState()), ":/toolbar/reset_tests");
-    auto actionCollapseTree = Ori::Gui::action(tr("&Collapse All"), testsTree, SLOT(collapseAll()), ":/toolbar/collapse_tests");
-    auto actionExpandTree = Ori::Gui::action(tr("&Expand All"), testsTree, SLOT(expandAll()), ":/toolbar/expand_tests");
+    auto actionRunAll = Ori::Gui::action(tr("Run &All"), this, SLOT(runAll()), ":/ori_test_window/run_tests");
+    auto actionRunSelected = Ori::Gui::action(tr("Run &Selected"), this, SLOT(runSelected()), ":/ori_test_window/run_test");
+    auto actionResetState = Ori::Gui::action(tr("&Reset All"), this, SLOT(resetState()), ":/ori_test_window/reset_tests");
+    auto actionCollapseTree = Ori::Gui::action(tr("&Collapse All"), testsTree, SLOT(collapseAll()), ":/ori_test_window/collapse_tests");
+    auto actionExpandTree = Ori::Gui::action(tr("&Expand All"), testsTree, SLOT(expandAll()), ":/ori_test_window/expand_tests");
     actionSaveLog = Ori::Gui::toggledAction(tr("Save Results to Log File"), this, nullptr);
 
-    addToolBar(Qt::TopToolBarArea, Ori::Gui::toolbar({
+    auto toolbar = new Ori::Widgets::FlatToolBar;
+    toolbar->setFloatable(false);
+    toolbar->setMovable(false);
+    Ori::Gui::populate(toolbar, {
         Ori::Gui::textToolButton(actionRunAll),
         Ori::Gui::textToolButton(actionRunSelected),
-        nullptr, actionResetState, actionExpandTree, actionCollapseTree }));
+        nullptr, actionResetState, actionExpandTree, actionCollapseTree });
+    addToolBar(Qt::TopToolBarArea, toolbar);
 
     menuBar()->addMenu(Ori::Gui::menu(tr("&Test"), { actionRunAll, actionRunSelected, nullptr,
         actionResetState, nullptr, actionExpandTree, actionCollapseTree }));
-    menuBar()->addMenu(new Ori::Widgets::LanguagesMenu(_translator));
     menuBar()->addMenu(Ori::Gui::menu(tr("&Options"), { actionSaveLog }));
 
     progress = new QProgressBar;
@@ -86,8 +86,6 @@ TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
 TestWindow::~TestWindow()
 {
     Ori::Settings s;
-    s.beginGroup("View");
-    s.setValue("language", _translator->currentLanguage());
 
     s.beginGroup("TestsExpanded");
     for (int i = 0; i < testsTree->topLevelItemCount(); i++)
@@ -236,10 +234,10 @@ void TestWindow::resetState(QTreeWidgetItem *root)
 void TestWindow::setState(QTreeWidgetItem *item, TestState state)
 {
     static QMap<TestState, QIcon> testIcons({
-        { TestUnknown, QIcon(":/tests/states/undef") },
-        { TestRunning, QIcon(":/tests/states/run") },
-        { TestSuccess, QIcon(":/tests/states/pass") },
-        { TestFail, QIcon(":/tests/states/fail") },
+        { TestUnknown, QIcon(":/ori_test_states/undef") },
+        { TestRunning, QIcon(":/ori_test_states/run") },
+        { TestSuccess, QIcon(":/ori_test_states/pass") },
+        { TestFail, QIcon(":/ori_test_states/fail") },
     });
     item->setIcon(0, testIcons[state]);
 }

@@ -17,7 +17,6 @@ QT_END_NAMESPACE
 
 namespace Ori {
 
-class Translator;
 class Settings;
 
 namespace Testing {
@@ -55,7 +54,6 @@ private:
     QPlainTextEdit *testLog;
     QProgressBar *progress;
     int testsTotal;
-    Ori::Translator* _translator;
 
     void resetState(QTreeWidgetItem *root);
     void setState(QTreeWidgetItem *item, TestState state);

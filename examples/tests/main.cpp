@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
     // You can check if application has been started with 'test' command-line argument.
     // QApplication must be initialized before, to command-line arguments be processed.
     if (!Ori::Testing::isTesting())
-        QMessageBox::information(0, QString::fromLatin1("Ori::Test Example"),
+        QMessageBox::information(nullptr, QString::fromLatin1("Ori::Test Example"),
             QString::fromLatin1("Application has not been started in test mode.\n\n"
                 "But example tests will be started anyway :-)"), QMessageBox::Ok);
 
