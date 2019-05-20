@@ -30,7 +30,6 @@ public:
     ~TestWindow();
 
     void setTests(const TestSuite& tests);
-    void setTests(QTreeWidgetItem *root, const TestSuite& tests);
 
 private:
     enum StatusInfoKind
@@ -53,15 +52,16 @@ private:
     QTreeWidget *testsTree;
     QPlainTextEdit *testLog;
     QProgressBar *progress;
+    QMap<TestBase*, QTreeWidgetItem*> testItems;
     int testsTotal;
 
+    void setTests(QTreeWidgetItem *root, const TestSuite& tests);
     void resetState(QTreeWidgetItem *root);
     void setState(QTreeWidgetItem *item, TestState state);
     void setStatusInfo(StatusInfoKind kind, int value);
     void runTestSession(QList<QTreeWidgetItem *> items);
     void runTest(QTreeWidgetItem *item, TestSession &session, bool isLastInGroup);
     TestBase* getTest(QTreeWidgetItem *item);
-    int testsCount(QTreeWidgetItem *item);
 
     void saveExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings);
     void loadExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings);
@@ -70,7 +70,7 @@ private slots:
     void runAll();
     void runSelected();
     void resetState();
-    void testSelected(QTreeWidgetItem*, QTreeWidgetItem*);
+    void showItemLog(QTreeWidgetItem *item);
 };
 
 } // namespace Testing

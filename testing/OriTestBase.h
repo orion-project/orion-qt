@@ -268,16 +268,16 @@ inline QString formatPtr(const void* ptr)
     new Ori::Testing::TestBase(#method, method)
 
 #define BEFORE_ALL(method)                                                                \
-    new Ori::Testing::TestBase(#method, method, TestKind::BeforeAll)
+    new Ori::Testing::TestBase(#method, method, Ori::Testing::TestKind::BeforeAll)
 
 #define AFTER_ALL(method)                                                                 \
-    new Ori::Testing::TestBase(#method, method, TestKind::AfterAll)
+    new Ori::Testing::TestBase(#method, method, Ori::Testing::TestKind::AfterAll)
 
 #define BEFORE_EACH(method)                                                               \
-    new Ori::Testing::TestBase(#method, method, TestKind::BeforeEach)
+    new Ori::Testing::TestBase(#method, method, Ori::Testing::TestKind::BeforeEach)
 
 #define AFTER_EACH(method)                                                                \
-    new Ori::Testing::TestBase(#method, method, TestKind::AfterEach)
+    new Ori::Testing::TestBase(#method, method, Ori::Testing::TestKind::AfterEach)
 
 #define ADD_GROUP(name)                                                                   \
     name::tests()
@@ -329,7 +329,8 @@ private:
 
 typedef void (*TestMethod) (TestBase *test);
 
-enum class TestKind {Test, BeforeAll, AfterAll, BeforeEach, AfterEach};
+enum class TestKind {Test, Group, BeforeAll, AfterAll, BeforeEach, AfterEach};
+enum class TestResult {None, Pass, Fail};
 
 class TestBase
 {
@@ -337,15 +338,14 @@ public:
     TestBase(const char *name, TestMethod method, TestKind kind = TestKind::Test);
     virtual ~TestBase();
 
-    const char* name() const { return _name; }
-    virtual void run();
+    QString name() const { return _name; }
+    void runTest();
     virtual void reset();
-    bool hasRun() const { return _hasRun; }
-    bool result() const { return _result; }
-    void setResult(bool value);
+    TestResult result() const { return _result; }
+    void setResult(bool pass);
     QString message() const { return _message; }
-    void setMessage(const QString& msg) { _message = msg; }
-    QString log() const { return _log; }
+    void setMessage(const QString& msg);
+    QStringList log() const { return _log; }
     QString path() const;
     TestBase* parent() const { return _parent; }
     QMap<QString, QVariant>& data() { return _data; }
@@ -356,14 +356,15 @@ public:
     void logAssertion(const QString& assertion, const QString& condition,
                       const QString& expected, const QString& actual,
                       const QString& file, int line);
+protected:
+    virtual void run();
 private:
-    bool _result = true;
-    const char *_name = "";
+    TestResult _result = TestResult::None;
+    QString _name;
     QString _message;
-    QString _log;
+    QStringList _log;
     TestBase *_parent = nullptr;
     TestMethod _method = nullptr;
-    bool _hasRun = false;
     QMap<QString, QVariant> _data;
     TestKind _kind = TestKind::Test;
 
@@ -393,22 +394,38 @@ private:
 };
 
 
-class TestSession
+class TestSession : public QObject
 {
+    Q_OBJECT
+
 public:
-    TestSession();
+    TestSession(const TestSuite& tests);
     ~TestSession();
 
-    void reset(const TestSuite &tests);
-    void run(const TestSuite& tests);
-    void run(TestBase *test, bool isLastInGroup);
+    void run();
 
+    int testsCount() const { return countGroup(_tests); }
     int testsRun() const { return _testsRun; }
     int testsPass() const { return _testsPass; }
     int testsFail() const { return _testsFail; }
 
+    bool emitSignals = false;
+
+signals:
+    void testRunning(TestBase* test);
+    void testFinished(TestBase* test);
+
 private:
-    int _testsRun, _testsPass, _testsFail;
+    TestSuite _tests;
+    int _testsRun = 0;
+    int _testsPass = 0;
+    int _testsFail = 0;
+
+    void runGroup(const TestSuite& tests);
+    int countGroup(const TestSuite& tests) const;
+    void runTest(TestBase *test, bool isLastInGroup);
+    void notifyTestRunning(TestBase* test);
+    void notifyTestFinished(TestBase* test);
 };
 
 } // namespace Testing

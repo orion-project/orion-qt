@@ -6,6 +6,7 @@
 
 #include <QAction>
 #include <QApplication>
+#include <QDebug>
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
@@ -15,7 +16,6 @@
 #include <QStatusBar>
 #include <QPlainTextEdit>
 #include <QTimer>
-#include <QToolBar>
 #include <QToolButton>
 #include <QTreeWidget>
 
@@ -32,7 +32,7 @@ TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
 
     testsTree = Ori::Gui::twoColumnTree(tr("Test"), tr("Message"));
     connect(testsTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
-            this, SLOT(testSelected(QTreeWidgetItem*,QTreeWidgetItem*)));
+            this, SLOT(showItemLog(QTreeWidgetItem*)));
 
     auto actionRunAll = Ori::Gui::action(tr("Run &All"), this, SLOT(runAll()), ":/ori_test_window/run_tests");
     auto actionRunSelected = Ori::Gui::action(tr("Run &Selected"), this, SLOT(runSelected()), ":/ori_test_window/run_test");
@@ -149,6 +149,8 @@ TestSuite mergeGroupsByName(const TestSuite &tests)
 void TestWindow::setTests(const TestSuite &tests)
 {
     testsTotal = 0;
+    testsTree->clear();
+    testItems.clear();
     setTests(nullptr, mergeGroupsByName(tests));
     setStatusInfo(CountTotal, testsTotal);
 
@@ -202,6 +204,8 @@ void TestWindow::setTests(QTreeWidgetItem *root, const TestSuite &tests)
             root->addChild(item);
         else
             testsTree->addTopLevelItem(item);
+
+        testItems[test] = item;
     }
 }
 
@@ -213,6 +217,7 @@ void TestWindow::resetState()
         getTest(item)->reset();
         resetState(item);
     }
+    showItemLog(testsTree->currentItem());
 }
 
 void TestWindow::resetState(QTreeWidgetItem *root)
@@ -247,19 +252,19 @@ void TestWindow::setStatusInfo(StatusInfoKind kind, int value)
     switch (kind)
     {
     case CountTotal:
-        labelTotal->setText(QString("   %1: %2   ").arg(tr("Total")).arg(value));
+        labelTotal->setText(QString("   Total: %1   ").arg(value));
         break;
 
     case CountRun:
-        labelRun->setText(QString("   %1: %2   ").arg(tr("Run")).arg(value));
+        labelRun->setText(QString("   Run: %1   ").arg(value));
         break;
 
     case CountPass:
-        labelPass->setText(QString("   %1: %2   ").arg(tr("Successful")).arg(value));
+        labelPass->setText(QString("   Pass: %1   ").arg(value));
         break;
 
     case CountFail:
-        labelFail->setText(QString("   %1: %2   ").arg(tr("Failed")).arg(value));
+        labelFail->setText(QString("   Fail: %1   ").arg(value));
         break;
     }
 }
@@ -288,98 +293,61 @@ void TestWindow::runTestSession(QList<QTreeWidgetItem*> items)
 
     TestLogger::enable(actionSaveLog->isChecked());
 
-    // count tests to run
-    int tests_count = 0;
-    for (auto item : items)
-        tests_count += testsCount(item);
-    if (tests_count > 1)
-    {
-        progress->setValue(0);
-        progress->setMaximum(tests_count);
-        progress->setVisible(true);
-    }
-
-    // reset statistics
     setStatusInfo(CountRun, 0);
     setStatusInfo(CountPass, 0);
     setStatusInfo(CountFail, 0);
+
+    TestSuite tests;
     for (auto item : items)
     {
-        getTest(item)->reset();
+        tests << getTest(item);
         resetState(item);
     }
 
-    // run tests
-    TestSession session;
-    int count = items.size();
-    for (int i = 0; i < count; i++)
-        runTest(items.at(i), session, i == count-1);
+    TestSession session(tests);
+    session.emitSignals = true;
 
-    // show results
-    auto currentItem = testsTree->currentItem();
-    if (currentItem)
-        testLog->setPlainText(getTest(currentItem)->log());
+    int testsCount = session.testsCount();
+    if (testsCount > 1)
+    {
+        progress->setValue(0);
+        progress->setMaximum(testsCount);
+        progress->setVisible(true);
+    }
+
+    connect(&session, &TestSession::testRunning, [&](TestBase* test){
+        if (!testItems.contains(test)) return;
+        auto item = testItems[test];
+
+        setState(item, TestRunning);
+    });
+    connect(&session, &TestSession::testFinished, [&](TestBase* test){
+        if (!testItems.contains(test)) return;
+        auto item = testItems[test];
+
+        auto res = test->result();
+        setState(item, res == TestResult::None ? TestUnknown : (
+            res == TestResult::Pass ? TestSuccess : TestFail));
+        item->setText(1, test->message());
+
+        setStatusInfo(CountRun, session.testsRun());
+        setStatusInfo(CountPass, session.testsPass());
+        setStatusInfo(CountFail, session.testsFail());
+
+        progress->setValue(session.testsRun());
+    });
+
+    session.run();
+
+    showItemLog(testsTree->currentItem());
 
     if (progress->isVisible())
         QTimer::singleShot(500, progress, SLOT(hide()));
 }
 
-void TestWindow::runTest(QTreeWidgetItem *item, TestSession &session, bool isLastInGroup)
+void TestWindow::showItemLog(QTreeWidgetItem *item)
 {
-    TestBase *test = getTest(item);
-
-    int count = item->childCount();
-    if (count > 0) // it is a group
-    {
-        for (int i = 0; i < count; i++)
-            runTest(item->child(i), session, i == count-1);
-    }
-    else
-    {
-        setState(item, TestRunning);
-
-#ifndef Q_OS_MAC
-        // Processing events on MacOS leads to some icons are not repainted
-        QApplication::processEvents();
-#endif
-        session.run(test, isLastInGroup);
-
-        progress->setValue(progress->value()+1);
-    }
-
-    setState(item, test->hasRun() ? (test->result() ? TestSuccess : TestFail) : TestUnknown);
-    item->setText(1, test->message());
-    setStatusInfo(CountRun, session.testsRun());
-    setStatusInfo(CountPass, session.testsPass());
-    setStatusInfo(CountFail, session.testsFail());
-
-#ifndef Q_OS_MAC
-    // Processing events on MacOS leads to some icons are not repainted
-    QApplication::processEvents();
-#endif
-}
-
-void TestWindow::testSelected(QTreeWidgetItem *selected, QTreeWidgetItem*)
-{
-    if (selected)
-        testLog->setPlainText(getTest(selected)->log());
-}
-
-int TestWindow::testsCount(QTreeWidgetItem *item)
-{
-    if (item->childCount() > 0)
-    {
-        int result = 0;
-        for (int i = 0; i < item->childCount(); i++)
-        {
-            if (item->child(i)->childCount() > 0)
-                result += testsCount(item->child(i));
-            else
-                result++;
-        }
-        return result;
-    }
-    return 1;
+    if (item) testLog->setPlainText(getTest(item)->log().join('\n'));
 }
 
 } // namespace Testing

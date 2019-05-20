@@ -23,9 +23,8 @@ inline bool noGui()
 inline int runConsole(TestSuite tests)
 {
     TestLogger::enable(true);
-    TestSession session;
-    session.reset(tests);
-    session.run(tests);
+    TestSession session(tests);
+    session.run();
     return 0;
 }
 
