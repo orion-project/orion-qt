@@ -48,7 +48,7 @@ TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
     Ori::Gui::populate(toolbar, {
         Ori::Gui::textToolButton(_actionRunAll),
         Ori::Gui::textToolButton(_actionRunSelected),
-        nullptr, _actionResetState, actionExpandTree, actionCollapseTree });
+        nullptr, _actionResetState, nullptr, actionExpandTree, actionCollapseTree });
     addToolBar(Qt::TopToolBarArea, toolbar);
 
     menuBar()->addMenu(Ori::Gui::menu(tr("&Test"), { _actionRunAll, _actionRunSelected, nullptr,

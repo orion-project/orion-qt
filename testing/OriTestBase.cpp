@@ -77,7 +77,18 @@ void TestSession::run()
     _testsPass = 0;
 
     for (auto test : _tests)
+    {
         test->reset();
+
+        auto parentGroup = asGroup(test->parent());
+        if (parentGroup)
+        {
+            if (parentGroup->_beforeAll)
+                parentGroup->_beforeAll->reset();
+            if (parentGroup->_afterAll)
+                parentGroup->_afterAll->reset();
+        }
+    }
 
     runGroup(_tests);
 
@@ -95,14 +106,16 @@ void TestSession::runTest(TestBase *test, bool isLastInGroup)
 {
     TestGroup *parentGroup = asGroup(test->parent());
 
-    if (parentGroup)
+    if (parentGroup and parentGroup->_beforeAll)
     {
-        auto beforeAll = parentGroup->_beforeAll;
-        if (beforeAll)
+        if (parentGroup->_beforeAll->result() == TestResult::None)
         {
-            if (beforeAll->result() == TestResult::None) beforeAll->runTest();
-            if (beforeAll->result() != TestResult::Pass) return;
+            parentGroup->_beforeAll->runTest();
+            if (!parentGroup->log().isEmpty())
+                parentGroup->logMessage("---------------");
         }
+        if (parentGroup->_beforeAll->result() != TestResult::Pass)
+            return;
     }
 
     TestGroup *group = asGroup(test);
@@ -119,7 +132,52 @@ void TestSession::runTest(TestBase *test, bool isLastInGroup)
         notifyTestRunning(test);
 
         _testsRun++;
-        test->runTest();
+
+        bool runTest = true;
+        if (parentGroup and parentGroup->_beforeEach)
+        {
+            parentGroup->_beforeEach->reset();
+            parentGroup->_beforeEach->run();
+            if (parentGroup->_beforeEach->result() == TestResult::Fail)
+            {
+                runTest = false;
+                test->setResult(false);
+                test->setMessage(QStringLiteral("BEFORE_EACH: %1").arg(parentGroup->_beforeEach->message()));
+            }
+            if (!parentGroup->_beforeEach->log().isEmpty())
+            {
+                test->logMessage(QStringLiteral("---------------"));
+                test->logMessage(QStringLiteral("BEFORE_EACH:"));
+                test->logMessage(parentGroup->_beforeEach->log());
+                test->logMessage(QStringLiteral("---------------"));
+            }
+        }
+
+        if (runTest)
+        {
+            test->runTest();
+
+            if (parentGroup and parentGroup->_afterEach)
+            {
+                parentGroup->_afterEach->reset();
+                parentGroup->_afterEach->run();
+                if (parentGroup->_afterEach->result() == TestResult::Fail)
+                {
+                    test->setResult(false);
+                    if (test->message().isEmpty())
+                        test->setMessage(QStringLiteral("AFTER_EACH: %1").arg(parentGroup->_afterEach->message()));
+                    else
+                        test->logMessage(QStringLiteral("AFTER_EACH: %1").arg(parentGroup->_afterEach->message()));
+                }
+                if (!parentGroup->_afterEach->log().isEmpty())
+                {
+                    test->logMessage(QStringLiteral("---------------"));
+                    test->logMessage(QStringLiteral("AFTER_EACH:"));
+                    test->logMessage(parentGroup->_afterEach->log());
+                    test->logMessage(QStringLiteral("---------------"));
+                }
+            }
+        }
 
         switch (test->result())
         {
@@ -131,7 +189,7 @@ void TestSession::runTest(TestBase *test, bool isLastInGroup)
         notifyTestFinished(test);
     }
 
-    if (parentGroup and isLastInGroup and parentGroup->_afterAll)
+    if (parentGroup and parentGroup->_afterAll and isLastInGroup)
         parentGroup->_afterAll->runTest();
 }
 
@@ -263,12 +321,6 @@ void TestBase::setResult(bool pass)
         {
             switch (_kind)
             {
-            case TestKind::BeforeAll:
-                _parent->logMessage(QStringLiteral("FAIL: BEFORE_ALL"));
-                break;
-            case TestKind::AfterAll:
-                _parent->logMessage(QStringLiteral("FAIL: AFTER_ALL"));
-                break;
             case TestKind::Test:
             case TestKind::Group:
                 if (_parent->message().isEmpty())

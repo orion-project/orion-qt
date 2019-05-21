@@ -131,25 +131,51 @@ TEST_CLASS_END
 namespace BeforeAndAfter {
     namespace GroupWithBeforeAndAfterAll {
         TEST_METHOD(before_all) {
-            TEST_LOG("before all")
+            TEST_LOG("This is the output from BEFORE_ALL method")
+        }
+
+        TEST_METHOD(before_each) {
+            TEST_LOG("This is the output from BEFORE_EACH method")
+        }
+
+        TEST_METHOD(after_each) {
+            TEST_LOG("This is the output from AFTER_EACH method")
         }
 
         TEST_METHOD(after_all) {
-            TEST_LOG("after all")
+            TEST_LOG("This is the output from AFTER_ALL method")
+        }
+
+        TEST_METHOD(test) {
+            TEST_LOG("This is the output from test method")
         }
 
         TEST_GROUP("Group with before and after",
             BEFORE_ALL(before_all),
-            ADD_TEST(TestSuccessed),
-            ADD_TEST(TestSuccessed),
-            ADD_TEST(TestSuccessed),
+            BEFORE_EACH(before_each),
+            ADD_TEST(test),
+            ADD_TEST(test),
+            ADD_TEST(test),
+            AFTER_EACH(after_each),
             AFTER_ALL(after_all),
         )
     }
 
     namespace GroupWithBeforeAllFailed {
         TEST_METHOD(before_all) {
-            ASSERT_FAIL("Failed BEFORE_ALL must stop its group")
+            ASSERT_FAIL("Tests must not run when BEFORE_ALL failed")
+        }
+
+        TEST_METHOD(before_each) {
+            TEST_LOG("BEFORE_EACH must not run when BEFORE_ALL failed")
+        }
+
+        TEST_METHOD(after_each) {
+            TEST_LOG("AFTER_EACH must not run when BEFORE_ALL failed")
+        }
+
+        TEST_METHOD(after_all) {
+            TEST_LOG("AFTER_ALL must not run when BEFORE_ALL failed")
         }
 
         TEST_GROUP("Group with failed BEFORE_ALL",
@@ -157,6 +183,7 @@ namespace BeforeAndAfter {
             ADD_TEST(TestSuccessed),
             ADD_TEST(TestSuccessed),
             ADD_TEST(TestSuccessed),
+            AFTER_ALL(after_all),
         )
     }
 
@@ -188,11 +215,83 @@ namespace BeforeAndAfter {
         )
     }
 
+    namespace FailedBeforeEach {
+        TEST_METHOD(before_all) {
+            TEST_LOG("This is the output from BEFORE_ALL method")
+        }
+
+        TEST_METHOD(before_each) {
+            ASSERT_FAIL("Something went wrong with BEFORE_EACH")
+        }
+
+        TEST_METHOD(after_each) {
+            TEST_LOG("AFTER_EACH must not run when BEFORE_EACH failed")
+        }
+
+        TEST_METHOD(after_all) {
+            TEST_LOG("AFTER_ALL must run when BEFORE_EACH failed")
+        }
+
+        TEST_METHOD(test) {
+            TEST_LOG("Tests must not run when BEFORE_EACH failed")
+        }
+
+        TEST_GROUP("Failed BEFORE_EACH",
+           BEFORE_ALL(before_all),
+           BEFORE_EACH(before_each),
+           ADD_TEST(test),
+           ADD_TEST(test),
+           ADD_TEST(test),
+           AFTER_EACH(after_each),
+           AFTER_ALL(after_all),
+        )
+    }
+
+    namespace FailedAfterEach {
+        TEST_METHOD(before_all) {
+            TEST_LOG("This is the output from BEFORE_ALL method")
+        }
+
+        TEST_METHOD(before_each) {
+            TEST_LOG("This is the output from BEFORE_EACH method")
+        }
+
+        TEST_METHOD(after_each) {
+            ASSERT_FAIL("Something went wrong with AFTER_EACH")
+        }
+
+        TEST_METHOD(after_all) {
+            TEST_LOG("AFTER_ALL must run when AFTER_EACH failed")
+        }
+
+        TEST_METHOD(test_passed) {
+            TEST_LOG("Tests should fail when AFTER_EACH failed")
+        }
+
+        TEST_METHOD(test_failed)
+        {
+            ASSERT_FAIL("Failed AFTER_EACH must not override fail message of the test")
+        }
+
+        TEST_GROUP("Failed AFTER_EACH",
+           BEFORE_ALL(before_all),
+           BEFORE_EACH(before_each),
+           ADD_TEST(test_passed),
+           ADD_TEST(test_passed),
+           ADD_TEST(test_failed),
+           ADD_TEST(test_passed),
+           AFTER_EACH(after_each),
+           AFTER_ALL(after_all),
+        )
+    }
+
     TEST_GROUP("Before/After methods",
         ADD_GROUP(GroupWithBeforeAndAfterAll),
         ADD_GROUP(GroupWithBeforeAllFailed),
         ADD_GROUP(PassedGroupWithAfterAllFailed),
         ADD_GROUP(FailedGroupWithAfterAllFailed),
+        ADD_GROUP(FailedBeforeEach),
+        ADD_GROUP(FailedAfterEach),
     )
 } // namespace BeforeAndAfter
 

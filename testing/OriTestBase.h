@@ -215,6 +215,32 @@ inline QString formatPtr(const void* ptr)
         return; \
     }}
 
+#define ASSERT_EQ_DATA(key_name, expr_expected) { \
+    QString __data_key__(key_name); \
+    if (!test->data().contains(__data_key__)) \
+    { \
+        test->setResult(false); \
+        test->setMessage("Data key not found"); \
+        test->logAssertion("HAS DATA KEY", \
+                           QString("test->data().contains(%1)").arg(#key_name), \
+                           "TRUE", "FALSE", __FILE__, __LINE__); \
+        return; \
+    } \
+    QVariant __test_var_value__ = test->data()[__data_key__]; \
+    QVariant __test_var_expected__(expr_expected); \
+    if (__test_var_value__ != __test_var_expected__) \
+    { \
+        test->setResult(false); \
+        test->setMessage("Data is not equal to expected"); \
+        test->logAssertion("ARE VARIANTS EQUAL",  \
+                           QString("data[%1] == %2").arg(#key_name).arg(#expr_expected), \
+                           __test_var_expected__.toString(), \
+                           __test_var_value__.toString(), \
+                           __FILE__, __LINE__); \
+        return; \
+    } \
+}
+
 #define ASSERT_FAIL(msg) {                                                                \
     test->setResult(false);                                                               \
     test->setMessage(msg);                                                                \
@@ -299,7 +325,7 @@ inline QString formatPtr(const void* ptr)
 #define TEST_LOG_DOUBLE(v) test->logMessage(QString("%1 = %2").arg(#v).arg(v, 0, 'g', 16));
 #define TEST_LOG_PTR(p) test->logMessage(QString("%1 = 0x%2").arg(#p).arg(quintptr(p), 0, 16));
 #define TEST_LOG_SEPARATOR test->logMessage("---------------------------------------");
-
+#define SET_TEST_DATA(key, value) test->data().insert(key, value)
 
 namespace Ori {
 namespace Testing {
