@@ -80,6 +80,8 @@ void TestSession::run()
         test->reset();
 
     runGroup(_tests);
+
+    if (emitSignals) emit sessionFinished();
 }
 
 void TestSession::runGroup(const TestSuite& tests)
@@ -144,25 +146,14 @@ void TestSession::notifyTestRunning(TestBase* test)
     }
 
     if (emitSignals)
-    {
         emit testRunning(test);
-#ifndef Q_OS_MAC
-        // Processing events on MacOS leads to some icons are not repainted
-        QApplication::processEvents();
-#endif
-    }
 }
 
 void TestSession::notifyTestFinished(TestBase* test)
 {
     if (emitSignals)
-    {
         emit testFinished(test);
-#ifndef Q_OS_MAC
-        // Processing events on MacOS leads to some icons are not repainted
-        QApplication::processEvents();
-#endif
-    }
+
     if (test->kind() == TestKind::Test)
     {
         switch (test->result())
@@ -180,7 +171,7 @@ void TestSession::notifyTestFinished(TestBase* test)
     }
 }
 
-int TestSession::countGroup(const TestSuite& tests) const
+int TestSession::countTestsInGroup(const TestSuite& tests) const
 {
     int count = 0;
     for (auto test : tests)
@@ -191,7 +182,7 @@ int TestSession::countGroup(const TestSuite& tests) const
             count++;
             break;
         case TestKind::Group:
-            count += countGroup(asGroup(test)->tests());
+            count += countTestsInGroup(asGroup(test)->tests());
             break;
         default:
             break;
@@ -199,7 +190,6 @@ int TestSession::countGroup(const TestSuite& tests) const
     }
     return count;
 }
-
 
 //------------------------------------------------------------------------------
 //                                 TestGroup

@@ -404,7 +404,7 @@ public:
 
     void run();
 
-    int testsCount() const { return countGroup(_tests); }
+    int testsCount() const { return countTestsInGroup(_tests); }
     int testsRun() const { return _testsRun; }
     int testsPass() const { return _testsPass; }
     int testsFail() const { return _testsFail; }
@@ -414,6 +414,7 @@ public:
 signals:
     void testRunning(TestBase* test);
     void testFinished(TestBase* test);
+    void sessionFinished();
 
 private:
     TestSuite _tests;
@@ -422,7 +423,7 @@ private:
     int _testsFail = 0;
 
     void runGroup(const TestSuite& tests);
-    int countGroup(const TestSuite& tests) const;
+    int countTestsInGroup(const TestSuite& tests) const;
     void runTest(TestBase *test, bool isLastInGroup);
     void notifyTestRunning(TestBase* test);
     void notifyTestFinished(TestBase* test);

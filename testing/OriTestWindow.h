@@ -9,6 +9,7 @@ QT_BEGIN_NAMESPACE
 class QAction;
 class QLabel;
 class QProgressBar;
+class QThread;
 class QTimer;
 class QTreeWidget;
 class QTreeWidgetItem;
@@ -31,6 +32,9 @@ public:
 
     void setTests(const TestSuite& tests);
 
+signals:
+    void sessionStarted();
+
 private:
     enum StatusInfoKind
     {
@@ -47,12 +51,14 @@ private:
         TestFail
     };
 
-    QAction *actionSaveLog;
+    QAction *_actionRunAll, *_actionRunSelected, *_actionResetState, *_actionSaveLog;
     QLabel *labelTotal, *labelRun, *labelPass, *labelFail;
     QTreeWidget *testsTree;
     QPlainTextEdit *testLog;
     QProgressBar *progress;
     QMap<TestBase*, QTreeWidgetItem*> testItems;
+    QThread* _sessionThread  = nullptr;
+    TestSession* _session = nullptr;
     int testsTotal;
 
     void setTests(QTreeWidgetItem *root, const TestSuite& tests);
@@ -65,6 +71,10 @@ private:
 
     void saveExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings);
     void loadExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings);
+
+    void testRunning(TestBase* test);
+    void testFinished(TestBase* test);
+    void sessionFinished();
 
 private slots:
     void runAll();

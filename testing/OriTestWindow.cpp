@@ -15,6 +15,7 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QPlainTextEdit>
+#include <QThread>
 #include <QTimer>
 #include <QToolButton>
 #include <QTreeWidget>
@@ -34,25 +35,25 @@ TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
     connect(testsTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
             this, SLOT(showItemLog(QTreeWidgetItem*)));
 
-    auto actionRunAll = Ori::Gui::action(tr("Run &All"), this, SLOT(runAll()), ":/ori_test_window/run_tests");
-    auto actionRunSelected = Ori::Gui::action(tr("Run &Selected"), this, SLOT(runSelected()), ":/ori_test_window/run_test");
-    auto actionResetState = Ori::Gui::action(tr("&Reset All"), this, SLOT(resetState()), ":/ori_test_window/reset_tests");
+    _actionRunAll = Ori::Gui::action(tr("Run &All"), this, SLOT(runAll()), ":/ori_test_window/run_tests");
+    _actionRunSelected = Ori::Gui::action(tr("Run &Selected"), this, SLOT(runSelected()), ":/ori_test_window/run_test");
+    _actionResetState = Ori::Gui::action(tr("&Reset All"), this, SLOT(resetState()), ":/ori_test_window/reset_tests");
     auto actionCollapseTree = Ori::Gui::action(tr("&Collapse All"), testsTree, SLOT(collapseAll()), ":/ori_test_window/collapse_tests");
     auto actionExpandTree = Ori::Gui::action(tr("&Expand All"), testsTree, SLOT(expandAll()), ":/ori_test_window/expand_tests");
-    actionSaveLog = Ori::Gui::toggledAction(tr("Save Results to Log File"), this, nullptr);
+    _actionSaveLog = Ori::Gui::toggledAction(tr("Save Results to Log File"), this, nullptr);
 
     auto toolbar = new Ori::Widgets::FlatToolBar;
     toolbar->setFloatable(false);
     toolbar->setMovable(false);
     Ori::Gui::populate(toolbar, {
-        Ori::Gui::textToolButton(actionRunAll),
-        Ori::Gui::textToolButton(actionRunSelected),
-        nullptr, actionResetState, actionExpandTree, actionCollapseTree });
+        Ori::Gui::textToolButton(_actionRunAll),
+        Ori::Gui::textToolButton(_actionRunSelected),
+        nullptr, _actionResetState, actionExpandTree, actionCollapseTree });
     addToolBar(Qt::TopToolBarArea, toolbar);
 
-    menuBar()->addMenu(Ori::Gui::menu(tr("&Test"), { actionRunAll, actionRunSelected, nullptr,
-        actionResetState, nullptr, actionExpandTree, actionCollapseTree }));
-    menuBar()->addMenu(Ori::Gui::menu(tr("&Options"), { actionSaveLog }));
+    menuBar()->addMenu(Ori::Gui::menu(tr("&Test"), { _actionRunAll, _actionRunSelected, nullptr,
+        _actionResetState, nullptr, actionExpandTree, actionCollapseTree }));
+    menuBar()->addMenu(Ori::Gui::menu(tr("&Options"), { _actionSaveLog }));
 
     progress = new QProgressBar;
     progress->setMaximumHeight(10);
@@ -81,10 +82,15 @@ TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
     splitter->setStretchFactor(0, 3);
     splitter->setStretchFactor(1, 1);
     setCentralWidget(splitter);
+
+    _sessionThread = new QThread(this);
+    _sessionThread->start();
 }
 
 TestWindow::~TestWindow()
 {
+    _sessionThread->quit();
+
     Ori::Settings s;
 
     s.beginGroup("TestsExpanded");
@@ -96,6 +102,8 @@ TestWindow::~TestWindow()
     }
 
     s.storeWindowGeometry("testWindow", this);
+
+    _sessionThread->wait(10000);
 }
 
 void TestWindow::saveExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings)
@@ -217,6 +225,11 @@ void TestWindow::resetState()
         getTest(item)->reset();
         resetState(item);
     }
+
+    setStatusInfo(CountRun, 0);
+    setStatusInfo(CountPass, 0);
+    setStatusInfo(CountFail, 0);
+
     showItemLog(testsTree->currentItem());
 }
 
@@ -290,8 +303,9 @@ void TestWindow::runSelected()
 void TestWindow::runTestSession(QList<QTreeWidgetItem*> items)
 {
     if (items.isEmpty()) return;
+    if (_session) return;
 
-    TestLogger::enable(actionSaveLog->isChecked());
+    TestLogger::enable(_actionSaveLog->isChecked());
 
     setStatusInfo(CountRun, 0);
     setStatusInfo(CountPass, 0);
@@ -304,10 +318,15 @@ void TestWindow::runTestSession(QList<QTreeWidgetItem*> items)
         resetState(item);
     }
 
-    TestSession session(tests);
-    session.emitSignals = true;
+    _session = new TestSession(tests);
+    _session->emitSignals = true;
+    _session->moveToThread(_sessionThread);
+    connect(_session, &TestSession::testRunning, this, &TestWindow::testRunning);
+    connect(_session, &TestSession::testFinished, this, &TestWindow::testFinished);
+    connect(_session, &TestSession::sessionFinished, this, &TestWindow::sessionFinished);
+    connect(this, &TestWindow::sessionStarted, _session, &TestSession::run);
 
-    int testsCount = session.testsCount();
+    int testsCount = _session->testsCount();
     if (testsCount > 1)
     {
         progress->setValue(0);
@@ -315,34 +334,51 @@ void TestWindow::runTestSession(QList<QTreeWidgetItem*> items)
         progress->setVisible(true);
     }
 
-    connect(&session, &TestSession::testRunning, [&](TestBase* test){
-        if (!testItems.contains(test)) return;
-        auto item = testItems[test];
+    _actionRunAll->setEnabled(false);
+    _actionRunSelected->setEnabled(false);
+    _actionRunSelected->setEnabled(false);
 
-        setState(item, TestRunning);
-    });
-    connect(&session, &TestSession::testFinished, [&](TestBase* test){
-        if (!testItems.contains(test)) return;
-        auto item = testItems[test];
+    emit sessionStarted();
+}
 
-        auto res = test->result();
-        setState(item, res == TestResult::None ? TestUnknown : (
-            res == TestResult::Pass ? TestSuccess : TestFail));
-        item->setText(1, test->message());
+void TestWindow::testRunning(TestBase* test)
+{
+    if (!testItems.contains(test)) return;
+    auto item = testItems[test];
 
-        setStatusInfo(CountRun, session.testsRun());
-        setStatusInfo(CountPass, session.testsPass());
-        setStatusInfo(CountFail, session.testsFail());
+    setState(item, TestRunning);
+}
 
-        progress->setValue(session.testsRun());
-    });
+void TestWindow::testFinished(TestBase* test)
+{
+    if (!testItems.contains(test)) return;
+    auto item = testItems[test];
 
-    session.run();
+    auto res = test->result();
+    setState(item, res == TestResult::None ? TestUnknown : (
+        res == TestResult::Pass ? TestSuccess : TestFail));
+    item->setText(1, test->message());
+
+    setStatusInfo(CountRun, _session->testsRun());
+    setStatusInfo(CountPass, _session->testsPass());
+    setStatusInfo(CountFail, _session->testsFail());
+
+    progress->setValue(_session->testsRun());
+}
+
+void TestWindow::sessionFinished()
+{
+    _session->deleteLater();
+    _session = nullptr;
+
+    _actionRunAll->setEnabled(true);
+    _actionRunSelected->setEnabled(true);
+    _actionRunSelected->setEnabled(true);
 
     showItemLog(testsTree->currentItem());
 
     if (progress->isVisible())
-        QTimer::singleShot(500, progress, SLOT(hide()));
+        QTimer::singleShot(500, progress, &QProgressBar::hide);
 }
 
 void TestWindow::showItemLog(QTreeWidgetItem *item)
