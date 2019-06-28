@@ -333,6 +333,15 @@ void Dialog::makeDialog()
             info(QString("TODO help by topic '%1'").arg(this->_helpTopic));
         });
     dialogLayout->addWidget(buttonBox);
+
+    for (auto button : buttonBox->buttons())
+        if (buttonBox->buttonRole(button) == QDialogButtonBox::AcceptRole)
+        {
+            _okButton = button;
+            break;
+        }
+
+    if (_onDlgReady) _onDlgReady();
 }
 
 void Dialog::acceptDialog()

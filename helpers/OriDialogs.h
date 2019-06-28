@@ -8,6 +8,7 @@
 #include <functional>
 
 QT_BEGIN_NAMESPACE
+class QAbstractButton;
 class QObject;
 class QDialog;
 class QWidget;
@@ -94,9 +95,13 @@ public:
 
     Dialog& withActiveWidget(QWidget* w) { _activeWidget = w; return *this; }
 
+    Dialog& withOnDlgReady(std::function<void()> handler) { _onDlgReady = handler; return *this; }
+
     bool exec();
 
     QSize size() const;
+
+    QAbstractButton* okButton() const { return _okButton; }
 
 private:
     QDialog* _dialog = nullptr;
@@ -112,6 +117,8 @@ private:
     VerificationFunc _verify;
     QSize _initialSize;
     QWidget* _activeWidget = nullptr;
+    QAbstractButton* _okButton = nullptr;
+    std::function<void()> _onDlgReady;
 
     void makeDialog();
     void acceptDialog();
