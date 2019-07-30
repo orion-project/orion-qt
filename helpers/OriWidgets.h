@@ -86,8 +86,8 @@ QPushButton* iconButton(const QString& tooltip, const QString& iconPath, QObject
 void setSelectedId(QComboBox *combo, int id);
 int getSelectedId(const QComboBox *combo, int def = -1);
 
-QAction* action(const QString& title, QObject* receiver, const char* slot, const char* icon = 0, const QKeySequence& shortcut = QKeySequence());
-QAction* toggledAction(const QString& title, QObject* receiver, const char* slot, const char* icon = 0, const QKeySequence& shortcut = QKeySequence());
+QAction* action(const QString& title, QObject* receiver, const char* slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence());
+QAction* toggledAction(const QString& title, QObject* receiver, const char* slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence());
 
 QTreeWidget* twoColumnTree(const QString& title1, const QString& title2);
 

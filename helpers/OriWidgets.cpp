@@ -467,10 +467,30 @@ int getSelectedId(const QComboBox *combo, int def)
 
 //--------------------------------------------------------------------------------------------------
 
+// Guesses a descriptive text suited for the menu entry.
+// This is equivalent to QAction's internal qt_strippedText().
+static QString strippedActionTitle(QString s) {
+    s.remove(QString::fromLatin1("..."));
+    for (int i = 0; i < s.size(); ++i)
+        if (s.at(i) == QLatin1Char('&'))
+            s.remove(i, 1);
+    return s.trimmed();
+}
+
+// Adds shortcut information to the action's tooltip.
+// Here is more complete solution supporting custom tooltips
+// https://stackoverflow.com/questions/42607554/show-shortcut-in-tooltip-of-qtoolbar
+static void setActionShortcut(QAction* action, const QKeySequence& shortcut)
+{
+    action->setShortcut(shortcut);
+    action->setToolTip(QStringLiteral("<p style='white-space:pre'>%1&nbsp;&nbsp;(<code>%2</code>)</p>")
+                       .arg(strippedActionTitle(action->text()), shortcut.toString()));
+}
+
 QAction* action(const QString& title, QObject* receiver, const char* slot, const char* icon, const QKeySequence& shortcut)
 {
     auto action = new QAction(title, receiver);
-    action->setShortcut(shortcut);
+    if (!shortcut.isEmpty()) setActionShortcut(action, shortcut);
     if (icon) action->setIcon(QIcon(icon));
     qApp->connect(action, SIGNAL(triggered()), receiver, slot);
     return action;
@@ -479,8 +499,8 @@ QAction* action(const QString& title, QObject* receiver, const char* slot, const
 QAction* toggledAction(const QString& title, QObject* receiver, const char* slot, const char* icon, const QKeySequence& shortcut)
 {
     auto action = new QAction(title, receiver);
-    action->setShortcut(shortcut);
     action->setCheckable(true);
+    if (!shortcut.isEmpty()) setActionShortcut(action, shortcut);
     if (icon) action->setIcon(QIcon(icon));
     if (slot) qApp->connect(action, SIGNAL(toggled(bool)), receiver, slot);
     return action;
