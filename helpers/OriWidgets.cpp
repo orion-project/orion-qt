@@ -484,7 +484,7 @@ static void setActionShortcut(QAction* action, const QKeySequence& shortcut)
 {
     action->setShortcut(shortcut);
     action->setToolTip(QStringLiteral("<p style='white-space:pre'>%1&nbsp;&nbsp;(<code>%2</code>)</p>")
-                       .arg(strippedActionTitle(action->text()), shortcut.toString()));
+                       .arg(strippedActionTitle(action->text()), shortcut.toString(QKeySequence::NativeText)));
 }
 
 QAction* action(const QString& title, QObject* receiver, const char* slot, const char* icon, const QKeySequence& shortcut)

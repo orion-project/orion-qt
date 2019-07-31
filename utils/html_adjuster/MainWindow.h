@@ -22,6 +22,8 @@ public:
         Ori::Gui::setFontMonospace(&html);
         css.setTabStopWidth(24);
         html.setTabStopWidth(24);
+        css.setAcceptRichText(false);
+        html.setAcceptRichText(false);
 
         setObjectName("mainWindow");
         setOrientation(Qt::Horizontal);
