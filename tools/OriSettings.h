@@ -87,6 +87,27 @@ private:
     QSettings* _settings;
 };
 
+namespace SettingsHelper {
+void storeWindowGeometry(QSettings* s, QWidget*, const QString& key = QString());
+void restoreWindowGeometry(QSettings* s, QWidget*, const QString& key = QString(), QSize defSize = QSize());
+} // namespace SettingsHelper
+
+
+struct SettingsGroup
+{
+    QSettings* _settings;
+
+    SettingsGroup(QSettings* s, const QString& group): _settings(s)
+    {
+        _settings->beginGroup(group);
+    }
+
+    ~SettingsGroup()
+    {
+        _settings->endGroup();
+    }
+};
+
 } // namespace Ori
 
 #endif // ORI_SETTINGS_H

@@ -77,38 +77,61 @@ Settings::~Settings()
     delete _settings;
 }
 
-void Settings::storeWindowGeometry(QWidget* w) { storeWindowGeometry(w->objectName(), w); }
-void Settings::restoreWindowGeometry(QWidget* w, QSize defSize) { restoreWindowGeometry(w->objectName(), w, defSize); }
+void Settings::storeWindowGeometry(QWidget* w)
+{
+    SettingsHelper::storeWindowGeometry(_settings, w, w->objectName());
+}
+
+void Settings::restoreWindowGeometry(QWidget* w, QSize defSize)
+{
+    SettingsHelper::restoreWindowGeometry(_settings, w, w->objectName(), defSize);
+}
 
 void Settings::storeWindowGeometry(const QString& key, QWidget* w)
 {
-    if (key.isEmpty()) return;
-
-    GroupResetAndBackup backup(_settings);
-
-    _settings->beginGroup("WindowStates");
-    _settings->beginGroup(key);
-    _settings->setValue("maximized", w->isMaximized());
-    if (!w->isMaximized())
-        _settings->setValue("geometry", w->geometry());
+    SettingsHelper::storeWindowGeometry(_settings, w, key);
 }
 
 void Settings::restoreWindowGeometry(const QString &key, QWidget* w, QSize defSize)
 {
-    if (key.isEmpty()) return;
+    SettingsHelper::restoreWindowGeometry(_settings, w, key, defSize);
+}
 
-    GroupResetAndBackup backup(_settings);
+namespace SettingsHelper {
+void storeWindowGeometry(QSettings* s, QWidget* w, const QString& key)
+{
+    auto group = key.isEmpty() ? w->objectName() : key;
+    if (group.isEmpty()) return;
 
-    _settings->beginGroup("WindowStates");
-    _settings->beginGroup(key);
-    QRect g = _settings->value("geometry").toRect();
+    GroupResetAndBackup backup(s);
+
+    s->beginGroup("WindowStates");
+    s->beginGroup(group);
+    s->setValue("maximized", w->isMaximized());
+    if (!w->isMaximized())
+        s->setValue("geometry", w->geometry());
+
+}
+
+void restoreWindowGeometry(QSettings* s, QWidget* w, const QString& key, QSize defSize)
+{
+    auto group = key.isEmpty() ? w->objectName() : key;
+    if (group.isEmpty()) return;
+
+    GroupResetAndBackup backup(s);
+
+    s->beginGroup("WindowStates");
+    s->beginGroup(group);
+    QRect g = s->value("geometry").toRect();
     if (g.width() > 0 && g.height() > 0)
         w->setGeometry(g);
     else if (defSize.width() > 0 && defSize.height() > 0)
         w->resize(defSize); // stay default position
-    if (_settings->value("maximized").toBool())
+    if (s->value("maximized").toBool())
         w->setWindowState(w->windowState() | Qt::WindowMaximized);
 }
+} // namespace SettingsHelper
+
 
 void Settings::storeDockState(QMainWindow* w) { storeDockState(w->objectName(), w); }
 void Settings::restoreDockState(QMainWindow* w) { restoreDockState(w->objectName(), w); }
