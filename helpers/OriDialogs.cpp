@@ -8,7 +8,6 @@
 #include <QFileDialog>
 #include <QIcon>
 #include <QLabel>
-#include <QLineEdit>
 #include <QStyle>
 #include <QMessageBox>
 
@@ -110,23 +109,23 @@ int yesNoCancel(QString& msg)
 }
 
 //------------------------------------------------------------------------------
-//                            Ori::Dlg::inputText
+//                         Ori::Dlg::InputTextEditor
 //------------------------------------------------------------------------------
 
-namespace {
-class InputTextEditor : public QLineEdit
+InputTextEditor::InputTextEditor(QWidget* parent) : QLineEdit(parent)
 {
-public:
-    InputTextEditor() {}
-
-    QSize sizeHint() const override
-    {
-        auto s = QLineEdit::sizeHint();
-        s.setWidth(s.width() * 2);
-        return s;
-    }
-};
 }
+
+QSize InputTextEditor::sizeHint() const
+{
+    auto s = QLineEdit::sizeHint();
+    s.setWidth(s.width() * _widthFactor);
+    return s;
+}
+
+//------------------------------------------------------------------------------
+//                            Ori::Dlg::inputText
+//------------------------------------------------------------------------------
 
 QString inputText(const QString& label, const QString& value)
 {
@@ -150,7 +149,7 @@ QString inputText(const QString& label, const QString& value, bool *ok)
     layout->addWidget(new QLabel(label));
     layout->addWidget(editor);
 
-    *ok = Dialog(&content)
+    *ok = Dialog(&content, false)
             .withContentToButtonsSpacingFactor(2)
             .exec();
 
@@ -194,7 +193,7 @@ bool showDialogWithPrompt(Qt::Orientation orientation, const QString& prompt, QW
     layout->setMargin(0);
     layout->addWidget(new QLabel(prompt));
     layout->addWidget(widget);
-    bool ok = Dialog(&content)
+    bool ok = Dialog(&content, false)
             .withTitle(title)
             .withIconPath(icon)
             .withContentToButtonsSpacingFactor(2)
@@ -254,7 +253,7 @@ void setDlgIcon(QWidget *dlg, const QString &path)
 //                             Ori::Dlg::Dialog
 //------------------------------------------------------------------------------
 
-Dialog::Dialog(QWidget* content): _content(content)
+Dialog::Dialog(QWidget* content, bool ownContent): _content(content), _ownContent(ownContent)
 {
     _backupContentParent = _content->parentWidget();
 }

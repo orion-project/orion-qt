@@ -4,6 +4,7 @@
 #include <QSize>
 #include <QString>
 #include <QVector>
+#include <QLineEdit>
 
 #include <functional>
 
@@ -38,6 +39,20 @@ DialogKind getLastDialog();
 void setNextResult(int res);
 }
 
+/// The thin wrapper around QLineEdit. QLineEdit itself is too narrow by default.
+/// The wrapper allows setting a new default width as a factor of the 'default default' one.
+class InputTextEditor : public QLineEdit
+{
+public:
+    explicit InputTextEditor(QWidget* parent = nullptr);
+
+    void setWidthFactor(int factor) { _widthFactor = factor; }
+    QSize sizeHint() const override;
+
+private:
+    int _widthFactor = 2;
+};
+
 /// Shows a dialog for entering a string value.
 /// Returns empty string if the dialog was canceled.
 QString inputText(const QString& label, const QString& value);
@@ -63,7 +78,7 @@ class Dialog
 public:
     typedef std::function<QString()> VerificationFunc;
 
-    Dialog(QWidget* content);
+    Dialog(QWidget* content, bool ownContent);
     ~Dialog();
 
     Dialog& withTitle(const QString& title) { _title = title; return *this; }
