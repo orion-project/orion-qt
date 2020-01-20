@@ -12,19 +12,21 @@ enum class LayoutItemMode { Layout, Widget, Stretch, Space };
 class LayoutItem
 {
 public:
-    LayoutItem(QWidget* widget) { _mode = LayoutItemMode::Widget, _widget = widget; }
-    LayoutItem(QLayout* layout) { _mode = LayoutItemMode::Layout, _layout = layout; }
+    LayoutItem(QWidget* widget) { _mode = LayoutItemMode::Widget; _widget = widget; }
+    LayoutItem(QLayout* layout) { _mode = LayoutItemMode::Layout; _layout = layout; }
 
     void addTo(QBoxLayout* layout) const
     {
         switch (_mode)
         {
         case LayoutItemMode::Layout:
-            layout->addLayout(_layout);
+            if (_layout)
+                layout->addLayout(_layout);
             break;
 
         case LayoutItemMode::Widget:
-            layout->addWidget(_widget);
+            if (_widget)
+                layout->addWidget(_widget);
             break;
 
         case LayoutItemMode::Stretch:
@@ -43,7 +45,7 @@ protected:
     LayoutItemMode _mode;
     union
     {
-        QLayout* _layout;
+        QLayout* _layout = nullptr;
         QWidget* _widget;
         int _space;
     };
@@ -60,7 +62,7 @@ public:
 class Space : public LayoutItem
 {
 public:
-    Space(int size) { _mode = LayoutItemMode::Space, _space = size; }
+    Space(int size) { _mode = LayoutItemMode::Space; _space = size; }
 };
 
 
