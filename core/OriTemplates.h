@@ -135,11 +135,6 @@ protected:
     int __breakable_block_counter = 0; \
     while (__breakable_block_counter++ < 1)
 
-//------------------------------------------------------------------------------
-//                               Result
-//------------------------------------------------------------------------------
-
 } // namespace Ori
-
 
 #endif // ORI_TEMPLATES_H
