@@ -320,17 +320,15 @@ void Dialog::makeDialog()
 
     // Dialog buttons
     auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel |
-        (_helpTopic.isEmpty() ? QDialogButtonBox::NoButton : QDialogButtonBox::Help));
+        (_onHelpRequested ? QDialogButtonBox::Help : QDialogButtonBox::NoButton));
     qApp->connect(buttonBox, &QDialogButtonBox::accepted, [this](){ this->acceptDialog(); });
     qApp->connect(buttonBox, &QDialogButtonBox::rejected, _dialog, &QDialog::reject);
     if (_connectOkToContentApply)
         qApp->connect(_dialog, SIGNAL(accepted()), _content, SLOT(apply()));
     for (auto signal: _okSignals)
         qApp->connect(signal.first ? signal.first : _content, signal.second, _dialog, SLOT(accept()));
-    if (!_helpTopic.isEmpty()) // TODO process help
-        qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, [this](){
-            info(QString("TODO help by topic '%1'").arg(this->_helpTopic));
-        });
+    if (_onHelpRequested)
+        qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, _onHelpRequested);
     dialogLayout->addWidget(buttonBox);
 
     for (auto button : buttonBox->buttons())

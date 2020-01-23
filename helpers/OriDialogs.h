@@ -82,7 +82,6 @@ public:
     ~Dialog();
 
     Dialog& withTitle(const QString& title) { _title = title; return *this; }
-    Dialog& withHelpTopic(const QString& topic) { _helpTopic = topic; return *this; }
     Dialog& withIconPath(const QString& iconPath) { _iconPath = iconPath; return *this; }
 
     /// Content should take all available place when dialog is resized.
@@ -111,6 +110,7 @@ public:
     Dialog& withActiveWidget(QWidget* w) { _activeWidget = w; return *this; }
 
     Dialog& withOnDlgReady(std::function<void()> handler) { _onDlgReady = handler; return *this; }
+    Dialog& withOnHelp(std::function<void()> handler) { _onHelpRequested = handler; return *this; }
 
     bool exec();
 
@@ -121,7 +121,7 @@ public:
 private:
     QDialog* _dialog = nullptr;
     QWidget *_content, *_backupContentParent;
-    QString _title, _helpTopic, _iconPath, _prompt;
+    QString _title, _iconPath, _prompt;
     QBoxLayout* _contentLayout;
     bool _ownContent = false;
     bool _fixedContentSize = true;
@@ -134,6 +134,7 @@ private:
     QWidget* _activeWidget = nullptr;
     QAbstractButton* _okButton = nullptr;
     std::function<void()> _onDlgReady;
+    std::function<void()> _onHelpRequested;
 
     void makeDialog();
     void acceptDialog();
