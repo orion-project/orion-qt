@@ -20,6 +20,7 @@ else {
 }
 
 HEADERS += \
+    $$PWD/core/OriArg.h \
     $$PWD/core/OriResult.h \
     $$PWD/widgets/OriActions.h \
     $$PWD/widgets/OriFlatToolBar.h \
