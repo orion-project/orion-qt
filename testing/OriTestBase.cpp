@@ -354,6 +354,7 @@ void TestBase::setMessage(const QString& msg)
 void TestBase::reset()
 {
     _result = TestResult::None;
+    _data.clear();
     _message.clear();
     _log.clear();
 }
@@ -377,25 +378,20 @@ void TestBase::logAssertion(const QString& assertion, const QString& condition,
                             const QString& expected, const QString& actual,
                             const QString &file, int line)
 {
-    auto msg = QStringLiteral
-                      ("Assertion : %1\n"
-                       "Condition : %2\n"
-                       "Expected  : %3\n"
-                       "Actual    : %4\n"
-                       "Location  : %5:%6\n")
-                    .arg(assertion)
-                    .arg(condition)
-                    .arg(expected)
-                    .arg(actual)
-                    .arg(file)
-                    .arg(line);
+    QString msg;
+    QTextStream stream(&msg);
+    stream << "Assertion : " << assertion << '\n'
+           << "Condition : " << condition << '\n'
+           << "Expected  : " << expected << '\n'
+           << "Actual    : " << actual << '\n'
+           << "Location  : " << file << ':' << line << '\n';
 
     if (_parent)
     {
         if (_kind == TestKind::BeforeAll)
-            _parent->logMessage(QString("BEFORE_ALL: Assertion:\n%2").arg(msg));
+            _parent->logMessage(QString("BEFORE_ALL: Assertion:\n%1").arg(msg));
         else if (_kind == TestKind::AfterAll)
-            _parent->logMessage(QString("AFTER_ALL: Assertion:\n%2").arg(msg));
+            _parent->logMessage(QString("AFTER_ALL: Assertion:\n%1").arg(msg));
         else _log.append(msg);
     }
     else _log.append(msg);
@@ -408,9 +404,9 @@ void TestBase::logMessage(const QString& msg)
     if (_parent)
     {
         if (_kind == TestKind::BeforeAll)
-            _parent->logMessage(QString("BEFORE_ALL: %2").arg(msg));
+            _parent->logMessage(QString("BEFORE_ALL: %1").arg(msg));
         else if (_kind == TestKind::AfterAll)
-            _parent->logMessage(QString("AFTER_ALL: %2").arg(msg));
+            _parent->logMessage(QString("AFTER_ALL: %1").arg(msg));
         else _log.append(msg);
     }
     else _log.append(msg);
