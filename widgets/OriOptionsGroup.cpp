@@ -116,7 +116,7 @@ QAbstractButton* OptionsGroup::getOption(int id) const
     if (!_options.contains(id))
     {
         qCritical() << "There is no option with id" << id;
-        return NULL;
+        return nullptr;
     }
     return _options[id];
 }

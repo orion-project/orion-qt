@@ -6,10 +6,11 @@
 namespace Ori {
 namespace Widgets {
 
+namespace {
 class ValueValidator : public QDoubleValidator
 {
 public:
-    ValueValidator(QObject* parent = 0) : QDoubleValidator(parent)
+    ValueValidator(QObject* parent = nullptr) : QDoubleValidator(parent)
     {
         setLocale(QLocale::C);
     }
@@ -21,7 +22,7 @@ public:
         return QDoubleValidator::validate(input, pos);
     }
 };
-
+}
 
 ValueEdit::ValueEdit(QWidget *parent) : QLineEdit(parent)
 {

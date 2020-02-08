@@ -16,11 +16,11 @@ class OptionsGroup : public QGroupBox
     Q_OBJECT
 
 public:
-    explicit OptionsGroup(bool radio = false, QWidget *parent = 0);
-    explicit OptionsGroup(const QString &title, bool radio = false, QWidget *parent = 0);
+    explicit OptionsGroup(bool radio = false, QWidget *parent = nullptr);
+    explicit OptionsGroup(const QString &title, bool radio = false, QWidget *parent = nullptr);
 #ifdef Q_COMPILER_INITIALIZER_LISTS
     explicit OptionsGroup(const QString &title, std::initializer_list<QString> options,
-        bool radio = false, QWidget *parent = 0);
+        bool radio = false, QWidget *parent = nullptr);
 #endif
 
     int option();
