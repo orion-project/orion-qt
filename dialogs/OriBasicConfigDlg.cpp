@@ -65,6 +65,9 @@ BasicConfigDialog::BasicConfigDialog(QWidget* parent) : QDialog(parent)
     layoutMain->setSpacing(12);
 #endif
     layoutMain->addLayout(layoutPages);
+#ifdef Q_OS_WIN
+    layoutMain->addSpacing(6);
+#endif
     layoutMain->addWidget(buttonBox);
     setLayout(layoutMain);
 }
