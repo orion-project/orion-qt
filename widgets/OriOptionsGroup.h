@@ -18,19 +18,17 @@ class OptionsGroup : public QGroupBox
 public:
     explicit OptionsGroup(bool radio = false, QWidget *parent = nullptr);
     explicit OptionsGroup(const QString &title, bool radio = false, QWidget *parent = nullptr);
-#ifdef Q_COMPILER_INITIALIZER_LISTS
     explicit OptionsGroup(const QString &title, std::initializer_list<QString> options,
         bool radio = false, QWidget *parent = nullptr);
-#endif
 
     int option();
     bool option(int id) const;
     void addOption(const QString &title);
     void addOption(int id, const QString &title);
-#ifdef Q_COMPILER_INITIALIZER_LISTS
     void addOptions(std::initializer_list<QString> options);
-#endif
     void setOption(int id, bool value = true);
+
+    void addControls(std::initializer_list<QObject*> controls);
 
 signals:
     void optionChecked(int id);
