@@ -17,10 +17,12 @@ class SvgView : public QWidget
   Q_OBJECT
 
 public:
-    explicit SvgView(QWidget *parent = 0);
-    explicit SvgView(const QString &prefix, QWidget *parent = 0);
+    explicit SvgView(QWidget *parent = nullptr);
+    explicit SvgView(const QString &prefix, QWidget *parent = nullptr);
 
     QSize sizeHint() const override;
+
+    static SvgView* makeStatic(const QString& path, QWidget *parent = nullptr);
 
 public slots:
     void clear();

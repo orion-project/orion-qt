@@ -8,6 +8,13 @@
 namespace Ori {
 namespace Widgets {
 
+SvgView* SvgView::makeStatic(const QString& path, QWidget *parent)
+{
+    auto v = new SvgView(parent);
+    v->load(path);
+    return v;
+}
+
 SvgView::SvgView(QWidget *parent) : SvgView(QString(), parent)
 {
 }

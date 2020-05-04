@@ -50,6 +50,16 @@ void InfoPanel::setInfo(const QString& text)
     _labelDescr->setText(text);
 }
 
+void InfoPanel::setMargin(int value)
+{
+    qobject_cast<QBoxLayout*>(layout())->setMargin(value);
+}
+
+void InfoPanel::setSpacing(int value)
+{
+    qobject_cast<QBoxLayout*>(layout())->setSpacing(value);
+}
+
 } // namespace Widgets
 } // namespace Ori
 
