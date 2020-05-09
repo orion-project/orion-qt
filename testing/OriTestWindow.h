@@ -28,7 +28,7 @@ class TestWindow : public QMainWindow
 
 public:
     explicit TestWindow(QWidget *parent = nullptr);
-    ~TestWindow();
+    ~TestWindow() override;
 
     void setTests(const TestSuite& tests);
 
@@ -38,17 +38,23 @@ signals:
 private:
     enum StatusInfoKind
     {
-        CountTotal,
-        CountRun,
-        CountPass,
-        CountFail
+        COUNT_TOTAL,
+        COUNT_RUN,
+        COUNT_PASS,
+        COUNT_FAIL
     };
     enum TestState
     {
-        TestUnknown,
-        TestRunning,
-        TestSuccess,
-        TestFail
+        TEST_UNKNOWN,
+        TEST_RUNNING,
+        TEST_SUCCESS,
+        TEST_FAIL
+    };
+    enum TreeColumns {
+        COL_NAME,
+        COL_DURATION,
+        COL_MESSAGE,
+        COL_COUNT
     };
 
     QAction *_actionRunAll, *_actionRunSelected, *_actionResetState, *_actionSaveLog;

@@ -337,7 +337,7 @@ class TestSession;
 typedef QVector<TestBase*> TestSuite;
 
 TestGroup* asGroup(TestBase* test);
-
+QString formatDuration(int64_t duration_ns);
 
 class TestLogger
 {
@@ -367,6 +367,7 @@ public:
     QString name() const { return _name; }
     void runTest();
     virtual void reset();
+    virtual int64_t duration() const { return _duration_ns; }
     TestResult result() const { return _result; }
     void setResult(bool pass);
     QString message() const { return _message; }
@@ -393,6 +394,7 @@ private:
     TestMethod _method = nullptr;
     QMap<QString, QVariant> _data;
     TestKind _kind = TestKind::Test;
+    int64_t _duration_ns = 0;
 
     friend class TestGroup;
     friend class TestSession;
@@ -406,6 +408,7 @@ public:
 
     const TestSuite& tests() const { return _tests; }
     void reset() override;
+    int64_t duration() const override;
 
     void append(TestBase *test);
 

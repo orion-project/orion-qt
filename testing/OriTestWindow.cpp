@@ -7,6 +7,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QDebug>
+#include <QHeaderView>
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
@@ -31,7 +32,13 @@ TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
     Ori::Settings s;
     s.restoreWindowGeometry("testWindow", this, QSize(640, 640));
 
-    testsTree = Ori::Gui::twoColumnTree(tr("Test"), tr("Message"));
+    testsTree = new QTreeWidget;
+    testsTree->setColumnCount(COL_COUNT);
+    testsTree->setAlternatingRowColors(true);
+    testsTree->setHeaderLabels({tr("Test"), tr("Duration"), tr("Message")});
+    testsTree->header()->setSectionResizeMode(COL_NAME, QHeaderView::ResizeToContents);
+    testsTree->header()->setSectionResizeMode(COL_DURATION, QHeaderView::ResizeToContents);
+    testsTree->header()->setSectionResizeMode(COL_MESSAGE, QHeaderView::Stretch);
     connect(testsTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
             this, SLOT(showItemLog(QTreeWidgetItem*)));
 
@@ -63,10 +70,10 @@ TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
     labelRun = new QLabel;
     labelPass = new QLabel;
     labelFail = new QLabel;
-    setStatusInfo(CountTotal, 0);
-    setStatusInfo(CountRun, 0);
-    setStatusInfo(CountPass, 0);
-    setStatusInfo(CountFail, 0);
+    setStatusInfo(COUNT_TOTAL, 0);
+    setStatusInfo(COUNT_RUN, 0);
+    setStatusInfo(COUNT_PASS, 0);
+    setStatusInfo(COUNT_FAIL, 0);
     statusBar()->addWidget(labelTotal);
     statusBar()->addWidget(labelRun);
     statusBar()->addWidget(labelPass);
@@ -97,8 +104,8 @@ TestWindow::~TestWindow()
     for (int i = 0; i < testsTree->topLevelItemCount(); i++)
     {
         QTreeWidgetItem* it = testsTree->topLevelItem(i);
-        s.setValue(it->text(0), it->isExpanded());
-        saveExpandedStates(it, it->text(0), s);
+        s.setValue(it->text(COL_NAME), it->isExpanded());
+        saveExpandedStates(it, it->text(COL_NAME), s);
     }
 
     s.storeWindowGeometry("testWindow", this);
@@ -113,7 +120,7 @@ void TestWindow::saveExpandedStates(QTreeWidgetItem* root, const QString& rootPa
         auto item = root->child(i);
         if (item->childCount() > 0)
         {
-            auto path = QString("%1/%2").arg(rootPath, item->text(0));
+            auto path = QString("%1/%2").arg(rootPath, item->text(COL_NAME));
             settings.setValue(path, item->isExpanded());
             saveExpandedStates(item, path, settings);
         }
@@ -160,15 +167,15 @@ void TestWindow::setTests(const TestSuite &tests)
     testsTree->clear();
     testItems.clear();
     setTests(nullptr, mergeGroupsByName(tests));
-    setStatusInfo(CountTotal, testsTotal);
+    setStatusInfo(COUNT_TOTAL, testsTotal);
 
     Ori::Settings s;
     s.beginGroup("TestsExpanded");
     for (int i = 0; i < testsTree->topLevelItemCount(); i++)
     {
         QTreeWidgetItem* it = testsTree->topLevelItem(i);
-        it->setExpanded(s.value(it->text(0), true).toBool());
-        loadExpandedStates(it, it->text(0), s);
+        it->setExpanded(s.value(it->text(COL_NAME), true).toBool());
+        loadExpandedStates(it, it->text(COL_NAME), s);
     }
 
     resetState();
@@ -181,7 +188,7 @@ void TestWindow::loadExpandedStates(QTreeWidgetItem* root, const QString& rootPa
         auto item = root->child(i);
         if (item->childCount() > 0)
         {
-            auto path = QString("%1/%2").arg(rootPath, item->text(0));
+            auto path = QString("%1/%2").arg(rootPath, item->text(COL_NAME));
             item->setExpanded(settings.value(path, true).toBool());
             loadExpandedStates(item, path, settings);
         }
@@ -190,20 +197,20 @@ void TestWindow::loadExpandedStates(QTreeWidgetItem* root, const QString& rootPa
 
 void TestWindow::setTests(QTreeWidgetItem *root, const TestSuite &tests)
 {
-    foreach (TestBase *test, tests)
+    for (TestBase *test: tests)
     {
         QTreeWidgetItem *item = new QTreeWidgetItem;
-        item->setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(test)));
-        item->setText(0, test->name());
+        item->setData(COL_NAME, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(test)));
+        item->setText(COL_NAME, test->name());
 
         TestGroup *group = dynamic_cast<TestGroup*>(test);
         if (group)
         {
             setTests(item, group->tests());
 
-            QFont font = item->font(0);
+            QFont font = item->font(COL_NAME);
             font.setBold(true);
-            item->setFont(0, font);
+            item->setFont(COL_NAME, font);
         }
         else
             testsTotal++;
@@ -226,24 +233,25 @@ void TestWindow::resetState()
         resetState(item);
     }
 
-    setStatusInfo(CountRun, 0);
-    setStatusInfo(CountPass, 0);
-    setStatusInfo(CountFail, 0);
+    setStatusInfo(COUNT_RUN, 0);
+    setStatusInfo(COUNT_PASS, 0);
+    setStatusInfo(COUNT_FAIL, 0);
 
     showItemLog(testsTree->currentItem());
 }
 
 void TestWindow::resetState(QTreeWidgetItem *root)
 {
-    setState(root, TestUnknown);
+    setState(root, TEST_UNKNOWN);
     root->setText(1, QString());
     for (int i = 0; i < root->childCount(); i++)
     {
         QTreeWidgetItem *child = root->child(i);
         if (child->childCount() == 0)
         {
-            setState(child, TestUnknown);
-            child->setText(1, QString());
+            setState(child, TEST_UNKNOWN);
+            child->setText(COL_DURATION, QString());
+            child->setText(COL_MESSAGE, QString());
         }
         else resetState(child);
     }
@@ -252,31 +260,31 @@ void TestWindow::resetState(QTreeWidgetItem *root)
 void TestWindow::setState(QTreeWidgetItem *item, TestState state)
 {
     static QMap<TestState, QIcon> testIcons({
-        { TestUnknown, QIcon(":/ori_test_states/undef") },
-        { TestRunning, QIcon(":/ori_test_states/run") },
-        { TestSuccess, QIcon(":/ori_test_states/pass") },
-        { TestFail, QIcon(":/ori_test_states/fail") },
+        { TEST_UNKNOWN, QIcon(":/ori_test_states/undef") },
+        { TEST_RUNNING, QIcon(":/ori_test_states/run") },
+        { TEST_SUCCESS, QIcon(":/ori_test_states/pass") },
+        { TEST_FAIL, QIcon(":/ori_test_states/fail") },
     });
-    item->setIcon(0, testIcons[state]);
+    item->setIcon(COL_NAME, testIcons[state]);
 }
 
 void TestWindow::setStatusInfo(StatusInfoKind kind, int value)
 {
     switch (kind)
     {
-    case CountTotal:
+    case COUNT_TOTAL:
         labelTotal->setText(QString("   Total: %1   ").arg(value));
         break;
 
-    case CountRun:
+    case COUNT_RUN:
         labelRun->setText(QString("   Run: %1   ").arg(value));
         break;
 
-    case CountPass:
+    case COUNT_PASS:
         labelPass->setText(QString("   Pass: %1   ").arg(value));
         break;
 
-    case CountFail:
+    case COUNT_FAIL:
         labelFail->setText(QString("   Fail: %1   ").arg(value));
         break;
     }
@@ -284,7 +292,7 @@ void TestWindow::setStatusInfo(StatusInfoKind kind, int value)
 
 TestBase* TestWindow::getTest(QTreeWidgetItem *item)
 {
-    return reinterpret_cast<TestBase*>(item->data(0, Qt::UserRole).value<void*>());
+    return reinterpret_cast<TestBase*>(item->data(COL_NAME, Qt::UserRole).value<void*>());
 }
 
 void TestWindow::runAll()
@@ -307,9 +315,9 @@ void TestWindow::runTestSession(QList<QTreeWidgetItem*> items)
 
     TestLogger::enable(_actionSaveLog->isChecked());
 
-    setStatusInfo(CountRun, 0);
-    setStatusInfo(CountPass, 0);
-    setStatusInfo(CountFail, 0);
+    setStatusInfo(COUNT_RUN, 0);
+    setStatusInfo(COUNT_PASS, 0);
+    setStatusInfo(COUNT_FAIL, 0);
 
     TestSuite tests;
     for (auto item : items)
@@ -346,7 +354,7 @@ void TestWindow::testRunning(TestBase* test)
     if (!testItems.contains(test)) return;
     auto item = testItems[test];
 
-    setState(item, TestRunning);
+    setState(item, TEST_RUNNING);
 }
 
 void TestWindow::testFinished(TestBase* test)
@@ -355,13 +363,14 @@ void TestWindow::testFinished(TestBase* test)
     auto item = testItems[test];
 
     auto res = test->result();
-    setState(item, res == TestResult::None ? TestUnknown : (
-        res == TestResult::Pass ? TestSuccess : TestFail));
-    item->setText(1, test->message());
+    setState(item, res == TestResult::None ? TEST_UNKNOWN : (
+        res == TestResult::Pass ? TEST_SUCCESS : TEST_FAIL));
+    item->setText(COL_MESSAGE, test->message());
+    item->setText(COL_DURATION, Ori::Testing::formatDuration(test->duration()));
 
-    setStatusInfo(CountRun, _session->testsRun());
-    setStatusInfo(CountPass, _session->testsPass());
-    setStatusInfo(CountFail, _session->testsFail());
+    setStatusInfo(COUNT_RUN, _session->testsRun());
+    setStatusInfo(COUNT_PASS, _session->testsPass());
+    setStatusInfo(COUNT_FAIL, _session->testsFail());
 
     progress->setValue(_session->testsRun());
 }

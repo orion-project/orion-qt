@@ -7,12 +7,26 @@
 #include <QStringList>
 #include <QTextStream>
 
+#include <chrono>
+
 namespace Ori {
 namespace Testing {
 
 TestGroup* asGroup(TestBase* test)
 {
     return dynamic_cast<TestGroup*>(test);
+}
+
+QString formatDuration(int64_t duration_ns)
+{
+    double d = duration_ns;
+    if (d/1e3 < 1)
+        return QString("%1 ns").arg(duration_ns);
+    if (d/1e6 < 1)
+        return QString("%1 µs").arg(d/1e3, 0, 'f', 3);
+    if (d/1e9 < 1)
+        return QString("%1 ms").arg(d/1e6, 0, 'f', 3);
+    return QString("%1 s").arg(d/1e9, 0, 'f', 3);
 }
 
 //------------------------------------------------------------------------------
@@ -285,6 +299,14 @@ void TestGroup::reset()
     if (_afterEach) _afterEach->reset();
 }
 
+int64_t TestGroup::duration() const
+{
+    int64_t total = 0;
+    for (auto test : _tests)
+        total += test->duration();
+    return total;
+}
+
 //------------------------------------------------------------------------------
 //                                 TestBase
 //------------------------------------------------------------------------------
@@ -353,6 +375,7 @@ void TestBase::setMessage(const QString& msg)
 
 void TestBase::reset()
 {
+    _duration_ns = 0;
     _result = TestResult::None;
     _data.clear();
     _message.clear();
@@ -361,7 +384,12 @@ void TestBase::reset()
 
 void TestBase::runTest()
 {
+    auto start = std::chrono::high_resolution_clock::now();
+
     run();
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    _duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
 
     // Assertions only assign Fail result
     if (_result != TestResult::Fail)
