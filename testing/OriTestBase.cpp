@@ -382,13 +382,45 @@ void TestBase::reset()
     _log.clear();
 }
 
+#ifdef Q_OS_WIN
+// In MinGW (7.3 at the moment) on Windows, the system timer is used
+// for `std::chrono::high_resolution_clock` which has a bad resolution.
+// This implementation of the true high resolution clock for Windows is from here:
+// https://stackoverflow.com/questions/16299029/resolution-of-stdchronohigh-resolution-clock-doesnt-correspond-to-measureme
+#include <windows.h>
+namespace
+{
+    const int64_t __frequency = []() -> int64_t
+    {
+        LARGE_INTEGER frequency;
+        QueryPerformanceFrequency(&frequency);
+        return frequency.QuadPart;
+    }();
+
+    struct WindowsHighResClock
+    {
+        typedef std::chrono::duration<int64_t, std::nano> duration;
+        typedef std::chrono::time_point<WindowsHighResClock> time_point;
+        static time_point now()
+        {
+            LARGE_INTEGER count;
+            QueryPerformanceCounter(&count);
+            return time_point(duration(count.QuadPart * static_cast<int64_t>(std::nano::den) / __frequency));
+        }
+    };
+} // namespace
+using HighResClock = WindowsHighResClock;
+#else
+using HighResClock = std::chrono::high_resolution_clock;
+#endif
+
 void TestBase::runTest()
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = HighResClock::now();
 
     run();
 
-    auto stop = std::chrono::high_resolution_clock::now();
+    auto stop = HighResClock::now();
     _duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
 
     // Assertions only assign Fail result
