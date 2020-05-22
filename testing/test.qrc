@@ -6,6 +6,7 @@
         <file alias="expand_tests">img/expand_all.svg</file>
         <file alias="collapse_tests">img/collapse_all.svg</file>
         <file alias="reset_tests">img/reset_all.svg</file>
+        <file alias="stop">img/stop.svg</file>
     </qresource>
     <qresource prefix="/ori_test_states">
         <file alias="pass">img/test_pass_16.png</file>

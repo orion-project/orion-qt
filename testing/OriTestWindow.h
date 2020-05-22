@@ -41,7 +41,7 @@ private:
         COUNT_TOTAL,
         COUNT_RUN,
         COUNT_PASS,
-        COUNT_FAIL
+        COUNT_FAIL,
     };
     enum TestState
     {
@@ -57,13 +57,15 @@ private:
         COL_COUNT
     };
 
-    QAction *_actionRunAll, *_actionRunSelected, *_actionResetState, *_actionSaveLog;
-    QLabel *labelTotal, *labelRun, *labelPass, *labelFail;
+    QAction *_actionRunAll, *_actionRunSelected, *_actionResetState, *_actionSaveLog, *_actionStop;
+    QLabel *labelTotal, *labelRun, *labelPass, *labelFail, *labelDuration;
     QTreeWidget *testsTree;
     QPlainTextEdit *testLog;
     QProgressBar *progress;
     QMap<TestBase*, QTreeWidgetItem*> testItems;
-    QThread* _sessionThread  = nullptr;
+    QThread* _sessionThread = nullptr;
+    QTimer* _stopTimer = nullptr;
+    int _stopTries = 0;
     TestSession* _session = nullptr;
     int testsTotal;
 
@@ -71,6 +73,7 @@ private:
     void resetState(QTreeWidgetItem *root);
     void setState(QTreeWidgetItem *item, TestState state);
     void setStatusInfo(StatusInfoKind kind, int value);
+    void setStatusDuration(int64_t tests, int64_t session);
     void runTestSession(QList<QTreeWidgetItem *> items);
     void runTest(QTreeWidgetItem *item, TestSession &session, bool isLastInGroup);
     TestBase* getTest(QTreeWidgetItem *item);
@@ -86,6 +89,8 @@ private slots:
     void runAll();
     void runSelected();
     void resetState();
+    void stopExecution();
+    void stopTimerTick();
     void showItemLog(QTreeWidgetItem *item);
 };
 

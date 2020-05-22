@@ -432,11 +432,14 @@ public:
     ~TestSession();
 
     void run();
+    void stop() { _stopRequested = true; }
 
     int testsCount() const { return countTestsInGroup(_tests); }
     int testsRun() const { return _testsRun; }
     int testsPass() const { return _testsPass; }
     int testsFail() const { return _testsFail; }
+    int64_t sessionDuration() const { return _sessionDuration; }
+    int64_t testsDuration() const { return _testsDuration; }
 
     bool emitSignals = false;
 
@@ -450,6 +453,9 @@ private:
     int _testsRun = 0;
     int _testsPass = 0;
     int _testsFail = 0;
+    int64_t _sessionDuration = 0;
+    int64_t _testsDuration = 0;
+    bool _stopRequested = false;
 
     void runGroup(const TestSuite& tests);
     int countTestsInGroup(const TestSuite& tests) const;

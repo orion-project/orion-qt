@@ -12,6 +12,38 @@
 namespace Ori {
 namespace Testing {
 
+#ifdef Q_OS_WIN
+// In MinGW (7.3 at the moment) on Windows, the system timer is used
+// for `std::chrono::high_resolution_clock` which has a bad resolution.
+// This implementation of the true high resolution clock for Windows is from here:
+// https://stackoverflow.com/questions/16299029/resolution-of-stdchronohigh-resolution-clock-doesnt-correspond-to-measureme
+#include <windows.h>
+namespace
+{
+    const int64_t __frequency = []() -> int64_t
+    {
+        LARGE_INTEGER frequency;
+        QueryPerformanceFrequency(&frequency);
+        return frequency.QuadPart;
+    }();
+
+    struct WindowsHighResClock
+    {
+        typedef std::chrono::duration<int64_t, std::nano> duration;
+        typedef std::chrono::time_point<WindowsHighResClock> time_point;
+        static time_point now()
+        {
+            LARGE_INTEGER count;
+            QueryPerformanceCounter(&count);
+            return time_point(duration(count.QuadPart * static_cast<int64_t>(std::nano::den) / __frequency));
+        }
+    };
+} // namespace
+using HighResClock = WindowsHighResClock;
+#else
+using HighResClock = std::chrono::high_resolution_clock;
+#endif
+
 TestGroup* asGroup(TestBase* test)
 {
     return dynamic_cast<TestGroup*>(test);
@@ -43,6 +75,11 @@ void TestLogger::reset()
 
 void TestLogger::write(const QString& msg)
 {
+    // TODO: Such open-write-close logging slows down the test execution
+    // (e.g. a session finishes in 4s without logs and in 24s with logs).
+    // Should be replaced with writing into memory buffer
+    // but concern is we won't see any logs if test session crashes
+    // so it might be better to move file writing in a separate thread
     QFile file(fileName());
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append))
         return;
@@ -80,8 +117,12 @@ TestSession::TestSession(const TestSuite& tests): _tests(tests)
 TestSession::~TestSession()
 {
     TEST_LOGGER(QString("STAT: tests: %1, passed: %2, failed: %3\n"
+                        "Summary tests duration: %4\n"
+                        "Total session duration: %5\n"
                         "***************** END ******************\n")
-                      .arg(_testsRun).arg(_testsPass).arg(_testsFail));
+                      .arg(_testsRun).arg(_testsPass).arg(_testsFail)
+                      .arg(formatDuration(_testsDuration))
+                      .arg(formatDuration(_sessionDuration)));
 }
 
 void TestSession::run()
@@ -89,6 +130,11 @@ void TestSession::run()
     _testsRun = 0;
     _testsFail = 0;
     _testsPass = 0;
+    _sessionDuration = 0;
+    _testsDuration = 0;
+    _stopRequested = false;
+
+    auto start = HighResClock::now();
 
     for (auto test : _tests)
     {
@@ -106,6 +152,9 @@ void TestSession::run()
 
     runGroup(_tests);
 
+    auto stop = HighResClock::now();
+    _sessionDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+
     if (emitSignals) emit sessionFinished();
 }
 
@@ -113,7 +162,12 @@ void TestSession::runGroup(const TestSuite& tests)
 {
     int count = tests.size();
     for (int i = 0; i < count; i++)
+    {
         runTest(tests.at(i), i == count-1);
+
+        if (_stopRequested)
+            return;
+    }
 }
 
 void TestSession::runTest(TestBase *test, bool isLastInGroup)
@@ -199,6 +253,9 @@ void TestSession::runTest(TestBase *test, bool isLastInGroup)
         case TestResult::Fail: _testsFail++; break;
         default: break;
         }
+
+        _testsDuration += test->duration();
+        TEST_LOGGER(QStringLiteral("Executed in %1").arg(formatDuration(test->duration())));
 
         notifyTestFinished(test);
     }
@@ -381,38 +438,6 @@ void TestBase::reset()
     _message.clear();
     _log.clear();
 }
-
-#ifdef Q_OS_WIN
-// In MinGW (7.3 at the moment) on Windows, the system timer is used
-// for `std::chrono::high_resolution_clock` which has a bad resolution.
-// This implementation of the true high resolution clock for Windows is from here:
-// https://stackoverflow.com/questions/16299029/resolution-of-stdchronohigh-resolution-clock-doesnt-correspond-to-measureme
-#include <windows.h>
-namespace
-{
-    const int64_t __frequency = []() -> int64_t
-    {
-        LARGE_INTEGER frequency;
-        QueryPerformanceFrequency(&frequency);
-        return frequency.QuadPart;
-    }();
-
-    struct WindowsHighResClock
-    {
-        typedef std::chrono::duration<int64_t, std::nano> duration;
-        typedef std::chrono::time_point<WindowsHighResClock> time_point;
-        static time_point now()
-        {
-            LARGE_INTEGER count;
-            QueryPerformanceCounter(&count);
-            return time_point(duration(count.QuadPart * static_cast<int64_t>(std::nano::den) / __frequency));
-        }
-    };
-} // namespace
-using HighResClock = WindowsHighResClock;
-#else
-using HighResClock = std::chrono::high_resolution_clock;
-#endif
 
 void TestBase::runTest()
 {
