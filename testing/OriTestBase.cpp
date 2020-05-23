@@ -51,14 +51,25 @@ TestGroup* asGroup(TestBase* test)
 
 QString formatDuration(int64_t duration_ns)
 {
+    QString time, unit;
     double d = duration_ns;
-    if (d/1e3 < 1)
-        return QString("%1 ns").arg(duration_ns);
-    if (d/1e6 < 1)
-        return QString("%1 µs").arg(d/1e3, 0, 'f', 3);
-    if (d/1e9 < 1)
-        return QString("%1 ms").arg(d/1e6, 0, 'f', 3);
-    return QString("%1 s").arg(d/1e9, 0, 'f', 3);
+    if (d/1e3 < 1) {
+        time = QString::number(duration_ns);
+        unit = QStringLiteral(" ns");
+    } else if (d/1e6 < 1) {
+        time = QString::number(d/1e3, 'f', 3);
+        unit = QStringLiteral(" µs");
+    } else if (d/1e9 < 1) {
+        time = QString::number(d/1e6, 'f', 3);
+        unit = QStringLiteral(" ms");
+    } else {
+        time = QString::number(d/1e9, 'f', 3);
+        unit = QStringLiteral(" s");
+    }
+    if (time.contains('.'))
+        while (time.endsWith('0'))
+            time.chop(1);
+    return time + unit;
 }
 
 //------------------------------------------------------------------------------
