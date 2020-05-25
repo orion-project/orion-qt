@@ -103,8 +103,6 @@ TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
 
 TestWindow::~TestWindow()
 {
-    _sessionThread->quit();
-
     Ori::Settings s;
 
     s.beginGroup("TestsExpanded");
@@ -117,7 +115,11 @@ TestWindow::~TestWindow()
 
     s.storeWindowGeometry("testWindow", this);
 
-    _sessionThread->wait(10000);
+    if (_sessionThread->isRunning())
+    {
+        _sessionThread->quit();
+        _sessionThread->wait(10000);
+    }
 }
 
 void TestWindow::saveExpandedStates(QTreeWidgetItem* root, const QString& rootPath, Ori::Settings& settings)
