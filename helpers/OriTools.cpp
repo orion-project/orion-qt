@@ -4,6 +4,9 @@
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 #include <QUrlQuery>
 #endif
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+#include <QRandomGenerator>
+#endif
 
 //--------------------------------------------------------------------------------------------------
 
@@ -61,6 +64,14 @@ QColor blend(const QColor& color1, const QColor& color2, qreal r)
                   color1.blue() * (1-r) + color2.blue()*r,
                   255);
 }
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+namespace {
+inline int qrand() {
+    return QRandomGenerator::global()->generate();
+}
+}
+#endif
 
 QColor random()
 {

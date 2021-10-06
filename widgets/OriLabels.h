@@ -15,8 +15,8 @@ class Label : public QLabel
     Q_OBJECT
 
 public:
-    explicit Label(QWidget *parent = nullptr, Qt::WindowFlags f = nullptr);
-    explicit Label(const QString &text, QWidget *parent = nullptr, Qt::WindowFlags f = nullptr);
+    explicit Label(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
+    explicit Label(const QString &text, QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
 
     void setSizeHint(QSize size);
     void setSizeHint(int w, int h);
@@ -47,8 +47,8 @@ class LabelSeparator : public QLabel
     Q_OBJECT
 
 public:
-    explicit LabelSeparator(QWidget *parent = nullptr, Qt::WindowFlags f = nullptr);
-    explicit LabelSeparator(const QString &text, QWidget *parent = nullptr, Qt::WindowFlags f = nullptr);
+    explicit LabelSeparator(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
+    explicit LabelSeparator(const QString &text, QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
     explicit LabelSeparator(const QString &text, bool bold);
 
 protected:
@@ -64,7 +64,7 @@ class ImagedLabel : public QWidget
     Q_OBJECT
 
 public:
-    explicit ImagedLabel(QWidget *parent = nullptr, Qt::WindowFlags f = nullptr);
+    explicit ImagedLabel(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
 
     void setContent(const QString& text, const QString& imagePath = QString());
 

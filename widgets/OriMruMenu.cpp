@@ -93,14 +93,14 @@ MruListWidget::MruListWidget(MruList *mru, QWidget *parent) : QWidget(parent), _
     _layout->addWidget(_header);
 
     auto layoutCenter = new QHBoxLayout;
-    layoutCenter->setMargin(0);
+    layoutCenter->setContentsMargins(0, 0, 0, 0);
     layoutCenter->setSpacing(0);
     layoutCenter->addStretch();
     layoutCenter->addLayout(_layout);
     layoutCenter->addStretch();
 
     auto layoutMain = new QVBoxLayout;
-    layoutMain->setMargin(0);
+    layoutMain->setContentsMargins(0, 0, 0, 0);
     layoutMain->setSpacing(0);
     layoutMain->addStretch();
     layoutMain->addLayout(layoutCenter);

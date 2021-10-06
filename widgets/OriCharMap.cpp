@@ -23,7 +23,7 @@ CharMap::CharMap(QWidget *parent) : QWidget(parent)
     connect(&scrollBar, SIGNAL(valueChanged(int)), this, SLOT(setTopRow(int)));
 
     QHBoxLayout *layout = new QHBoxLayout;
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addStretch();
     layout->addWidget(&scrollBar);
     setLayout(layout);
@@ -48,8 +48,12 @@ void CharMap::setSize(const QString &fontSize)
 
 void CharMap::setStyle(const QString &fontStyle)
 {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+    displayFont = QFontDatabase::font(displayFont.family(), fontStyle, displayFont.pointSize());
+#else
     QFontDatabase fontDatabase;
     displayFont = fontDatabase.font(displayFont.family(), fontStyle, displayFont.pointSize());
+#endif
     displayFont.setStyleStrategy(QFont::NoFontMerging);
     updateView(true);
 }
@@ -124,7 +128,11 @@ void CharMap::mousePressEvent(QMouseEvent *event)
 void CharMap::wheelEvent(QWheelEvent *event)
 {
     event->accept();
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+    topRow -= event->pixelDelta().manhattanLength() / 120;
+#else
     topRow -= event->delta() / 120;
+#endif
     if(topRow < 0) topRow = 0;
     if(topRow > totalRows - rowCount)
         topRow = totalRows - rowCount;

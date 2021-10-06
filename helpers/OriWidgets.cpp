@@ -1,6 +1,7 @@
 #include "OriWidgets.h"
 
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QBoxLayout>
 #include <QComboBox>
@@ -284,7 +285,7 @@ QBoxLayout* layoutV(QWidget* parent, const std::initializer_list<QObject*>& item
 
 QBoxLayout* initGeometry(QBoxLayout* layout, int margin, int spacing)
 {
-    if (margin >= 0) layout->setMargin(margin);
+    if (margin >= 0) layout->setContentsMargins(margin, margin, margin, margin);
     if (spacing >= 0) layout->setSpacing(spacing);
     return layout;
 }

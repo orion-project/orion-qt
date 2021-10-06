@@ -79,7 +79,7 @@ public:
         add(items);
     }
 
-    LayoutBox& setMargin(int value) { _layout->setMargin(value); return *this; }
+    LayoutBox& setMargin(int value) { _layout->setContentsMargins(value, value, value, value); return *this; }
     LayoutBox& setSpacing(int value) { boxLayout()->setSpacing(value); return *this; }
     LayoutBox& setStretchFactor(QWidget* w, int s) { boxLayout()->setStretchFactor(w, s); return *this; }
     LayoutBox& useFor(QWidget* parent) { parent->setLayout(_layout); return *this; }

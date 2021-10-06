@@ -16,7 +16,7 @@ TableWidgetBase::TableWidgetBase(QWidget *parent) : QWidget(parent)
     itemDelegate = NULL;
 
     mainLayout = new QVBoxLayout;
-    mainLayout->setMargin(0);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
     setLayout(mainLayout);
 }

@@ -123,7 +123,7 @@ ImagedLabel::ImagedLabel(QWidget *parent, Qt::WindowFlags f) : QWidget(parent, f
     _text = new QLabel;
 
     QHBoxLayout *layout = new QHBoxLayout;
-    layout->setMargin(2);
+    layout->setContentsMargins(2, 2, 2, 2);
     layout->setSpacing(3);
     layout->addWidget(_icon);
     layout->addWidget(_text);

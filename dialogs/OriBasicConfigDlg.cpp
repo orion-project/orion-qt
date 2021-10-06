@@ -147,7 +147,11 @@ void BasicConfigDialog::adjustPageList()
         QStringList strs = pageList->item(i)->text().split('\n');
         for (int j = 0; j < strs.count(); j++)
         {
+        #if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
+            width = fm.horizontalAdvance(strs[j]);
+        #else
             width = fm.width(strs[j]);
+        #endif
             if(width > max_width) max_width = width;
         }
     }
@@ -236,7 +240,7 @@ BasicConfigPage::BasicConfigPage(const QString& title,
     _helpTopic = helpTopic;
 
     _mainLayout = new QVBoxLayout(this);
-    _mainLayout->setMargin(0);
+    _mainLayout->setContentsMargins(0, 0, 0, 0);
 }
 
 void BasicConfigPage::add(std::initializer_list<QObject*> items)

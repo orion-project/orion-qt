@@ -168,7 +168,7 @@ void PopupGrid::paintEvent(QPaintEvent *event)
 
     //finally the rest of the space
     p.setClipRegion(emptyArea);
-    p.fillRect(rect(), palette().background());
+    p.fillRect(rect(), palette().window());
 }
 
 void PopupGrid::closeEvent(QCloseEvent *event)

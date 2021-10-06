@@ -145,7 +145,7 @@ QString inputText(const QString& label, const QString& value, bool *ok)
 
     QWidget content;
     auto layout = new QVBoxLayout(&content);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(new QLabel(label));
     layout->addWidget(editor);
 
@@ -190,7 +190,7 @@ bool showDialogWithPrompt(Qt::Orientation orientation, const QString& prompt, QW
         layout = new QVBoxLayout(&content);
     else
         layout = new QHBoxLayout(&content);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(new QLabel(prompt));
     layout->addWidget(widget);
     bool ok = Dialog(&content, false)
@@ -299,7 +299,7 @@ void Dialog::makeDialog()
             _contentLayout = new QVBoxLayout;
         else
             _contentLayout = new QHBoxLayout;
-        _contentLayout->setMargin(0);
+        _contentLayout->setContentsMargins(0, 0, 0, 0);
         _contentLayout->addWidget(new QLabel(_prompt));
         dialogLayout->addLayout(_contentLayout);
     }

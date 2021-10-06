@@ -2,7 +2,9 @@
 
 #include <QApplication>
 #include <QDebug>
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
 #include <QDesktopWidget>
+#endif
 #include <QFileInfo>
 #include <QIcon>
 #include <QScreen>
@@ -48,10 +50,14 @@ QScreen* findScreenOrPrimary(QWidget* w)
 {
     if (!w)
         return QGuiApplication::primaryScreen();
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+    return QGuiApplication::screenAt(w->geometry().topLeft());
+#else
     int screenNumber = qApp->desktop()->screenNumber(w);
     if (screenNumber < 0)
         return QGuiApplication::primaryScreen();
     return QGuiApplication::screens().at(screenNumber);
+#endif
 }
 
 void moveToScreenCenter(QWidget* w, QWidget* screenOfThisWidget)

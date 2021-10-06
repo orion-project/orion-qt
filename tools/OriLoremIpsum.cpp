@@ -2,6 +2,10 @@
 
 #include <QStringList>
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+#include <QRandomGenerator>
+#endif
+
 namespace LoremIpsum {
 
 const QList<QString>& words()
@@ -82,7 +86,13 @@ const QList<QString>& domains()
 
 QString getItem(const QList<QString>& list)
 {
-    return list.at(qrand() % list.size());
+    return list.at(
+    #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+        QRandomGenerator::global()->generate()
+    #else
+        qrand()
+    #endif
+        % list.size());
 }
 
 QString makeText(int numWords)

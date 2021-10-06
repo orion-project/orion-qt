@@ -30,12 +30,12 @@ SelectableTile::SelectableTile(QWidget *parent) : QFrame(parent)
     _content->setAutoFillBackground(true);
 
     auto contentLayout = new QVBoxLayout(_content);
-    contentLayout->setMargin(6);
+    contentLayout->setContentsMargins(6, 6, 6, 6);
     contentLayout->addWidget(_iconLabel);
     contentLayout->addWidget(_titleLabel);
 
     auto mainLayout = new QVBoxLayout(this);
-    mainLayout->setMargin(3);
+    mainLayout->setContentsMargins(3, 3, 3, 3);
     mainLayout->addWidget(_content);
 
     updateColor();
@@ -118,7 +118,7 @@ void SelectableTile::updateColor()
 
     if (!focused and !_selected)
     {
-        p.setColor(QPalette::Background, baseColor);
+        p.setColor(QPalette::Window, baseColor);
         _content->setPalette(p);
         setPalette(p);
         return;
@@ -128,18 +128,18 @@ void SelectableTile::updateColor()
 
     if (_selected)
     {
-        p.setColor(QPalette::Background, selectedColor);
+        p.setColor(QPalette::Window, selectedColor);
         setPalette(p);
 
         auto color = Ori::Color::blend(baseColor, selectedColor, focused ? 0.2 : 0.1);
-        p.setColor(QPalette::Background, color);
+        p.setColor(QPalette::Window, color);
         _content->setPalette(p);
         return;
     }
 
     // else focused
     auto color = Ori::Color::blend(baseColor, selectedColor, 0.1);
-    p.setColor(QPalette::Background, color);
+    p.setColor(QPalette::Window, color);
     _content->setPalette(p);
     setPalette(color);
 }
