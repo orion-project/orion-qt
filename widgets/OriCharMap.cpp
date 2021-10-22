@@ -128,7 +128,7 @@ void CharMap::mousePressEvent(QMouseEvent *event)
 void CharMap::wheelEvent(QWheelEvent *event)
 {
     event->accept();
-#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
     topRow -= event->pixelDelta().manhattanLength() / 120;
 #else
     topRow -= event->delta() / 120;
