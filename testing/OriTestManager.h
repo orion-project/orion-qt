@@ -38,8 +38,9 @@ inline int runWindow(QApplication& app, TestSuite tests)
 
 inline int run(QApplication& app, TestSuite tests)
 {
+#if (QT_VERSION < QT_VERSION_CHECK(5, 15, 0))
     qsrand(QDateTime::currentDateTime().toTime_t());
-
+#endif
     int result = noGui()
         ? runConsole(tests)
         : runWindow(app, tests);
