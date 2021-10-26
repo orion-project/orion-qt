@@ -22,6 +22,7 @@ else {
 HEADERS += \
     $$PWD/core/OriArg.h \
     $$PWD/core/OriResult.h \
+    $$PWD/helpers/OriTheme.h \
     $$PWD/widgets/OriActions.h \
     $$PWD/widgets/OriFlatToolBar.h \
     $$PWD/widgets/OriCharMap.h \
@@ -60,6 +61,7 @@ HEADERS += \
     $$PWD/helpers/OriLayouts.h
 
 SOURCES += \
+    $$PWD/helpers/OriTheme.cpp \
     $$PWD/widgets/OriActions.cpp \
     $$PWD/widgets/OriCharMap.cpp \
     $$PWD/widgets/OriInfoPanel.cpp \
