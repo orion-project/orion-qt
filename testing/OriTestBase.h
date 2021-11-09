@@ -117,7 +117,7 @@ inline QString formatPtr(const void* ptr)
         test->setResult(false); \
         test->setMessage("Value is not equal to expected" ); \
         test->logAssertion("ARE STRINGS EQUAL", \
-                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           QString("%1 == %2").arg(#expr_value, #expr_expected), \
                            QString(__test_var_expected__), \
                            QString(__test_var_value__), __FILE__, __LINE__); \
         return; \
@@ -131,7 +131,7 @@ inline QString formatPtr(const void* ptr)
         test->setResult(false); \
         test->setMessage("Pointer is not equal to expected" ); \
         test->logAssertion("ARE POINTERS EQUAL", \
-                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           QString("%1 == %2").arg(#expr_value, #expr_expected), \
                            formatPtr(__test_var_expected__), \
                            formatPtr(__test_var_value__), \
                            __FILE__, __LINE__); \
@@ -146,7 +146,7 @@ inline QString formatPtr(const void* ptr)
         test->setResult(false); \
         test->setMessage("Pointers are equal" ); \
         test->logAssertion("ARE NOT POINTERS EQUAL", \
-                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           QString("%1 == %2").arg(#expr_value, #expr_expected), \
                            formatPtr(__test_var_expected__), \
                            formatPtr(__test_var_value__), \
                            __FILE__, __LINE__); \
@@ -161,7 +161,7 @@ inline QString formatPtr(const void* ptr)
         test->setResult(false); \
         test->setMessage("Value is not equal to expected" ); \
         test->logAssertion("ARE INTEGERS EQUAL", \
-                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           QString("%1 == %2").arg(#expr_value, #expr_expected), \
                            QString::number(__test_var_expected__), \
                            QString::number(__test_var_value__), \
                            __FILE__, __LINE__); \
@@ -176,7 +176,7 @@ inline QString formatPtr(const void* ptr)
         test->setResult(false); \
         test->setMessage("Value is not equal to expected" ); \
         test->logAssertion("ARE DOUBLES EQUAL", \
-                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           QString("%1 == %2").arg(#expr_value, #expr_expected), \
                            QString::number(__test_var_expected__, 'g', 16), \
                            QString::number(__test_var_value__, 'g', 16), \
                            __FILE__, __LINE__); \
@@ -192,7 +192,7 @@ inline QString formatPtr(const void* ptr)
         test->setResult(false); \
         test->setMessage("Value is not equal to expected" ); \
         test->logAssertion("ARE DOUBLES NEAR EQUAL", \
-                           QString("%1 == %2").arg(#expr_value).arg(#expr_expected), \
+                           QString("%1 == %2").arg(#expr_value, #expr_expected), \
                            QString::number(__test_var_expected__, 'g', 16), \
                            QString::number(__test_var_value__, 'g', 16), \
                            __FILE__, __LINE__); \
@@ -207,7 +207,7 @@ inline QString formatPtr(const void* ptr)
         test->setResult(false); \
         test->setMessage("Values are equal" ); \
         test->logAssertion("ARE DOUBLES NOT EQUAL", \
-                           QString("%1 != %2").arg(#expr_value).arg(#expr_expected), \
+                           QString("%1 != %2").arg(#expr_value, #expr_expected), \
                            QString("Any value other than %1") \
                                 .arg(__test_var_expected__, 0, 'g', 16), \
                            QString::number(__test_var_value__, 'g', 16), \
@@ -233,7 +233,7 @@ inline QString formatPtr(const void* ptr)
         test->setResult(false); \
         test->setMessage("Data is not equal to expected"); \
         test->logAssertion("ARE VARIANTS EQUAL",  \
-                           QString("data[%1] == %2").arg(#key_name).arg(#expr_expected), \
+                           QString("data[%1] == %2").arg(#key_name, #expr_expected), \
                            __test_var_expected__.toString(), \
                            __test_var_value__.toString(), \
                            __FILE__, __LINE__); \
