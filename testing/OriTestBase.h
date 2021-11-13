@@ -337,7 +337,6 @@ class TestSession;
 typedef QVector<TestBase*> TestSuite;
 
 TestGroup* asGroup(TestBase* test);
-QString formatDuration(int64_t duration_ns);
 
 class TestLogger
 {

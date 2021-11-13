@@ -1,4 +1,5 @@
 #include "OriTestBase.h"
+#include "OriTimeMeter.h"
 
 #include <QApplication>
 #include <QDateTime>
@@ -7,69 +8,12 @@
 #include <QStringList>
 #include <QTextStream>
 
-#include <chrono>
-
 namespace Ori {
 namespace Testing {
-
-#ifdef Q_OS_WIN
-// In MinGW (7.3 at the moment) on Windows, the system timer is used
-// for `std::chrono::high_resolution_clock` which has a bad resolution.
-// This implementation of the true high resolution clock for Windows is from here:
-// https://stackoverflow.com/questions/16299029/resolution-of-stdchronohigh-resolution-clock-doesnt-correspond-to-measureme
-#include <windows.h>
-namespace
-{
-    const int64_t __frequency = []() -> int64_t
-    {
-        LARGE_INTEGER frequency;
-        QueryPerformanceFrequency(&frequency);
-        return frequency.QuadPart;
-    }();
-
-    struct WindowsHighResClock
-    {
-        typedef std::chrono::duration<int64_t, std::nano> duration;
-        typedef std::chrono::time_point<WindowsHighResClock> time_point;
-        static time_point now()
-        {
-            LARGE_INTEGER count;
-            QueryPerformanceCounter(&count);
-            return time_point(duration(count.QuadPart * static_cast<int64_t>(std::nano::den) / __frequency));
-        }
-    };
-} // namespace
-using HighResClock = WindowsHighResClock;
-#else
-using HighResClock = std::chrono::high_resolution_clock;
-#endif
 
 TestGroup* asGroup(TestBase* test)
 {
     return dynamic_cast<TestGroup*>(test);
-}
-
-QString formatDuration(int64_t duration_ns)
-{
-    QString time, unit;
-    double d = duration_ns;
-    if (d/1e3 < 1) {
-        time = QString::number(duration_ns);
-        unit = QStringLiteral(" ns");
-    } else if (d/1e6 < 1) {
-        time = QString::number(d/1e3, 'f', 3);
-        unit = QStringLiteral(" µs");
-    } else if (d/1e9 < 1) {
-        time = QString::number(d/1e6, 'f', 3);
-        unit = QStringLiteral(" ms");
-    } else {
-        time = QString::number(d/1e9, 'f', 3);
-        unit = QStringLiteral(" s");
-    }
-    if (time.contains('.'))
-        while (time.endsWith('0'))
-            time.chop(1);
-    return time + unit;
 }
 
 //------------------------------------------------------------------------------
@@ -132,8 +76,8 @@ TestSession::~TestSession()
                         "Total session duration: %5\n"
                         "***************** END ******************\n")
                       .arg(_testsRun).arg(_testsPass).arg(_testsFail)
-                      .arg(formatDuration(_testsDuration))
-                      .arg(formatDuration(_sessionDuration)));
+                      .arg(formatDuration(_testsDuration),
+                           formatDuration(_sessionDuration)));
 }
 
 void TestSession::run()
@@ -145,9 +89,9 @@ void TestSession::run()
     _testsDuration = 0;
     _stopRequested = false;
 
-    auto start = HighResClock::now();
+    TimeMeter tm;
 
-    for (auto test : _tests)
+    foreach (auto test, _tests)
     {
         test->reset();
 
@@ -163,8 +107,7 @@ void TestSession::run()
 
     runGroup(_tests);
 
-    auto stop = HighResClock::now();
-    _sessionDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+    _sessionDuration = tm.stop();
 
     if (emitSignals) emit sessionFinished();
 }
@@ -358,7 +301,7 @@ void TestGroup::reset()
 {
     TestBase::reset();
 
-    for (auto test : _tests)
+    foreach (auto test, _tests)
         test->reset();
 
     if (_beforeAll) _beforeAll->reset();
@@ -452,12 +395,11 @@ void TestBase::reset()
 
 void TestBase::runTest()
 {
-    auto start = HighResClock::now();
+    TimeMeter tm;
 
     run();
 
-    auto stop = HighResClock::now();
-    _duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+    _duration_ns = tm.stop();
 
     // Assertions only assign Fail result
     if (_result != TestResult::Fail)
@@ -510,7 +452,7 @@ void TestBase::logMessage(const QString& msg)
 
 void TestBase::logMessage(const QStringList& list)
 {
-    for (auto s : list) logMessage(s);
+    foreach (const auto& s, list) logMessage(s);
 }
 
 } // namespace Tests

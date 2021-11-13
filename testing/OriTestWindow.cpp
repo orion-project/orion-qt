@@ -1,4 +1,5 @@
 #include "OriTestWindow.h"
+#include "OriTimeMeter.h"
 
 #include "../tools/OriSettings.h"
 #include "../helpers/OriWidgets.h"
