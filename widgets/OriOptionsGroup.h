@@ -42,6 +42,36 @@ private:
     QAbstractButton* getOption(int id) const;
 };
 
+class OptionsGroupV2 : public QGroupBox
+{
+    Q_OBJECT
+
+public:
+    explicit OptionsGroupV2(bool radio = false, QWidget *parent = nullptr);
+    explicit OptionsGroupV2(const QString &title, bool radio = false, QWidget *parent = nullptr);
+    explicit OptionsGroupV2(const QString &title, const QVector<QPair<QString, QString>>& options,
+        bool radio = false, QWidget *parent = nullptr);
+
+    QString option() const;
+    bool option(const QString& id) const;
+    void addOption(const QString& id, const QString &title);
+    void addOptions(const QVector<QPair<QString, QString>>& options);
+    void setOption(const QString& id, bool value = true);
+
+    void addControls(std::initializer_list<QObject*> controls);
+
+signals:
+    void optionChecked(const QString& id);
+
+private slots:
+    void buttonClicked(bool checked);
+
+private:
+    bool _radio;
+    QMap<QString, QAbstractButton*> _options;
+    QAbstractButton* getButton(const QString& id) const;
+};
+
 } // namespace Widgets
 } // namespace Gui
 
