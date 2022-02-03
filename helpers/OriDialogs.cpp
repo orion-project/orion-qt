@@ -253,6 +253,10 @@ void setDlgIcon(QWidget *dlg, const QString &path)
 //                             Ori::Dlg::Dialog
 //------------------------------------------------------------------------------
 
+namespace {
+QMap<QString, QSize> __savedSizes;
+}
+
 Dialog::Dialog(QWidget* content, bool ownContent): _content(content), _ownContent(ownContent)
 {
     _backupContentParent = _content->parentWidget();
@@ -274,6 +278,8 @@ bool Dialog::exec()
         _contentLayout->removeWidget(_content);
         _content->setParent(_backupContentParent);
     }
+    if (!_persistenceId.isEmpty())
+        __savedSizes[_persistenceId] = _dialog->size();
     return res;
 }
 
@@ -290,6 +296,8 @@ void Dialog::makeDialog()
     setDlgIcon(_dialog, _iconPath);
     if (!_initialSize.isEmpty())
         _dialog->resize(_initialSize);
+    else if (!_persistenceId.isEmpty() && __savedSizes.contains(_persistenceId))
+        _dialog->resize(__savedSizes[_persistenceId]);
     QVBoxLayout* dialogLayout = new QVBoxLayout(_dialog);
 
     // Dialog content
@@ -321,17 +329,17 @@ void Dialog::makeDialog()
     // Dialog buttons
     auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel |
         (_onHelpRequested ? QDialogButtonBox::Help : QDialogButtonBox::NoButton));
-    qApp->connect(buttonBox, &QDialogButtonBox::accepted, [this](){ this->acceptDialog(); });
+    qApp->connect(buttonBox, &QDialogButtonBox::accepted, [this]{ acceptDialog(); });
     qApp->connect(buttonBox, &QDialogButtonBox::rejected, _dialog, &QDialog::reject);
     if (_connectOkToContentApply)
         qApp->connect(_dialog, SIGNAL(accepted()), _content, SLOT(apply()));
-    for (auto signal: _okSignals)
+    foreach (auto signal, _okSignals)
         qApp->connect(signal.first ? signal.first : _content, signal.second, _dialog, SLOT(accept()));
     if (_onHelpRequested)
         qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, _onHelpRequested);
     dialogLayout->addWidget(buttonBox);
 
-    for (auto button : buttonBox->buttons())
+    foreach (auto button, buttonBox->buttons())
         if (buttonBox->buttonRole(button) == QDialogButtonBox::AcceptRole)
         {
             _okButton = button;

@@ -112,6 +112,8 @@ public:
     Dialog& withOnDlgReady(std::function<void()> handler) { _onDlgReady = handler; return *this; }
     Dialog& withOnHelp(std::function<void()> handler) { _onHelpRequested = handler; return *this; }
 
+    Dialog& withPersistenceId(const QString& id) { _persistenceId = id; return *this; }
+
     bool exec();
 
     QSize size() const;
@@ -135,6 +137,7 @@ private:
     QAbstractButton* _okButton = nullptr;
     std::function<void()> _onDlgReady;
     std::function<void()> _onHelpRequested;
+    QString _persistenceId;
 
     void makeDialog();
     void acceptDialog();
