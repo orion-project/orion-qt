@@ -6,6 +6,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFileDialog>
+#include <QGlobalStatic>
 #include <QIcon>
 #include <QLabel>
 #include <QStyle>
@@ -254,7 +255,8 @@ void setDlgIcon(QWidget *dlg, const QString &path)
 //------------------------------------------------------------------------------
 
 namespace {
-QMap<QString, QSize> __savedSizes;
+using SavedSizesMap = QMap<QString, QSize>;
+Q_GLOBAL_STATIC(SavedSizesMap, __savedSizes)
 }
 
 Dialog::Dialog(QWidget* content, bool ownContent): _content(content), _ownContent(ownContent)
@@ -279,7 +281,7 @@ bool Dialog::exec()
         _content->setParent(_backupContentParent);
     }
     if (!_persistenceId.isEmpty())
-        __savedSizes[_persistenceId] = _dialog->size();
+        (*__savedSizes)[_persistenceId] = _dialog->size();
     return res;
 }
 
@@ -296,8 +298,8 @@ void Dialog::makeDialog()
     setDlgIcon(_dialog, _iconPath);
     if (!_initialSize.isEmpty())
         _dialog->resize(_initialSize);
-    else if (!_persistenceId.isEmpty() && __savedSizes.contains(_persistenceId))
-        _dialog->resize(__savedSizes[_persistenceId]);
+    else if (!_persistenceId.isEmpty() && __savedSizes->contains(_persistenceId))
+        _dialog->resize((*__savedSizes)[_persistenceId]);
     QVBoxLayout* dialogLayout = new QVBoxLayout(_dialog);
 
     // Dialog content
@@ -314,29 +316,43 @@ void Dialog::makeDialog()
     else
     {
         _contentLayout = dialogLayout;
+        if (_skipContentMargins)
+            _contentLayout->setContentsMargins(0, 0, 0, 0);
     }
     _contentLayout->addWidget(_content);
+
+    auto style = qApp->style();
 
     // Content-to-buttons space
     if (_fixedContentSize)
         dialogLayout->addStretch();
     if (_contentToButtonsSpacingFactor > 1)
     {
-        int defaultSpacing = qApp->style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing);
+        int defaultSpacing = style->pixelMetric(QStyle::PM_LayoutVerticalSpacing);
         dialogLayout->addSpacing(defaultSpacing * (_contentToButtonsSpacingFactor - 1));
     }
 
     // Dialog buttons
     auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel |
         (_onHelpRequested ? QDialogButtonBox::Help : QDialogButtonBox::NoButton));
-    qApp->connect(buttonBox, &QDialogButtonBox::accepted, [this]{ acceptDialog(); });
+    qApp->connect(buttonBox, &QDialogButtonBox::accepted, _dialog, [this]{ acceptDialog(); });
     qApp->connect(buttonBox, &QDialogButtonBox::rejected, _dialog, &QDialog::reject);
     if (_connectOkToContentApply)
         qApp->connect(_dialog, SIGNAL(accepted()), _content, SLOT(apply()));
-    foreach (auto signal, _okSignals)
+    foreach (const auto& signal, _acceptSignals)
         qApp->connect(signal.first ? signal.first : _content, signal.second, _dialog, SLOT(accept()));
     if (_onHelpRequested)
         qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, _onHelpRequested);
+
+    // By default dialogLayout provides margins
+    // When skipping content margins we still want to have margins around buttons
+    if (_skipContentMargins)
+        buttonBox->setContentsMargins(
+            style->pixelMetric(QStyle::PM_LayoutLeftMargin),
+            0,
+            style->pixelMetric(QStyle::PM_LayoutRightMargin),
+            style->pixelMetric(QStyle::PM_LayoutBottomMargin));
+
     dialogLayout->addWidget(buttonBox);
 
     foreach (auto button, buttonBox->buttons())
@@ -368,15 +384,15 @@ QSize Dialog::size() const
     return _dialog ? _dialog->size() : QSize();
 }
 
-Dialog& Dialog::withOkSignal(const char* signal)
+Dialog& Dialog::withAcceptSignal(const char* signal)
 {
-    _okSignals << QPair<QObject*, const char*>(nullptr, signal);
+    _acceptSignals << QPair<QObject*, const char*>(nullptr, signal);
     return *this;
 }
 
-Dialog& Dialog::withOkSignal(QObject* sender, const char* signal)
+Dialog& Dialog::withAcceptSignal(QObject* sender, const char* signal)
 {
-    _okSignals << QPair<QObject*, const char*>(sender, signal);
+    _acceptSignals << QPair<QObject*, const char*>(sender, signal);
     return *this;
 }
 
