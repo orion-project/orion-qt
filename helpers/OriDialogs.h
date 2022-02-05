@@ -72,11 +72,13 @@ bool showDialogWithPromptV(const QString& prompt, QWidget *widget, const QString
 
 bool show(QDialog* dlg);
 
+
 /// Shows a content in a dialog with 'OK', 'Cancel' and optional 'Help' buttons at bottom.
 class Dialog
 {
 public:
     typedef std::function<QString()> VerificationFunc;
+    typedef std::function<void()> HandlerFunc;
 
     Dialog(QWidget* content, bool ownContent);
     ~Dialog();
@@ -103,12 +105,12 @@ public:
     /// Widget should have slot apply() to process OK button click.
     Dialog& connectOkToContentApply() { _connectOkToContentApply = true; return *this; }
 
-    /// The same as acceptOnSignal, deprecated.
+    /// The same as withAcceptSignal, deprecated.
     Dialog& withOkSignal(const char* signal) { return withAcceptSignal(signal); }
     Dialog& withOkSignal(QObject* sender, const char* signal) { return withAcceptSignal(sender, signal); }
 
     /// A signal that must trigger the dialog's accept method.
-    /// This way a content can accept the dialog, it should raise this signal.
+    /// This way a content can accept the dialog.
     Dialog& withAcceptSignal(const char* signal);
     Dialog& withAcceptSignal(QObject* sender, const char* signal);
 
@@ -118,8 +120,16 @@ public:
 
     Dialog& withActiveWidget(QWidget* w) { _activeWidget = w; return *this; }
 
-    Dialog& withOnDlgReady(std::function<void()> handler) { _onDlgReady = handler; return *this; }
-    Dialog& withOnHelp(std::function<void()> handler) { _onHelpRequested = handler; return *this; }
+    /// A handler that is called when the dialog is ready but yet shown.
+    Dialog& withOnDlgReady(HandlerFunc handler) { _onDlgReady = handler; return *this; }
+
+    /// A handler that is called when the Help button pressed.
+    /// The Help button is not shown if this hander is not provided.
+    Dialog& withOnHelp(HandlerFunc handler) { _onHelpRequested = handler; return *this; }
+
+    /// A handler that is called when the Apply button pressed.
+    /// The Apply button is not shown if this hander is not provided.
+    Dialog& withOnApply(HandlerFunc handler) { _applyHandler = handler; return *this; }
 
     /// If the id is provided then the dialog size will be stored in memory
     /// after dialog was closed and then restored on the next run.
@@ -146,8 +156,9 @@ private:
     QSize _initialSize;
     QWidget* _activeWidget = nullptr;
     QAbstractButton* _okButton = nullptr;
-    std::function<void()> _onDlgReady;
-    std::function<void()> _onHelpRequested;
+    HandlerFunc _onDlgReady;
+    HandlerFunc _onHelpRequested;
+    HandlerFunc _applyHandler;
     QString _persistenceId;
     bool _skipContentMargins = false;
 

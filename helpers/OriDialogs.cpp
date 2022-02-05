@@ -1,6 +1,7 @@
 #include "OriDialogs.h"
 
 #include <QApplication>
+#include <QAbstractButton>
 #include <QBoxLayout>
 #include <QDebug>
 #include <QDialog>
@@ -334,13 +335,20 @@ void Dialog::makeDialog()
 
     // Dialog buttons
     auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel |
-        (_onHelpRequested ? QDialogButtonBox::Help : QDialogButtonBox::NoButton));
+        (_onHelpRequested ? QDialogButtonBox::Help : QDialogButtonBox::NoButton) |
+        (_applyHandler ? QDialogButtonBox::Apply : QDialogButtonBox::NoButton)
+    );
     qApp->connect(buttonBox, &QDialogButtonBox::accepted, _dialog, [this]{ acceptDialog(); });
     qApp->connect(buttonBox, &QDialogButtonBox::rejected, _dialog, &QDialog::reject);
     if (_connectOkToContentApply)
         qApp->connect(_dialog, SIGNAL(accepted()), _content, SLOT(apply()));
     foreach (const auto& signal, _acceptSignals)
         qApp->connect(signal.first ? signal.first : _content, signal.second, _dialog, SLOT(accept()));
+    if (_applyHandler)
+        qApp->connect(buttonBox, &QDialogButtonBox::clicked, [buttonBox, this](QAbstractButton *button){
+            if ((void*)button == (void*)buttonBox->button(QDialogButtonBox::Apply))
+                _applyHandler();
+        });
     if (_onHelpRequested)
         qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, _onHelpRequested);
 
