@@ -56,7 +56,7 @@ void setFontMonospace(QWidget *w, int sizePt)
     QFont f = w->font();
 
 #if defined(Q_OS_WIN)
-    f.setFamily("Courier New");
+    f.setFamily("Consolas");
     f.setPointSize(10);
 #elif defined(Q_OS_MAC)
     f.setFamily("Monaco");
