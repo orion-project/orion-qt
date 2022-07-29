@@ -478,30 +478,57 @@ static QString strippedActionTitle(QString s) {
     return s.trimmed();
 }
 
+static const char* __actionTooltipFormat("<p style='white-space:pre'>%1&nbsp;&nbsp;(<code>%2</code>)</p>");
+
+void setActionTooltipFormat(const char *fmt)
+{
+    __actionTooltipFormat = fmt;
+}
+
 // Adds shortcut information to the action's tooltip.
 // Here is more complete solution supporting custom tooltips
 // https://stackoverflow.com/questions/42607554/show-shortcut-in-tooltip-of-qtoolbar
-static void setActionShortcut(QAction* action, const QKeySequence& shortcut)
+static void setActionTooltip(QAction* action, const QString& tooltip, const QKeySequence& shortcut)
 {
-    action->setShortcut(shortcut);
-    action->setToolTip(QStringLiteral("<p style='white-space:pre'>%1&nbsp;&nbsp;(<code>%2</code>)</p>")
-                       .arg(strippedActionTitle(action->text()), shortcut.toString(QKeySequence::NativeText)));
+    QString t = tooltip;
+
+    if (t.isEmpty())
+        t = action->text();
+
+    t = strippedActionTitle(t);
+
+    if (!shortcut.isEmpty() && strlen(__actionTooltipFormat) > 0)
+        t = QString::fromLatin1(__actionTooltipFormat).arg(t, shortcut.toString(QKeySequence::NativeText));
+
+    action->setToolTip(t);
 }
 
-QAction* action(const QString& title, QObject* receiver, const char* slot, const char* icon, const QKeySequence& shortcut)
+QAction* action(const QString& title, const QString& tooltip, QObject* receiver, const char* slot, const char* icon, const QKeySequence& shortcut)
 {
     auto action = new QAction(title, receiver);
-    if (!shortcut.isEmpty()) setActionShortcut(action, shortcut);
+    setActionTooltip(action, tooltip, shortcut);
+    if (!shortcut.isEmpty()) action->setShortcut(shortcut);
     if (icon) action->setIcon(QIcon(icon));
     qApp->connect(action, SIGNAL(triggered()), receiver, slot);
     return action;
 }
 
+QAction* action(const QString& title, QObject* receiver, const char* slot, const char* icon, const QKeySequence& shortcut)
+{
+    return action(title, title, receiver, slot, icon, shortcut);
+}
+
 QAction* toggledAction(const QString& title, QObject* receiver, const char* slot, const char* icon, const QKeySequence& shortcut)
+{
+    return toggledAction(title, title, receiver, slot, icon, shortcut);
+}
+
+QAction* toggledAction(const QString& title, const QString& tooltip, QObject* receiver, const char* slot, const char* icon, const QKeySequence& shortcut)
 {
     auto action = new QAction(title, receiver);
     action->setCheckable(true);
-    if (!shortcut.isEmpty()) setActionShortcut(action, shortcut);
+    setActionTooltip(action, tooltip, shortcut);
+    if (!shortcut.isEmpty()) action->setShortcut(shortcut);
     if (icon) action->setIcon(QIcon(icon));
     if (slot) qApp->connect(action, SIGNAL(toggled(bool)), receiver, slot);
     return action;
