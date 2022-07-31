@@ -27,6 +27,16 @@ int getParamInt(const QUrl& url, const QString& name)
     return getParamStr(url, name).toInt();
 }
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+int rand() {
+    return QRandomGenerator::global()->generate();
+}
+#else
+int rand() {
+    return qrand();
+}
+#endif
+
 } // namespace Tools
 } // namespace Ori
 
@@ -65,17 +75,9 @@ QColor blend(const QColor& color1, const QColor& color2, qreal r)
                   255);
 }
 
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
-namespace {
-inline int qrand() {
-    return QRandomGenerator::global()->generate();
-}
-}
-#endif
-
 QColor random()
 {
-    return QColor(qrand() % 255, qrand() % 255, qrand() % 255);
+    return QColor(Ori::Tools::rand() % 255, Ori::Tools::rand() % 255, Ori::Tools::rand() % 255);
 }
 
 QColor random(int darkenThan, int lightenThan, int minDistance)
@@ -84,9 +86,9 @@ QColor random(int darkenThan, int lightenThan, int minDistance)
     int H, S, L, tryCount = 0;
     while (tryCount++ < 100)
     {
-        H = qrand() % 255;
-        S = qrand() % 255;
-        L = qrand() % 255;
+        H = Ori::Tools::rand() % 255;
+        S = Ori::Tools::rand() % 255;
+        L = Ori::Tools::rand() % 255;
         if (L < lightenThan) continue;
         if (L > darkenThan) continue;
         if (qAbs(H - prevH) < minDistance &&

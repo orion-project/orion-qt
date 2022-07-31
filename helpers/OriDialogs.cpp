@@ -299,7 +299,7 @@ void Dialog::makeDialog()
     setDlgIcon(_dialog, _iconPath);
     if (!_initialSize.isEmpty())
         _dialog->resize(_initialSize);
-    else if (!_persistenceId.isEmpty() && __savedSizes->contains(_persistenceId))
+    if (!_persistenceId.isEmpty() && __savedSizes->contains(_persistenceId))
         _dialog->resize((*__savedSizes)[_persistenceId]);
     QVBoxLayout* dialogLayout = new QVBoxLayout(_dialog);
 

@@ -16,6 +16,9 @@ namespace Tools {
 QString getParamStr(const QUrl& url, const QString& name);
 int getParamInt(const QUrl& url, const QString& name);
 
+// Use instead of qrand that is deprecated since 5.15
+int rand();
+
 } // namespace Tools
 } // namespace Ori
 
