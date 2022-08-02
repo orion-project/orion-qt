@@ -23,12 +23,14 @@ public:
 
     int option();
     bool option(int id) const;
-    void addOption(const QString &title);
-    void addOption(int id, const QString &title);
+    void addOption(const QString &title, const QString &hint = QString());
+    void addOption(int id, const QString &title, const QString &hint = QString());
     void addOptions(std::initializer_list<QString> options);
     void setOption(int id, bool value = true);
 
     void addControls(std::initializer_list<QObject*> controls);
+
+    QString hintFormat;
 
 signals:
     void optionChecked(int id);

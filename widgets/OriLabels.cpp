@@ -102,15 +102,19 @@ void LabelSeparator::paintEvent(QPaintEvent*)
     {
         QStyle *style = QWidget::style();
         int align = static_cast<int>(QStyle::visualAlignment(layoutDirection(), alignment()));
-        style->drawItemText(&p, cr, align, palette, true, text, foregroundRole());
-        p.setClipRegion(QRegion(cr) - style->itemTextRect(
-            QFontMetrics(font()), cr, align, true, text).adjusted(-4, 0, 4, 0));
+        QRect textRect = cr;
+        textRect.adjust(textIndent, 0, -textIndent, 0);
+        style->drawItemText(&p, textRect, align, palette, true, text, foregroundRole());
+        textRect = style->itemTextRect(QFontMetrics(font()), textRect, align, true, text);
+        p.setClipRegion(QRegion(cr) - textRect.adjusted(-4, 0, 4, 0));
     }
     int y = (cr.bottom() + cr.top()) / 2;
     p.setPen(palette.color(QPalette::Mid));
     p.drawLine(cr.left(), y, cr.right(), y);
-    p.setPen(palette.color(QPalette::Midlight));
-    p.drawLine(cr.left(), y+1, cr.right(), y+1);
+    if (!flat) {
+        p.setPen(palette.color(QPalette::Midlight));
+        p.drawLine(cr.left(), y+1, cr.right(), y+1);
+    }
 }
 
 //------------------------------------------------------------------------------

@@ -51,6 +51,9 @@ public:
     explicit LabelSeparator(const QString &text, QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
     explicit LabelSeparator(const QString &text, bool bold);
 
+    bool flat = false;
+    int textIndent = 10;
+
 protected:
     void paintEvent(QPaintEvent*);
 };

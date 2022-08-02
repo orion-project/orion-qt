@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QCheckBox>
+#include <QLabel>
 #include <QRadioButton>
 #include <QVBoxLayout>
 
@@ -32,12 +33,12 @@ OptionsGroup::OptionsGroup(const QString &title, std::initializer_list<QString> 
 }
 #endif
 
-void OptionsGroup::addOption(const QString &title)
+void OptionsGroup::addOption(const QString &title, const QString &hint)
 {
-    addOption(_options.size(), title);
+    addOption(_options.size(), title, hint);
 }
 
-void OptionsGroup::addOption(int id, const QString &title)
+void OptionsGroup::addOption(int id, const QString &title, const QString &hint)
 {
     if (_options.contains(id))
     {
@@ -51,7 +52,26 @@ void OptionsGroup::addOption(int id, const QString &title)
         check = new QCheckBox(title);
     connect(check, SIGNAL(clicked(bool)), this, SLOT(buttonClicked(bool)));
     _options.insert(id, check);
-    layout()->addWidget(check);
+
+    if (hint.isEmpty())
+    {
+        layout()->addWidget(check);
+    }
+    else
+    {
+        auto hintLabel = new QLabel;
+        if (hintFormat.isEmpty())
+            hintLabel->setText(hint);
+        else
+            hintLabel->setText(hintFormat.arg(hint));
+
+        auto optLayout = new QHBoxLayout;
+        optLayout->setSpacing(0);
+        optLayout->setContentsMargins(0, 0, 0, 0);
+        optLayout->addWidget(check);
+        optLayout->addWidget(hintLabel);
+        qobject_cast<QBoxLayout*>(layout())->addLayout(optLayout);
+    }
 }
 
 #ifdef Q_COMPILER_INITIALIZER_LISTS
