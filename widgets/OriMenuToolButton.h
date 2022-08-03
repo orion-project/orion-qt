@@ -20,7 +20,7 @@ public:
   MenuToolButton(QWidget *parent = 0);
 
   void addAction(QAction *action);
-  void addAction(int id, const QString& title, const QString& icon, const QString& tooltip = QString());
+  void addAction(int id, const QString& title, const QString& icon = QString(), const QString& tooltip = QString());
 
   int selectedId() const;
   void setSelectedId(int id);

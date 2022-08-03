@@ -25,7 +25,9 @@ void MenuToolButton::addAction(int id, const QString& title, const QString& icon
 {
     if (!_group)
         _group = new QActionGroup(this);
-    auto action = new QAction(QIcon(icon), title, _group);
+    auto action = new QAction(title, _group);
+    if (!icon.isEmpty())
+        action->setIcon(QIcon(icon));
     if (!tooltip.isEmpty())
         action->setToolTip(tooltip);
     action->setData(id);
