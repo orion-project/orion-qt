@@ -21,6 +21,16 @@ void MenuToolButton::addAction(QAction *action)
     connect(action, SIGNAL(triggered()), this, SLOT(actionChecked()));
 }
 
+void MenuToolButton::addAction(int id, QAction *action)
+{
+    if (!_group)
+        _group = new QActionGroup(this);
+    _group->addAction(action);
+    action->setData(id);
+    action->setCheckable(true);
+    addAction(action);
+}
+
 void MenuToolButton::addAction(int id, const QString& title, const QString& icon, const QString &tooltip)
 {
     if (!_group)
