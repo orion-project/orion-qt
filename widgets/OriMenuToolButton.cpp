@@ -10,6 +10,7 @@ namespace Widgets {
 MenuToolButton::MenuToolButton(QWidget *parent) : QToolButton(parent)
 {
     _menu = new QMenu(this);
+    connect(_menu, &QMenu::aboutToShow, this, &MenuToolButton::aboutToShow);
 
     setMenu(_menu);
     setPopupMode(QToolButton::InstantPopup);
@@ -34,7 +35,11 @@ void MenuToolButton::addAction(int id, QAction *action)
 void MenuToolButton::addAction(int id, const QString& title, const QString& icon, const QString &tooltip)
 {
     if (!_group)
+    {
         _group = new QActionGroup(this);
+        if (multiselect)
+            _group->setExclusionPolicy(QActionGroup::ExclusionPolicy::None);
+    }
     auto action = new QAction(title, _group);
     if (!icon.isEmpty())
         action->setIcon(QIcon(icon));
@@ -47,7 +52,8 @@ void MenuToolButton::addAction(int id, const QString& title, const QString& icon
 
 void MenuToolButton::actionChecked()
 {
-    setDefaultAction(qobject_cast<QAction*>(sender()));
+    if (!multiselect)
+        setDefaultAction(qobject_cast<QAction*>(sender()));
 }
 
 int MenuToolButton::selectedId() const
@@ -67,7 +73,8 @@ void MenuToolButton::setSelectedId(int id)
     foreach (auto a, _group->actions())
         if (a->data().toInt() == id) {
             a->setChecked(true);
-            setDefaultAction(a);
+            if (!multiselect)
+                setDefaultAction(a);
             return;
         }
 }
@@ -94,8 +101,11 @@ void MenuToolButton::setSelectedFlags(int flags)
     foreach (auto a, _group->actions()) {
         if (flags & a->data().toInt()) {
             a->setChecked(true);
-            setDefaultAction(a);
-            return;
+            if (!multiselect)
+            {
+                setDefaultAction(a);
+                return;
+            }
         }
     }
 }

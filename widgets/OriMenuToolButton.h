@@ -30,6 +30,11 @@ public:
   int selectedFlags(int origFlags) const;
   void setSelectedFlags(int flags);
 
+  bool multiselect = false;
+
+signals:
+  void aboutToShow();
+
 private:
   QMenu *_menu;
   QActionGroup *_group = nullptr;
