@@ -38,7 +38,11 @@ void MenuToolButton::addAction(int id, const QString& title, const QString& icon
     {
         _group = new QActionGroup(this);
         if (multiselect)
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 2))
             _group->setExclusionPolicy(QActionGroup::ExclusionPolicy::None);
+#else
+            _group->setExclusive(false);
+#endif
     }
     auto action = new QAction(title, _group);
     if (!icon.isEmpty())
