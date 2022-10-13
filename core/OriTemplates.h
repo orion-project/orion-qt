@@ -135,6 +135,42 @@ protected:
     int __breakable_block_counter = 0; \
     while (__breakable_block_counter++ < 1)
 
+template <typename T> struct Optional {
+    bool set;
+    T value;
+    Optional(): set(false) {}
+    explicit Optional(const T& value): set(true), value(value) {}
+    static Optional null() { return Optional(); }
+};
+
+template <typename T> struct TmpAssign {
+    TmpAssign(T* target, const T& value) {
+        _target = target;
+        _savedValue = *target;
+        *target = value;
+    }
+    ~TmpAssign() {
+        *_target = _savedValue;
+    }
+private:
+    T* _target;
+    T _savedValue;
+};
+
 } // namespace Ori
+
+#define BOOL_PARAM(param_name) \
+    struct param_name { \
+        explicit param_name(bool v) : value(v) {} \
+        operator bool() const { return value; } \
+        bool value; \
+    };
+
+#define INT_PARAM(param_name) \
+    struct param_name { \
+        explicit param_name(int v) : value(v) {} \
+        operator int() const { return value; } \
+        int value; \
+    };
 
 #endif // ORI_TEMPLATES_H
