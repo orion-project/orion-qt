@@ -1,6 +1,7 @@
 #include "OriMenuToolButton.h"
 
 #include <QAction>
+#include <QActionGroup>
 #include <QDebug>
 #include <QMenu>
 

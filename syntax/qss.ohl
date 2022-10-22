@@ -1,0 +1,120 @@
+name: qss
+title: QSS Styles
+
+# https://doc.qt.io/qt-5/stylesheet-reference.html#list-of-pseudo-states
+rule: Pseudo-state
+expr: :{1}(!{0,1}[a-z][a-z-]+)
+color: maroon
+group: 1
+
+rule: Property name
+expr: ([a-zA-Z_][a-zA-Z0-9-_]*\s*):
+color: red
+group: 1
+
+rule: Platform prefix
+expr: (windows|linux|macos):
+color: orange
+group: 1
+
+rule: Class
+expr: Q[a-zA-Z]+
+color: #0451a5
+
+# https://doc.qt.io/qt-5/stylesheet-reference.html#list-of-sub-controls
+rule: Sub-control
+expr: :{2}([a-z][a-z-]+)
+color: Chocolate
+group: 1
+
+rule: Object name
+expr: #[a-zA-Z_][a-zA-Z0-9_-]*
+color: #001080
+
+rule: Property selector
+expr: \[([a-zA-Z_][a-zA-Z0-9_-]*)\s*=.*\]
+color: #795e26
+group: 1
+
+rule: Variable
+expr: \$[a-zA-Z_][a-zA-Z0-9-_]+
+color: #0070c1
+
+rule: Color
+expr: #[0-9a-fA-F]{3,8}
+color: #267f99
+
+rule: String
+# Single-quoted string, possibly containing escaped quote \'
+expr: '[^\\']*(\\.[^\\']*)*'
+# Double-quoted string, possibly containing escaped quote \"
+expr: "[^\\"]*(\\.[^\\"]*)*"
+color: darkGreen
+
+rule: Comment
+expr: \/\*
+expr: \*\/
+color: green
+opts: multiline
+
+---
+$base-color: #dadbde;
+
+/************************************
+             Main window
+************************************/
+QMainWindow {
+  background-color: $base-color;
+  windows:font-size: 15px;
+  linux:font-size: 17px;
+  macos:font-size: 14px;
+}
+
+QMenuBar::item {
+  padding: 3px 6px;
+  border-radius: 3px;
+}
+QMenuBar::item:selected {
+  color: white;
+  background: steelBlue;
+}
+
+#pages_list {
+  font-size: 13px;
+  background-image: url(":/style/background");
+}
+#pages_list::item {
+  height: 32px;
+}
+#pages_list::item:hover {
+  background-color: #334682b4;
+  border-radius: 4px;
+}
+
+[role=memo_editor] {
+  background-color: white;
+  border: 1px solid silver;
+}
+#memo_title_editor [readOnly = true] {
+  border: 1px solid transparent;
+}
+
+QScrollBar::handle:vertical:hover {
+  background-color: $base-color;
+}
+
+/************************************
+             Status bar
+************************************/
+QStatusBar QLabel {
+  font-size: 12px;
+}
+QStatusBar [role='status_panel'] {
+  margin-left: 3px;
+  margin-bottom: 4px;
+  margin-right: 10px;
+  margin-top: 2px;
+}
+
+/* pseudo-state with negation */
+QPushButton:hover:!pressed { color: blue; }

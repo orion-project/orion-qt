@@ -1,0 +1,71 @@
+name: css
+title: CSS Styles
+
+rule: Property name
+expr: [a-zA-Z_][a-zA-Z0-9-_]*\s*:
+color: red
+
+rule: Class
+expr: \.[a-zA-Z][a-zA-Z0-9_-]+
+color: #0451a5
+
+rule: Pseudo-state
+expr: :{1}!{0,1}[a-z][a-z-]+
+color: maroon
+
+rule: Color
+expr: #[0-9a-fA-F]{3,8}
+color: #267f99
+
+rule: String
+# Single-quoted string, possibly containing escaped quote \'
+expr: '[^\\']*(\\.[^\\']*)*'
+# Double-quoted string, possibly containing escaped quote \"
+expr: "[^\\"]*(\\.[^\\"]*)*"
+color: darkGreen
+
+rule: Comment
+expr: \/\*
+expr: \*\/
+color: green
+opts: multiline
+
+---
+/************************************
+                html
+************************************/
+html {
+  font-family: "Helvetica Neue",Helvetica,"Segoe UI",Arial,freesans,sans-serif;
+  font-size: 16px;
+  color: #333;
+}
+
+.header {
+  line-height: 1.2;
+  margin-top: 16px;
+  font-weight: 600;
+  color: black;
+}
+
+.header:hover {
+  color: red
+}
+
+.inline-code {
+  font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
+  background-color: #11000000;
+}
+
+.inline-code_margin {
+  font-size: 6px;
+  color: #f0f0f0;
+}
+
+a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+pre {
+  font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
+}

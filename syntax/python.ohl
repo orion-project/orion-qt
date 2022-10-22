@@ -1,0 +1,93 @@
+name: python
+title: Python code
+
+rule: Keywords
+terms: and,assert,break,continue,del,elif,else,except,exec,finally
+terms: for,from,global,if,import,in,is,lambda,not,or,pass,print,raise,return
+terms: try,while,yield,None,True,False
+color: #af00db
+
+rule: Function and class def
+terms: def,class
+color: blue
+
+rule: Function and class name
+expr: def\s+(.*)\s*\(
+expr: class\s+(.*)\s*:
+color: #795e26
+group: 1
+
+rule: Special names
+terms: self,__name__
+color: #001080
+
+rule: String
+# Single-quoted string, possibly containing escaped quote \'
+expr: '[^\\']*(\\.[^\\']*)*'
+# Double-quoted string, possibly containing escaped quote \"
+expr: "[^\\"]*(\\.[^\\"]*)*"
+color: #a31515
+
+rule: Triple-quoted string (single)
+opts: multiline
+expr: '''
+color: #a31515
+
+rule: Triple-quoted string (double)
+opts: multiline
+expr: """
+color: #a31515
+
+rule: Numbers
+expr: \b[+-]?[0-9]+[lL]?\b
+expr: \b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b
+expr: \b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b
+color: #098658
+
+rule: Comment
+expr: #[^\n]*
+color: green
+
+---
+#!/usr/bin/env python
+
+'''
+Enumerate files in folder example
+'''
+
+import os
+
+class Enumerator:
+    def __init__(self, dir):
+        self.dir = dir
+        self.num_int = 123
+        self.num_int1 = -123
+        self.num_hex = 0xf45l
+        self.num_flt = -123e-45
+        self.num_flt1 = 123E45
+
+    def enumerate_files(self):
+      """ Returns all files in specific folder """
+      d = self.dir
+      return [f for f in os.listdir(d) if os.path.isfile(os.path.join(d, f))]
+
+def enumerate_files_variant_2(folder):
+    ''' Returns all files in specific folder '''
+    res = []
+    count = 0
+    for root, dirnames, filenames in os.walk(folder):
+        for filename in filenames:
+            res.append(filename)
+            print(f"File: \"{filename}\" ('{file}')\n")
+            count += 1
+    return res
+
+"""
+"Main" function
+"""
+if __name__ == '__main__':
+    folder = '/bin'
+    # use variant 2 for enumeration (+1)
+    files = enumerate_files_variant_2(folder)
+    for file in files:
+        print(f'file: \'{file}\' ("{file}")\n')

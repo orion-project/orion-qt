@@ -1,0 +1,87 @@
+name: sql
+title: SQL Query (SQLite)
+
+rule: Procyon tables
+terms: Folder,Memo,MemoOptions,Settings
+opts: ignore-case
+style: bold
+
+# https://www.sqlite.org/lang_keywords.html
+rule: Keyword
+terms: ABORT,ACTION,ADD,AFTER,ALL,ALTER,ALWAYS,ANALYZE,AND,AS,ASC,ATTACH
+terms: AUTOINCREMENT,BEFORE,BEGIN,BETWEEN,BY,CASCADE,CASE,CAST,CHECK,COLLATE
+terms: COLUMN,COMMIT,CONFLICT,CONSTRAINT,CREATE,CROSS,CURRENT,CURRENT_DATE
+terms: CURRENT_TIME,CURRENT_TIMESTAMP,DATABASE,DEFAULT,DEFERRABLE,DEFERRED
+terms: DELETE,DESC,DETACH,DISTINCT,DO,DROP,EACH,ELSE,END,ESCAPE,EXCEPT
+terms: EXCLUDE,EXCLUSIVE,EXISTS,EXPLAIN,FAIL,FILTER,FIRST,FOLLOWING,FOR
+terms: FOREIGN,FROM,FULL,GENERATED,GLOB,GROUP,GROUPS,HAVING,IF,IGNORE
+terms: IMMEDIATE,IN,INDEX,INDEXED,INITIALLY,INNER,INSERT,INSTEAD,INTERSECT
+terms: INTO,IS,ISNULL,JOIN,KEY,LAST,LEFT,LIKE,LIMIT,MATCH,MATERIALIZED
+terms: NATURAL,NO,NOT,NOTHING,NOTNULL,NULL,NULLS,OF,OFFSET,ON,OR,ORDER
+terms: OTHERS,OUTER,OVER,PARTITION,PLAN,PRAGMA,PRECEDING,PRIMARY,QUERY
+terms: RAISE,RANGE,RECURSIVE,REFERENCES,REGEXP,REINDEX,RELEASE,RENAME,REPLACE
+terms: RESTRICT,RETURNING,RIGHT,ROLLBACK,ROW,ROWS,SAVEPOINT,SELECT,SET
+terms: TABLE,TEMP,TEMPORARY,THEN,TIES,TO,TRANSACTION,TRIGGER,UNBOUNDED
+terms: UNION,UNIQUE,UPDATE,USING,VACUUM,VALUES,VIEW,VIRTUAL,WHEN,WHERE
+terms: WINDOW,WITH,WITHOUT
+opts: ignore-case
+color: blue
+
+rule: Datatypes
+terms: INTEGER,NUMERIC,TEXT,REAL,BLOB
+opts: ignore-case
+color: #0451a5
+
+rule: Functions
+# https://www.sqlite.org/lang_datefunc.html
+terms: date,time,datetime,julianday,strftime
+# https://www.sqlite.org/lang_aggfunc.html
+terms: avg,count,count,group_concat,group_concat,max,min,sum,total
+# https://www.sqlite.org/lang_mathfunc.html
+terms: acos,acosh,asin,asinh,atan,atan2,atanh,ceil,ceiling,cos
+terms: cosh,degrees,exp,floor,ln,log,log,log10,log2,mod,pi
+terms: pow,power,radians,sin,sinh,sqrt,tan,tanh,trunc
+opts: ignore-case
+color: maroon
+
+rule: Numbers
+expr: \b[+-]?[0-9]+[lL]?\b
+expr: \b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b
+expr: \b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b
+color: #098658
+
+rule: String
+# Single-quoted string, possibly containing escaped quote \'
+expr: '[^\\']*(\\.[^\\']*)*'
+# Double-quoted string, possibly containing escaped quote \"
+expr: "[^\\"]*(\\.[^\\"]*)*"
+color: darkGreen
+
+rule: Single line comment
+expr: --.*$
+color: green
+
+rule: Multiline comment
+expr: \/\*
+expr: \*\/
+color: green
+opts: multiline
+
+---
+SELECT id, value FROM Settings /*settings table*/ WHERE id LIKE '%2'
+
+/*
+Comments can appear anywhere whitespace can occur,
+including inside expressions and in the middle 
+of other SQL statements. Comments do not nest. 
+*/
+
+-- case-insensitive highlightning
+create table if not exists Folder
+    (Id integer primary key, Parent, Title)
+
+-- functions
+SELECT julianday('now') - julianday('1776-07-04'); 
+SELECT (julianday('now') - 2440587.5)*86400.0; 
+
+SELECT MAX(Id) FROM Memo

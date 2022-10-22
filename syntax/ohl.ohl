@@ -1,0 +1,30 @@
+name: highlighter
+title: Highlighter spec
+
+rule: Key
+expr: ^\s*(name|title|rule|expr|color|style|group|terms|opts):
+color: blue
+group: 1
+
+rule: Comment
+expr: ^\s*#.*$
+color: darkGreen
+style: italic
+
+rule: Rule name
+expr: ^\s*rule:\s*(.*)
+style: bold
+group: 1
+
+---
+rule: Function and class def
+terms: def,class
+color: blue
+
+# These are supposed to override all previous formatting, so put at the end
+rule: Separator
+expr: ^\s*-{3,}.*$
+expr: \s*#.*$
+color: darkGray
+style: bold,italic
+group: 1
