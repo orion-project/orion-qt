@@ -160,6 +160,12 @@ public:
         rule.name = val;
         QRegularExpression::PatternOptions opts;
 
+    #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+        auto skipEmptyParts = Qt::SkipEmptyParts;
+    #else
+        auto skipEmptyParts = QString::SkipEmptyParts;
+    #endif
+
         while (!stream.atEnd())
         {
             if (!readLine())
@@ -227,7 +233,7 @@ public:
             }
             else if (key == QStringLiteral("style"))
             {
-                foreach (const auto& style, val.split(',', Qt::SkipEmptyParts))
+                foreach (const auto& style, val.split(',', skipEmptyParts))
                 {
                     auto s = style.trimmed();
                     if (s == QStringLiteral("bold"))
@@ -248,7 +254,7 @@ public:
             }
             else if (key == QStringLiteral("opts"))
             {
-                foreach (const auto& style, val.split(',', Qt::SkipEmptyParts))
+                foreach (const auto& style, val.split(',', skipEmptyParts))
                 {
                     auto s = style.trimmed();
                     if (s == QStringLiteral("multiline"))
@@ -262,7 +268,7 @@ public:
             {
                 if (rule.exprs.isEmpty())
                 {
-                    foreach (const auto& term, val.split(',', Qt::SkipEmptyParts))
+                    foreach (const auto& term, val.split(',', skipEmptyParts))
                         rule.terms << term.trimmed();
                 }
                 else warning(QStringLiteral("Can't have \"expr\" and \"terms\" in the same rule"));
