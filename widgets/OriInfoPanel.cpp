@@ -2,6 +2,7 @@
 
 #include <QBoxLayout>
 #include <QLabel>
+#include <QIcon>
 
 namespace Ori {
 namespace Widgets {
@@ -9,7 +10,7 @@ namespace Widgets {
 InfoPanel::InfoPanel(QWidget *parent) : QFrame(parent)
 {
     QLabel *labelImage = new QLabel;
-    labelImage->setPixmap(QPixmap(":/toolbar/info")); // TODO extract to orion images
+    labelImage->setPixmap(QIcon(":/ori_images/info").pixmap(24, 24));
     labelImage->setMaximumWidth(24);
     labelImage->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 

@@ -19,6 +19,9 @@ else {
     QMAKE_LFLAGS += -std=c++11
 }
 
+RESOURCES += \
+    $$PWD/resources.qrc
+
 HEADERS += \
     $$PWD/core/OriArg.h \
     $$PWD/core/OriResult.h \
