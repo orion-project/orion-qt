@@ -125,6 +125,12 @@ public:
         return distanceBetweenSignAndMagnitudeNumbers(_u._bits, rhs._u._bits) <= _maxUlps;
     }
 
+    bool isZero() const
+    {
+        static Double zero(0);
+        return almostEqual(zero);
+    }
+
     bool is(const double& b)
     {
         return almostEqual(Double(b));
