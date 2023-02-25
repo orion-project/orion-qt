@@ -139,9 +139,15 @@ template <typename T> struct Optional {
     bool set;
     T value;
     Optional(): set(false) {}
-    explicit Optional(const T& value): set(true), value(value) {}
+    Optional(const T& value): set(true), value(value) {}
     static Optional null() { return Optional(); }
 };
+
+template <typename T>
+inline bool operator ==(const Optional<T>& v1, const Optional<T>& v2)
+{
+    return v1.set && v2.set && v1.value == v2.value;
+}
 
 template <typename T> struct TmpAssign {
     TmpAssign(T* target, const T& value) {

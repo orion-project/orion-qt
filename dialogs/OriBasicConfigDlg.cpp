@@ -189,6 +189,27 @@ void BasicConfigDialog::setCurrentPageIndex(int index)
     pageList->setCurrentRow(index);
 }
 
+PageId BasicConfigDialog::currentPageId() const
+{
+    int idx = currentPageIndex();
+    auto page = qobject_cast<BasicConfigPage*>(pageView->widget(idx));
+    return page ? page->id() : PageId();
+}
+
+void BasicConfigDialog::setCurrentPageId(const PageId& id)
+{
+    if (!id.set) return;
+    for (int i = 0; i < pageView->count(); i++)
+    {
+        auto page = qobject_cast<BasicConfigPage*>(pageView->widget(i));
+        if (page && page->id() == id)
+        {
+            setCurrentPageIndex(i);
+            return;
+        }
+    }
+}
+
 void BasicConfigDialog::pageListItemSelected(int index)
 {
     pageView->setCurrentIndex(index);
@@ -232,11 +253,19 @@ QString BasicConfigDialog::currentHelpTopic() const
 
 BasicConfigPage::BasicConfigPage(const QString& title,
                                  const QString& iconPath,
+                                 const QString& helpTopic)
+    : BasicConfigPage(PageId(), title, iconPath, helpTopic)
+{}
+
+BasicConfigPage::BasicConfigPage(PageId id,
+                                 const QString& title,
+                                 const QString& iconPath,
                                  const QString& helpTopic) : QWidget()
 {
     setWindowTitle(title);
     setWindowIcon(QIcon(iconPath));
 
+    _id = id;
     _helpTopic = helpTopic;
 
     _mainLayout = new QVBoxLayout(this);

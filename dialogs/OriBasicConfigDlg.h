@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+#include "core/OriTemplates.h"
+
 QT_BEGIN_NAMESPACE
 class QVBoxLayout;
 class QListWidget;
@@ -14,6 +16,8 @@ namespace Ori {
 namespace Dlg {
 
 class BasicConfigPage;
+
+using PageId = Ori::Optional<int>;
 
 class BasicConfigDialog : public QDialog
 {
@@ -30,6 +34,8 @@ public:
 
     int currentPageIndex() const;
     void setCurrentPageIndex(int index);
+    PageId currentPageId() const;
+    void setCurrentPageId(const PageId &id);
     BasicConfigPage* currentPage() const;
 
 signals:
@@ -64,7 +70,6 @@ private:
     bool restoreState();
 };
 
-
 class BasicConfigPage : public QWidget
 {
     Q_OBJECT
@@ -74,6 +79,12 @@ public:
                              const QString& iconPath = QString(),
                              const QString& helpTopic = QString());
 
+    explicit BasicConfigPage(PageId id,
+                             const QString& title,
+                             const QString& iconPath = QString(),
+                             const QString& helpTopic = QString());
+
+    const PageId& id() const { return _id; }
     const QString& helpTopic() const { return _helpTopic; }
 
     void setLongTitle(const QString& title) { _longTitle = title; }
@@ -84,6 +95,7 @@ public:
     QObject* stretch() { return &_stretchDummy; }
 
 private:
+    PageId _id = PageId();
     QString _helpTopic, _longTitle;
     QVBoxLayout* _mainLayout;
     QObject _stretchDummy;
