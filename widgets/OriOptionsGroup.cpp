@@ -33,6 +33,19 @@ OptionsGroup::OptionsGroup(const QString &title, std::initializer_list<QString> 
 }
 #endif
 
+OptionsGroup::OptionsGroup(Params params, QWidget *parent)
+    : QGroupBox(params.title, parent), _radio(params.radio)
+{
+    QBoxLayout* layout;
+    if (params.horizontal)
+        layout = new QHBoxLayout;
+    else
+        layout = new QVBoxLayout;
+    if (params.spacing > -1)
+        layout->setSpacing(params.spacing);
+    setLayout(layout);
+}
+
 void OptionsGroup::addOption(const QString &title, const QString &hint)
 {
     addOption(_options.size(), title, hint);

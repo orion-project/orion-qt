@@ -16,10 +16,20 @@ class OptionsGroup : public QGroupBox
     Q_OBJECT
 
 public:
+    struct Params
+    {
+        QString title;
+        bool radio = true;
+        bool horizontal = false;
+        int spacing = -1;
+    };
+
+public:
     explicit OptionsGroup(bool radio = false, QWidget *parent = nullptr);
     explicit OptionsGroup(const QString &title, bool radio = false, QWidget *parent = nullptr);
     explicit OptionsGroup(const QString &title, std::initializer_list<QString> options,
         bool radio = false, QWidget *parent = nullptr);
+    explicit OptionsGroup(Params params, QWidget *parent = nullptr);
 
     int option();
     bool option(int id) const;
@@ -40,6 +50,8 @@ public slots:
 
 private:
     bool _radio;
+    bool _horizontal = false;
+    int _spacing = -1;
     QMap<int, QAbstractButton*> _options;
     QAbstractButton* getOption(int id) const;
 };
