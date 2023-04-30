@@ -148,8 +148,8 @@ QString MruFileListWidget::makeLinkText(QAction* action) const
 {
     QFileInfo file(action->text());
     auto text = file.exists()
-        ? QString("<a href=%1>%1</a>").arg(file.baseName())
-        : file.baseName();
+        ? QString("<a href=%1>%1</a>").arg(file.completeBaseName())
+        : file.completeBaseName();
     return QString("%1<br><font color='%3'>%2</font>").arg(text, file.filePath(), filePathColor());
 }
 

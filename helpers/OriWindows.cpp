@@ -43,7 +43,7 @@ void setWindowFilePath(QWidget *window, const QString& fileName)
     if (fileName.isEmpty())
         setWindowProject(window, QApplication::translate("Window title", "Untitled"));
     else
-        setWindowProject(window, QFileInfo(fileName).baseName());
+        setWindowProject(window, QFileInfo(fileName).completeBaseName());
 }
 
 QScreen* findScreenOrPrimary(QWidget* w)
