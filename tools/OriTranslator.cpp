@@ -1,6 +1,7 @@
 #include "OriTranslator.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QDir>
 #include <QTranslator>
 
@@ -116,8 +117,10 @@ void Translator::setTranslator(const QString& lang)
     if (!_translatorQt)
         qApp->installTranslator(_translatorQt = new QTranslator(qApp));
 
-    _translator->load(_setup.langFileName(lang), _setup.languagesDir);
-    _translatorQt->load(_setup.qtLangFileName(lang), _setup.languagesDir);
+    if (!_translator->load(_setup.langFileName(lang), _setup.languagesDir))
+        qWarning() << "Unable to load translation" << _setup.langFileName(lang);
+    if (!_translatorQt->load(_setup.qtLangFileName(lang), _setup.languagesDir))
+        qWarning() << "Unable to load translation" << _setup.qtLangFileName(lang);
 }
 
 QStringList Translator::getLanguages() const
@@ -141,7 +144,9 @@ QString Translator::getLanguageName(const QString& lang) const
     if (_setup.isDefault(lang))
         return _setup.defaultLangName;
 
-    QTranslator tr; tr.load(_setup.langFileName(lang), _setup.languagesDir);
+    QTranslator tr;
+    if (!tr.load(_setup.langFileName(lang), _setup.languagesDir))
+        qWarning() << "Unable to load translation" << _setup.langFileName(lang);
 
     QString langName = tr.translate("Language", "English", "Translate this to the "
         "language of the translation file, NOT to the meaning of 'English'!");
