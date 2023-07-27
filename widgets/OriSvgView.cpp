@@ -57,7 +57,7 @@ void SvgView::paintEvent(QPaintEvent*)
 
     // draw styled frame
     QStyleOptionFrame opt;
-    opt.init(this);
+    opt.initFrom(this);
     opt.rect = contentsRect();
     opt.state |= QStyle::State_Sunken;
     style()->drawPrimitive(QStyle::PE_Frame, &opt, &p, this);

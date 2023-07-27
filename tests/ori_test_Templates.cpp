@@ -91,8 +91,8 @@ TEST_METHOD(declare_enum)
     ASSERT_EQ_INT(values[2], TestEnum_3)
 
     auto names = ENUM_NAMES(TestEnum);
-    for (auto n : names) TEST_LOG(n)
-    ASSERT_EQ_STR(names.size(), 3)
+    for (auto& n : names) TEST_LOG(n)
+    ASSERT_EQ_INT(names.size(), 3)
     ASSERT_EQ_STR(names[0], "TestEnum_1")
     ASSERT_EQ_STR(names[1], "TestEnum_2")
     ASSERT_EQ_STR(names[2], "TestEnum_3")
