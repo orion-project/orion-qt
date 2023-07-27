@@ -1,6 +1,7 @@
 #include "OriSettings.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QFileInfo>
 #include <QMainWindow>
 #include <QWidget>
@@ -44,7 +45,7 @@ QString Settings::localIniPath()
 QSettings* Settings::open()
 {
     QString localIni = localIniPath();
-    if (QFileInfo(localIni).exists())
+    if (QFileInfo::exists(localIni))
         return new QSettings(localIni, QSettings::IniFormat);
 
     QString app = qApp->applicationName();
@@ -124,7 +125,16 @@ void restoreWindowGeometry(QSettings* s, QWidget* w, const QString& key, QSize d
     s->beginGroup(group);
     QRect g = s->value("geometry").toRect();
     if (g.width() > 0 && g.height() > 0)
+    {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+        if (QGuiApplication::screenAt(g.topLeft()))
+            w->setGeometry(g);
+        else
+            qWarning() << "Stored geometry is out of available screens, ignoring" << w->objectName() << g;
+#else
         w->setGeometry(g);
+#endif
+    }
     else if (defSize.width() > 0 && defSize.height() > 0)
         w->resize(defSize); // stay default position
     if (s->value("maximized").toBool())
