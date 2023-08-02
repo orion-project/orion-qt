@@ -67,6 +67,7 @@ HEADERS += \
     $$PWD/helpers/OriLayouts.h
 
 SOURCES += \
+    $$PWD/helpers/OriLayouts.cpp \
     $$PWD/helpers/OriTheme.cpp \
     $$PWD/tools/OriHighlighter.cpp \
     $$PWD/tools/OriPetname.cpp \

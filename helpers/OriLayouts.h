@@ -4,6 +4,10 @@
 #include <QWidget>
 #include <QBoxLayout>
 
+QT_BEGIN_NAMESPACE
+class QGroupBox;
+QT_END_NAMESPACE
+
 namespace Ori {
 namespace Layouts {
 
@@ -59,10 +63,27 @@ public:
 };
 
 
+/// Gets space as hardcoded value
 class Space : public LayoutItem
 {
 public:
     Space(int size) { _mode = LayoutItemMode::Space; _space = size; }
+};
+
+
+/// Gets space as factor of default layout horizontal spacing
+class SpaceH : public LayoutItem
+{
+public:
+    SpaceH(qreal factor = 1);
+};
+
+
+/// Gets space as factor of default layout vertical spacing
+class SpaceV : public LayoutItem
+{
+public:
+    SpaceV(qreal factor = 1);
 };
 
 
@@ -81,9 +102,11 @@ public:
 
     LayoutBox& setMargin(int value) { _layout->setContentsMargins(value, value, value, value); return *this; }
     LayoutBox& setSpacing(int value) { boxLayout()->setSpacing(value); return *this; }
+    LayoutBox& setDefSpacing(qreal factor);
     LayoutBox& setStretchFactor(QWidget* w, int s) { boxLayout()->setStretchFactor(w, s); return *this; }
     LayoutBox& useFor(QWidget* parent) { parent->setLayout(_layout); return *this; }
     QWidget* makeWidget() { auto w = new QWidget; w->setLayout(_layout); return w; }
+    QGroupBox* makeGroupBox(const QString& title);
 
     QBoxLayout* boxLayout() const { return qobject_cast<QBoxLayout*>(_layout); }
 
