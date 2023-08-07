@@ -25,6 +25,21 @@ SpaceV::SpaceV(qreal factor)
     _space = qRound(defSpacing(true) * qAbs(factor));
 }
 
+//------------------------------------------------------------------------------
+//                                    LayoutBox
+//------------------------------------------------------------------------------
+
+LayoutBox& LayoutBox::setDefMargins()
+{
+    auto style = qApp->style();
+    boxLayout()->setContentsMargins(
+        style->pixelMetric(QStyle::PM_LayoutLeftMargin),
+        style->pixelMetric(QStyle::PM_LayoutTopMargin),
+        style->pixelMetric(QStyle::PM_LayoutRightMargin),
+        style->pixelMetric(QStyle::PM_LayoutBottomMargin));
+    return *this;
+}
+
 LayoutBox& LayoutBox::setDefSpacing(qreal factor)
 {
     bool vert = qobject_cast<QVBoxLayout*>(_layout);

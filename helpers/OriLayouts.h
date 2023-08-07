@@ -100,9 +100,10 @@ public:
         add(items);
     }
 
+    LayoutBox& setDefMargins();
     LayoutBox& setMargin(int value) { _layout->setContentsMargins(value, value, value, value); return *this; }
     LayoutBox& setSpacing(int value) { boxLayout()->setSpacing(value); return *this; }
-    LayoutBox& setDefSpacing(qreal factor);
+    LayoutBox& setDefSpacing(qreal factor = 1);
     LayoutBox& setStretchFactor(QWidget* w, int s) { boxLayout()->setStretchFactor(w, s); return *this; }
     LayoutBox& useFor(QWidget* parent) { parent->setLayout(_layout); return *this; }
     QWidget* makeWidget() { auto w = new QWidget; w->setLayout(_layout); return w; }
