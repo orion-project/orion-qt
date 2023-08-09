@@ -7,14 +7,44 @@
 #include <QLabel>
 #include <QKeyEvent>
 
-namespace Ori {
-namespace Widgets {
+namespace Ori::Widgets {
 
 //------------------------------------------------------------------------------
-//                               IconCheckBox
+//                           SelectableTileContentDefault
 //------------------------------------------------------------------------------
 
-SelectableTile::SelectableTile(QWidget *parent) : QFrame(parent)
+SelectableTileContentDefault::SelectableTileContentDefault() : SelectableTileContent()
+{
+    setAutoFillBackground(true);
+}
+
+void SelectableTileContentDefault::updateState(bool focused, bool selected)
+{
+    QPalette p;
+    auto baseColor = p.color(QPalette::Base);
+    QColor color;
+    if (!focused and !selected)
+        color = baseColor;
+    else {
+        auto selectedColor = p.color(QPalette::Highlight);
+        color = Ori::Color::blend(
+            baseColor, selectedColor, selected && focused ? 0.2 : 0.1);
+    }
+    p.setColor(QPalette::Window, color);
+    setPalette(p);
+}
+
+//------------------------------------------------------------------------------
+//                               SelectableTile
+//------------------------------------------------------------------------------
+
+SelectableTile::SelectableTile(QWidget *parent)
+    : SelectableTile(new SelectableTileContentDefault(), parent)
+{
+}
+
+SelectableTile::SelectableTile(SelectableTileContent *content, QWidget *parent)
+    : QFrame(parent), _content(content)
 {
     setFrameShape(QFrame::StyledPanel);
     setFocusPolicy(Qt::StrongFocus);
@@ -26,9 +56,6 @@ SelectableTile::SelectableTile(QWidget *parent) : QFrame(parent)
     _titleLabel = new QLabel;
     _titleLabel->setAlignment(Qt::AlignHCenter);
 
-    _content = new QWidget;
-    _content->setAutoFillBackground(true);
-
     auto contentLayout = new QVBoxLayout(_content);
     contentLayout->setContentsMargins(6, 6, 6, 6);
     contentLayout->addWidget(_iconLabel);
@@ -38,7 +65,7 @@ SelectableTile::SelectableTile(QWidget *parent) : QFrame(parent)
     mainLayout->setContentsMargins(3, 3, 3, 3);
     mainLayout->addWidget(_content);
 
-    updateColor();
+    updateState();
 }
 
 void SelectableTile::setPixmap(const QPixmap& pixmap)
@@ -56,7 +83,6 @@ void SelectableTile::setTitleStyleSheet(const QString& styleSheet)
     _titleLabel->setStyleSheet(styleSheet);
 }
 
-
 void SelectableTile::setData(const QVariant& data)
 {
     _data = data;
@@ -68,13 +94,13 @@ void SelectableTile::focusInEvent(QFocusEvent *event)
     if (selectionFollowsFocus)
         select(true);
     else
-        updateColor();
+        updateState();
 }
 
 void SelectableTile::focusOutEvent(QFocusEvent *event)
 {
     QFrame::focusOutEvent(event);
-    updateColor();
+    updateState();
 }
 
 void SelectableTile::keyPressEvent(QKeyEvent* event)
@@ -109,52 +135,35 @@ void SelectableTile::mouseDoubleClickEvent(QMouseEvent *event)
     emit doubleClicked();
 }
 
-void SelectableTile::updateColor()
+void SelectableTile::updateState()
 {
+    bool focused = hasFocus();
     QPalette p;
     auto baseColor = p.color(QPalette::Base);
-
-    bool focused = hasFocus();
-
+    QColor color;
     if (!focused and !_selected)
-    {
-        p.setColor(QPalette::Window, baseColor);
-        _content->setPalette(p);
-        setPalette(p);
-        return;
+        color = baseColor;
+    else {
+        auto selectedColor = p.color(QPalette::Highlight);
+        color = _selected ? selectedColor
+            : Ori::Color::blend(baseColor, selectedColor, 0.1);
     }
-
-    auto selectedColor = p.color(QPalette::Highlight);
-
-    if (_selected)
-    {
-        p.setColor(QPalette::Window, selectedColor);
-        setPalette(p);
-
-        auto color = Ori::Color::blend(baseColor, selectedColor, focused ? 0.2 : 0.1);
-        p.setColor(QPalette::Window, color);
-        _content->setPalette(p);
-        return;
-    }
-
-    // else focused
-    auto color = Ori::Color::blend(baseColor, selectedColor, 0.1);
     p.setColor(QPalette::Window, color);
-    _content->setPalette(p);
-    setPalette(color);
+    setPalette(p);
+    _content->updateState(focused, _selected);
 }
 
 void SelectableTile::setSelected(bool on)
 {
     if (_selected == on) return;
     _selected = on;
-    updateColor();
+    updateState();
 }
 
 void SelectableTile::select(bool raiseEvent)
 {
     _selected = true;
-    updateColor();
+    updateState();
     if (raiseEvent)
         emit selected();
 }
@@ -250,5 +259,4 @@ void SelectableTileRadioGroup::tileDoubleClicked()
     emit doubleClicked(tile->data());
 }
 
-} // namespace Widgets
-} // namespace Ori
+} // namespace Ori::Widgets

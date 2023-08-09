@@ -8,8 +8,25 @@ QT_BEGIN_NAMESPACE
 class QLabel;
 QT_END_NAMESPACE
 
-namespace Ori {
-namespace Widgets {
+namespace Ori::Widgets {
+
+class SelectableTileContent : public QWidget
+{
+    Q_OBJECT
+
+public:
+    SelectableTileContent() {}
+    virtual void updateState(bool focused, bool selected) { Q_UNUSED(focused) Q_UNUSED(selected) }
+};
+
+class SelectableTileContentDefault : public SelectableTileContent
+{
+    Q_OBJECT
+
+public:
+    SelectableTileContentDefault();
+    void updateState(bool focused, bool selected) override;
+};
 
 class SelectableTile : public QFrame
 {
@@ -17,6 +34,7 @@ class SelectableTile : public QFrame
 
 public:
     explicit SelectableTile(QWidget *parent = nullptr);
+    explicit SelectableTile(SelectableTileContent *content, QWidget *parent = nullptr);
 
     void setPixmap(const QPixmap& pixmap);
 
@@ -45,13 +63,13 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 private:
+    SelectableTileContent* _content;
     QLabel *_iconLabel, *_titleLabel;
-    QWidget* _content;
     QVariant _data;
     bool _selected = false;
 
     void select(bool raiseEvent);
-    void updateColor();
+    void updateState();
 };
 
 
@@ -82,7 +100,6 @@ private:
     void tileDoubleClicked();
 };
 
-} // namespace Widgets
-} // namespace Ori
+} // namespace Ori::Widgets
 
 #endif // ORI_SELECTABLE_TILE_H
