@@ -17,7 +17,7 @@ QString getParamStr(const QUrl& url, const QString& name);
 int getParamInt(const QUrl& url, const QString& name);
 
 // Use instead of qrand that is deprecated since 5.15
-int rand();
+quint32 rand();
 
 } // namespace Tools
 } // namespace Ori

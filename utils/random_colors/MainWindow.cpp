@@ -98,7 +98,7 @@ void MainWindow::generate()
             auto color = simple
                     ? Ori::Color::random()
                     : Ori::Color::random(darken, lighten, distance);
-            item->setBackgroundColor(color);
+            item->setBackground(color);
             item->setToolTip(QString("%1\n%2\n%3")
                              .arg(Ori::Color::formatHtml(color))
                              .arg(Ori::Color::formatRgb(color))

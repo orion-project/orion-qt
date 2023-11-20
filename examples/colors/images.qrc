@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/toolbar">
+        <file alias="text_color">text_color.svg</file>
+        <file alias="back_color">back_color.svg</file>
+    </qresource>
+</RCC>

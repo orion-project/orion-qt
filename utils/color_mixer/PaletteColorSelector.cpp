@@ -45,8 +45,10 @@ PaletteRoleCombo::PaletteRoleCombo(QWidget *parent) : QComboBox(parent)
     ADD_ITEM(ToolTipBase)
     ADD_ITEM(ToolTipText)
     ADD_ITEM(NColorRoles)
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
     ADD_ITEM(Foreground)
     ADD_ITEM(Background)
+#endif
 
     connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(itemSelected(int)));
 }

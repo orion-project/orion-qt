@@ -28,12 +28,12 @@ int getParamInt(const QUrl& url, const QString& name)
 }
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
-int rand() {
+quint32 rand() {
     return QRandomGenerator::global()->generate();
 }
 #else
-int rand() {
-    return qrand();
+quint32 rand() {
+    return qAbs(qrand());
 }
 #endif
 

@@ -30,6 +30,7 @@ HEADERS += \
     $$PWD/tools/OriPetname.h \
     $$PWD/widgets/OriActions.h \
     $$PWD/widgets/OriCodeEditor.h \
+    $$PWD/widgets/OriColorSelectors.h \
     $$PWD/widgets/OriFlatToolBar.h \
     $$PWD/widgets/OriCharMap.h \
     $$PWD/widgets/OriInfoPanel.h \
@@ -74,6 +75,7 @@ SOURCES += \
     $$PWD/widgets/OriActions.cpp \
     $$PWD/widgets/OriCharMap.cpp \
     $$PWD/widgets/OriCodeEditor.cpp \
+    $$PWD/widgets/OriColorSelectors.cpp \
     $$PWD/widgets/OriInfoPanel.cpp \
     $$PWD/widgets/OriLabels.cpp \
     $$PWD/widgets/OriLangsMenu.cpp \

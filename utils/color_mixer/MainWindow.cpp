@@ -12,7 +12,9 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
+#if (QT_VERSION < QT_VERSION_CHECK(5, 15, 0))
     qsrand(QDateTime::currentMSecsSinceEpoch());
+#endif
 
     menuBar()->addMenu(new Ori::Widgets::StylesMenu(new Ori::Styler(this)));
 

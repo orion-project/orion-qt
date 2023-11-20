@@ -20,8 +20,13 @@ public:
     {
         Ori::Gui::setFontMonospace(&css);
         Ori::Gui::setFontMonospace(&html);
+    #if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+        css.setTabStopDistance(24);
+        html.setTabStopDistance(24);
+    #else
         css.setTabStopWidth(24);
         html.setTabStopWidth(24);
+    #endif
         css.setAcceptRichText(false);
         html.setAcceptRichText(false);
 
