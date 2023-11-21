@@ -244,12 +244,14 @@ void BaseColorButton::setSelectedColor(const QColor& c)
         QPixmap pixmap(iconSize());
         pixmap.fill(Qt::transparent);
         QPainter p(&pixmap);
-        p.setPen(palette().color(QPalette::Shadow));
-        p.setBrush(_color);
-        if (_iconRect.isEmpty())
-            p.drawRect(pixmap.rect().adjusted(5, 5, -5, -5));
-        else
-            p.drawRect(_iconRect);
+        auto r = _iconRect.isEmpty() ? pixmap.rect().adjusted(5, 5, -5, -5) : _iconRect;
+        if (drawIconFrame)
+        {
+            p.setPen(palette().color(QPalette::Shadow));
+            p.setBrush(_color);
+            p.drawRect(r);
+        }
+        else p.fillRect(r, _color);
         setIcon(pixmap);
     }
     else
@@ -264,19 +266,20 @@ void BaseColorButton::setSelectedColor(const QColor& c)
 void BaseColorButton::setBaseIcon(const QIcon& icon)
 {
     _baseIcon = icon;
-    setSelectedColor(_color);
+    //setSelectedColor(_color);
 }
 
 void BaseColorButton::setIconRect(const QRect& r)
 {
     _iconRect = r;
-    setSelectedColor(_color);
+    //setSelectedColor(_color);
 }
 
 void BaseColorButton::showColorDialog()
 {
     QColorDialog dlg;
-    dlg.setOption(QColorDialog::DontUseNativeDialog, true);
+    dlg.setOption(QColorDialog::ShowAlphaChannel, allowTransparentColors);
+    dlg.setOption(QColorDialog::DontUseNativeDialog, !useNativeColorDialog);
     dlg.setCurrentColor(_color);
     if (dlg.exec())
     {
@@ -287,7 +290,7 @@ void BaseColorButton::showColorDialog()
 
 void BaseColorButton::resizeEvent(QResizeEvent*)
 {
-    setSelectedColor(_color);
+    //setSelectedColor(_color);
 }
 
 //------------------------------------------------------------------------------

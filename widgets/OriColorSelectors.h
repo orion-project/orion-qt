@@ -69,6 +69,10 @@ public:
     QRect iconRect() const { return _iconRect; }
     void setIconRect(const QRect& r);
 
+    bool drawIconFrame = true;
+    bool allowTransparentColors = false;
+    bool useNativeColorDialog = false;
+
 signals:
     void colorSelected(const QColor&);
 
