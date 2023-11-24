@@ -120,8 +120,8 @@ public:
     void setCellSpacing(int value) { _grid->setCellSpacing(value); }
     bool showTooltip() const { return _grid->showTooltip(); }
     void setShowTooltip(bool on) { _grid->setShowTooltip(on); }
-    bool showColorDialog() const { return _actnColorDlg->isVisible(); }
-    void setShowColorDialog(bool on) { _actnColorDlg->setVisible(on); }
+    bool showColorDialog() const;
+    void setShowColorDialog(bool on);
 
 private:
     ColorGrid *_grid;

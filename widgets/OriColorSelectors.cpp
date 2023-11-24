@@ -121,7 +121,13 @@ void ColorGrid::mouseMoveEvent(QMouseEvent* event)
     QWidget::mouseMoveEvent(event);
 
     qreal m = BORDER_W + _cellSpacing/2.0;
-    auto pos = event->position() - QPointF(m, m);
+    auto pos =
+    #if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+        event->position()
+    #else
+        QPointF(event->pos())
+    #endif
+        - QPointF(m, m);
     int col = pos.x() / (_cellSize + _cellSpacing);
     int row = pos.y() / (_cellSize + _cellSpacing);
     int index = _colCount * row + col;
@@ -139,7 +145,14 @@ void ColorGrid::mouseMoveEvent(QMouseEvent* event)
     emit hovered(color);
 
     if (_showTooltip)
-        QToolTip::showText(event->globalPosition().toPoint(), color.name(), this);
+    {
+    #if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+        QPoint pos = event->globalPosition().toPoint();
+    #else
+        QPoint pos = event->globalPos();
+    #endif
+        QToolTip::showText(pos, color.name(), this);
+    }
 }
 
 void ColorGrid::mousePressEvent(QMouseEvent*)
@@ -331,6 +344,17 @@ void PopupColorButton::onGridColorSelected(const QColor& color)
     emit colorSelected(color);
     _menu->hide();
 }
+
+bool PopupColorButton::showColorDialog() const
+{
+    return _actnColorDlg->isVisible();
+}
+
+void PopupColorButton::setShowColorDialog(bool on)
+{
+    _actnColorDlg->setVisible(on);
+}
+
 
 } // namespace Widgets
 } // namespace Ori
