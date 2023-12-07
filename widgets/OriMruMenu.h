@@ -19,8 +19,6 @@ class MruList;
 namespace Ori {
 namespace Widgets {
 
-////////////////////////////////////////////////////////////////////////////////
-
 class MruMenu : public QMenu
 {
     Q_OBJECT
@@ -32,11 +30,9 @@ public:
 private:
     QPointer<MruList> _mru;
 
-private slots:
     void populate();
 };
 
-////////////////////////////////////////////////////////////////////////////////
 
 class MruMenuPart : public QObject
 {
@@ -51,11 +47,9 @@ private:
     QPointer<QAction> _placeholder;
     QAction *_separator;
 
-private slots:
     void populate();
 };
 
-////////////////////////////////////////////////////////////////////////////////
 
 class MruListWidget : public QWidget
 {
@@ -75,12 +69,10 @@ private:
 protected:
     virtual QString makeLinkText(QAction* action) const;
 
-private slots:
     void clicked();
     void populate();
 };
 
-////////////////////////////////////////////////////////////////////////////////
 
 class MruFileListWidget : public MruListWidget
 {
@@ -89,12 +81,7 @@ public:
 
 protected:
     QString makeLinkText(QAction* action) const override;
-
-private:
-    QString filePathColor() const;
 };
-
-////////////////////////////////////////////////////////////////////////////////
 
 
 } // namespace Widgets

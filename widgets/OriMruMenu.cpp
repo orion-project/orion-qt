@@ -1,5 +1,5 @@
 #include "OriMruMenu.h"
-#include "../tools/OriSettings.h"
+
 #include "../tools/OriMruList.h"
 
 #include <QAction>
@@ -11,10 +11,14 @@
 namespace Ori {
 namespace Widgets {
 
+//------------------------------------------------------------------------------
+//                                 MruMenu
+//------------------------------------------------------------------------------
+
 MruMenu::MruMenu(const QString& title, MruList *mru, QWidget *parent) : QMenu(title, parent), _mru(mru)
 {
     if (_mru)
-        connect(_mru, SIGNAL(changed()), this, SLOT(populate()));
+        connect(_mru, &Ori::MruList::changed, this, &MruMenu::populate);
 
     populate();
 }
@@ -41,13 +45,15 @@ void MruMenu::populate()
         setEnabled(false);
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+//                               MruMenuPart
+//------------------------------------------------------------------------------
 
 MruMenuPart::MruMenuPart(MruList *mru, QMenu *menu, QAction *placeholder, QWidget *parent)
     : QObject(parent), _mru(mru), _menu(menu), _placeholder(placeholder)
 {
     if (_mru)
-        connect(_mru, SIGNAL(changed()), this, SLOT(populate()));
+        connect(_mru, &Ori::MruList::changed, this, &MruMenuPart::populate);
 
     _separator = new QAction(this);
     _separator->setSeparator(true);
@@ -78,12 +84,14 @@ void MruMenuPart::populate()
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+//                              MruListWidget
+//------------------------------------------------------------------------------
 
 MruListWidget::MruListWidget(MruList *mru, QWidget *parent) : QWidget(parent), _mru(mru)
 {
     if (_mru)
-        connect(_mru, SIGNAL(changed()), this, SLOT(populate()));
+        connect(_mru, &Ori::MruList::changed, this, &MruListWidget::populate);
 
     _header = new QLabel;
     setHeader(tr("Recently used"));
@@ -112,15 +120,17 @@ MruListWidget::MruListWidget(MruList *mru, QWidget *parent) : QWidget(parent), _
 
 void MruListWidget::populate()
 {
-    for (auto link : _links.keys()) delete link;
+    qDeleteAll(_links.keyBegin(), _links.keyEnd());
     _links.clear();
 
     if (!_mru) return;
 
     foreach (QAction *action, _mru->actions())
     {
+        // TODO: There is the call to virtual method from constructor
+        // check where the derived class MruFileListWidget is used and fix the flow
         auto link = new QLabel(makeLinkText(action));
-        connect(link, SIGNAL(linkActivated(QString)), this, SLOT(clicked()));
+        connect(link, &QLabel::linkActivated, this, &MruListWidget::clicked);
         _layout->addWidget(link);
         _links.insert(link, action);
     }
@@ -142,7 +152,9 @@ void MruListWidget::setHeader(const QString& s)
     _header->setText(QString("<b>%1</b>").arg(s));
 }
 
-////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+//                              MruFileListWidget
+//------------------------------------------------------------------------------
 
 QString MruFileListWidget::makeLinkText(QAction* action) const
 {
@@ -150,16 +162,9 @@ QString MruFileListWidget::makeLinkText(QAction* action) const
     auto text = file.exists()
         ? QString("<a href=%1>%1</a>").arg(file.completeBaseName())
         : file.completeBaseName();
-    return QString("%1<br><font color='%3'>%2</font>").arg(text, file.filePath(), filePathColor());
+    QString pathColor = palette().color(QPalette::Shadow).name();
+    return QString("%1<br><font color='%3'>%2</font>").arg(text, file.filePath(), pathColor);
 }
-
-QString MruFileListWidget::filePathColor() const
-{
-    return palette().color(QPalette::Shadow).name();
-}
-
-////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Widgets
 } // namespace Ori
-

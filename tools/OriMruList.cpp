@@ -16,11 +16,28 @@ namespace Ori {
 
 MruList::MruList(QObject *parent): QObject(parent)
 {
-    _actionClearAll = new QAction(tr("Clear History"), this);
-    connect(_actionClearAll, SIGNAL(triggered()), this, SLOT(clearAll()));
+}
 
-    _actionClearInvalids = new QAction(tr("Delete Invalid Items"), this);
-    connect(_actionClearInvalids, SIGNAL(triggered()), this, SLOT(clearInvalids()));
+QAction* MruList::actionClearAll()
+{
+    if (!_actionClearAll)
+    {
+        _actionClearAll = new QAction(tr("Clear History"), this);
+        _actionClearAll->setEnabled(!_actions.empty());
+        connect(_actionClearAll, &QAction::triggered, this, &MruList::clearAll);
+    }
+    return _actionClearAll;
+}
+
+QAction* MruList::actionClearInvalids()
+{
+    if (!_actionClearInvalids)
+    {
+        _actionClearInvalids = new QAction(tr("Delete Invalid Items"), this);
+        _actionClearInvalids->setEnabled(!_actions.empty());
+        connect(_actionClearInvalids, &QAction::triggered, this, &MruList::clearInvalids);
+    }
+    return _actionClearInvalids;
 }
 
 void MruList::append(const QString& item)
@@ -95,14 +112,14 @@ QStringList MruList::items() const
 QAction* MruList::makeAction(const QString &item)
 {
     QAction *action = new QAction(item, this);
-    connect(action, SIGNAL(triggered()), this, SLOT(actionTriggered()));
+    connect(action, &QAction::triggered, this, &MruList::actionTriggered);
     return action;
 }
 
 void MruList::update()
 {
-    _actionClearAll->setEnabled(!_actions.empty());
-    _actionClearInvalids->setEnabled(!_actions.empty());
+    if (_actionClearAll) _actionClearAll->setEnabled(!_actions.empty());
+    if (_actionClearInvalids) _actionClearInvalids->setEnabled(!_actions.empty());
 
     save();
 
@@ -202,8 +219,6 @@ bool MruFileList::canClick(const QString& item) const
     }
     return true;
 }
-
-////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Ori
 

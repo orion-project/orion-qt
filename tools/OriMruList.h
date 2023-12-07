@@ -27,8 +27,8 @@ public:
 
     QStringList items() const;
     const QList<QAction*>& actions() const { return _actions; }
-    QAction* actionClearAll() const { return _actionClearAll; }
-    QAction* actionClearInvalids() const { return _actionClearInvalids; }
+    QAction* actionClearAll();
+    QAction* actionClearInvalids();
 
     int maxCount() const { return _maxCount; }
     void setMaxCount(int value);
@@ -48,7 +48,8 @@ protected:
 private:
     QString _settingGroup, _settingsKey;
     QList<QAction*> _actions;
-    QAction *_actionClearAll, *_actionClearInvalids;
+    QAction *_actionClearAll = nullptr;
+    QAction *_actionClearInvalids = nullptr;
     int _maxCount = -1;
 
     void update();
@@ -59,8 +60,6 @@ private:
     QAction* makeAction(const QString& item);
     QList<QAction*> invalidItems() const;
     void trimActions();
-
-private slots:
     void actionTriggered();
     void clearInvalids();
     void clearAll();
