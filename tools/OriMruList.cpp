@@ -73,6 +73,15 @@ bool MruList::sameItems(const QString& item1, const QString& item2) const
     return item1 == item2;
 }
 
+void MruList::setItems(const QStringList& items)
+{
+    qDeleteAll(_actions);
+    for (const QString& item : items)
+        if (_maxCount < 0 || _actions.size() < _maxCount)
+            _actions.append(makeAction(item));
+    update();
+}
+
 void MruList::load(const QString &key)
 {
     Ori::Settings s;
@@ -92,6 +101,11 @@ void MruList::load(QSettings* settings, const QString& key)
 
 void MruList::save()
 {
+    if (!_autoSave)
+    {
+        emit saveRequired();
+        return;
+    }
     if (!_settingsKey.isEmpty())
     {
         Settings s;

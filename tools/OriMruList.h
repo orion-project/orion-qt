@@ -26,17 +26,24 @@ public:
     void load(QSettings* settings, const QString &key = QString());
 
     QStringList items() const;
+    void setItems(const QStringList& items);
+
     const QList<QAction*>& actions() const { return _actions; }
+
     QAction* actionClearAll();
     QAction* actionClearInvalids();
 
     int maxCount() const { return _maxCount; }
     void setMaxCount(int value);
 
+    bool autoSave() const { return _autoSave; }
+    void setAutoSave(bool on) { _autoSave = on; }
+
 public slots:
     void append(const QString& item);
 
 signals:
+    void saveRequired();
     void clicked(const QString& item);
     void changed();
 
@@ -51,6 +58,7 @@ private:
     QAction *_actionClearAll = nullptr;
     QAction *_actionClearInvalids = nullptr;
     int _maxCount = -1;
+    bool _autoSave = true;
 
     void update();
     void save();

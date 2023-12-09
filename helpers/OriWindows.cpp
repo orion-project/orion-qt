@@ -70,6 +70,33 @@ void moveToScreenCenter(QWidget* w, QWidget* screenOfThisWidget)
     w->move(screenRect.left() + x, screenRect.top() + y);
 }
 
+void setGeometry(QWidget* w, const QRect& g, bool maximized, const QSize& defSize)
+{
+    if (g.width() > 0 and g.height() > 0)
+    {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+        if (QGuiApplication::screenAt(g.topLeft()))
+            w->setGeometry(g);
+        else
+        {
+            qWarning() << "Stored geometry is out of available screens, ignoring" << w->objectName() << g;
+            if (defSize.width() > 0 and defSize.height() > 0)
+                w->resize(defSize);
+            Ori::Wnd::moveToScreenCenter(w, qApp->activeWindow());
+        }
+#else
+        w->setGeometry(g);
+#endif
+    }
+    else if (defSize.width() > 0 and defSize.height() > 0)
+    {
+        w->resize(defSize);
+        moveToScreenCenter(w, qApp->activeWindow());
+    }
+    if (maximized)
+        w->setWindowState(w->windowState() | Qt::WindowMaximized);
+}
+
 } // namespace Window
 } // namespace Ori
 

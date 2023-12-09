@@ -45,9 +45,9 @@ public:
     QSettings* settings() const { return _settings; }
 
     void storeWindowGeometry(QWidget*);
-    void restoreWindowGeometry(QWidget*, QSize defSize = QSize());
+    void restoreWindowGeometry(QWidget*, const QSize& defSize = QSize());
     void storeWindowGeometry(const QString& key, QWidget*);
-    void restoreWindowGeometry(const QString& key, QWidget*, QSize defSize = QSize());
+    void restoreWindowGeometry(const QString& key, QWidget*, const QSize& defSize = QSize());
 
     void storeDockState(QMainWindow*);
     void restoreDockState(QMainWindow*);
@@ -68,13 +68,13 @@ public:
     static void storeWindow(const QString& key, QWidget* w) {
         Settings().storeWindowGeometry(key, w);
     }
-    static void restoreWindow(const QString& key, QWidget* w, QSize defSize = QSize()) {
+    static void restoreWindow(const QString& key, QWidget* w, const QSize& defSize = QSize()) {
         Settings().restoreWindowGeometry(key, w, defSize);
     }
     static void storeWindow(QWidget* w) {
         Settings().storeWindowGeometry(w);
     }
-    static void restoreWindow(QWidget* w, QSize defSize = QSize()) {
+    static void restoreWindow(QWidget* w, const QSize& defSize = QSize()) {
         Settings().restoreWindowGeometry(w, defSize);
     }
 
@@ -89,7 +89,7 @@ private:
 
 namespace SettingsHelper {
 void storeWindowGeometry(QSettings* s, QWidget*, const QString& key = QString());
-void restoreWindowGeometry(QSettings* s, QWidget*, const QString& key = QString(), QSize defSize = QSize());
+void restoreWindowGeometry(QSettings* s, QWidget*, const QString& key = QString(), const QSize& defSize = QSize());
 } // namespace SettingsHelper
 
 

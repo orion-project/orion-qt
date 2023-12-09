@@ -2,8 +2,10 @@
 #define ORI_WINDOWS_H
 
 #include <QString>
+#include <QSize>
 
 QT_BEGIN_NAMESPACE
+class QRect;
 class QScreen;
 class QWidget;
 QT_END_NAMESPACE
@@ -19,6 +21,7 @@ void setWindowFilePath(QWidget*, const QString&);
 
 void moveToScreenCenter(QWidget*, QWidget* = nullptr);
 QScreen* findScreenOrPrimary(QWidget* w);
+void setGeometry(QWidget* w, const QRect& g, bool maximized, const QSize& defSize = {});
 
 } // namespace Window
 } // namespace Ori

@@ -1,5 +1,7 @@
 #include "OriSettings.h"
 
+#include "../helpers/OriWindows.h"
+
 #include <QApplication>
 #include <QDebug>
 #include <QFileInfo>
@@ -83,7 +85,7 @@ void Settings::storeWindowGeometry(QWidget* w)
     SettingsHelper::storeWindowGeometry(_settings, w, w->objectName());
 }
 
-void Settings::restoreWindowGeometry(QWidget* w, QSize defSize)
+void Settings::restoreWindowGeometry(QWidget* w, const QSize& defSize)
 {
     SettingsHelper::restoreWindowGeometry(_settings, w, w->objectName(), defSize);
 }
@@ -93,7 +95,7 @@ void Settings::storeWindowGeometry(const QString& key, QWidget* w)
     SettingsHelper::storeWindowGeometry(_settings, w, key);
 }
 
-void Settings::restoreWindowGeometry(const QString &key, QWidget* w, QSize defSize)
+void Settings::restoreWindowGeometry(const QString &key, QWidget* w, const QSize& defSize)
 {
     SettingsHelper::restoreWindowGeometry(_settings, w, key, defSize);
 }
@@ -114,31 +116,15 @@ void storeWindowGeometry(QSettings* s, QWidget* w, const QString& key)
 
 }
 
-void restoreWindowGeometry(QSettings* s, QWidget* w, const QString& key, QSize defSize)
+void restoreWindowGeometry(QSettings* s, QWidget* w, const QString& key, const QSize& defSize)
 {
     auto group = key.isEmpty() ? w->objectName() : key;
     if (group.isEmpty()) return;
 
     GroupResetAndBackup backup(s);
-
     s->beginGroup("WindowStates");
     s->beginGroup(group);
-    QRect g = s->value("geometry").toRect();
-    if (g.width() > 0 && g.height() > 0)
-    {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
-        if (QGuiApplication::screenAt(g.topLeft()))
-            w->setGeometry(g);
-        else
-            qWarning() << "Stored geometry is out of available screens, ignoring" << w->objectName() << g;
-#else
-        w->setGeometry(g);
-#endif
-    }
-    else if (defSize.width() > 0 && defSize.height() > 0)
-        w->resize(defSize); // stay default position
-    if (s->value("maximized").toBool())
-        w->setWindowState(w->windowState() | Qt::WindowMaximized);
+    Ori::Wnd::setGeometry(w, s->value("geometry").toRect(), s->value("maximized").toBool(), defSize);
 }
 } // namespace SettingsHelper
 
