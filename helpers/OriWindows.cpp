@@ -9,6 +9,7 @@
 #include <QIcon>
 #include <QScreen>
 #include <QWidget>
+#include <QWindow>
 
 namespace Ori {
 namespace Wnd {
@@ -82,15 +83,20 @@ void setGeometry(QWidget* w, const QRect& g, bool maximized, const QSize& defSiz
             qWarning() << "Stored geometry is out of available screens, ignoring" << w->objectName() << g;
             if (defSize.width() > 0 and defSize.height() > 0)
                 w->resize(defSize);
+            // This function is mostly called from constructors and window size is not yet fully defined there,
+            // e.g. at this moment window size could be 640x480, which is probably some QWidget's default value,
+            // and eventually the window gets offset from the creen center when it's size calculated properly.
+            // So it's better to provide default size, to have the window initially centered.
             Ori::Wnd::moveToScreenCenter(w, qApp->activeWindow());
         }
 #else
         w->setGeometry(g);
 #endif
     }
-    else if (defSize.width() > 0 and defSize.height() > 0)
+    else
     {
-        w->resize(defSize);
+        if (defSize.width() > 0 and defSize.height() > 0)
+            w->resize(defSize);
         moveToScreenCenter(w, qApp->activeWindow());
     }
     if (maximized)
