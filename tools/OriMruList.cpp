@@ -43,6 +43,11 @@ QAction* MruList::actionClearInvalids()
 void MruList::append(const QString& item)
 {
     if (item.isEmpty()) return;
+    if (!validateItem(item))
+    {
+        qWarning() << "MruList::append: invalid item" << item;
+        return;
+    }
 
     auto a = action(item);
     if (a)
