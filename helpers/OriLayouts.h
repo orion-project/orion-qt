@@ -102,6 +102,7 @@ public:
 
     LayoutBox& setDefMargins();
     LayoutBox& setMargin(int value) { _layout->setContentsMargins(value, value, value, value); return *this; }
+    LayoutBox& setMargins(int left, int top, int right, int bottom) { _layout->setContentsMargins(left, top, right, bottom); return *this; }
     LayoutBox& setSpacing(int value) { boxLayout()->setSpacing(value); return *this; }
     LayoutBox& setDefSpacing(qreal factor = 1);
     LayoutBox& setStretchFactor(QWidget* w, int s) { boxLayout()->setStretchFactor(w, s); return *this; }
