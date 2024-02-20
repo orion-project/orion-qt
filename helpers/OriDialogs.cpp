@@ -1,5 +1,6 @@
 #include "OriDialogs.h"
 
+#include <QAction>
 #include <QApplication>
 #include <QAbstractButton>
 #include <QBoxLayout>
@@ -10,8 +11,9 @@
 #include <QGlobalStatic>
 #include <QIcon>
 #include <QLabel>
-#include <QStyle>
 #include <QMessageBox>
+#include <QMouseEvent>
+#include <QStyle>
 
 namespace Ori {
 namespace Dlg {
@@ -260,6 +262,41 @@ using SavedSizesMap = QMap<QString, QSize>;
 Q_GLOBAL_STATIC(SavedSizesMap, __savedSizes)
 }
 
+
+class OriDialogHelpLabel : public QLabel
+{
+public:
+    OriDialogHelpLabel(QWidget *parent) : QLabel(parent) {}
+
+    Dialog::HandlerFunc onHelpRequested;
+
+protected:
+    void mouseReleaseEvent(QMouseEvent *e) override
+    {
+        QLabel::mouseReleaseEvent(e);
+        if (e->button() == Qt::LeftButton)
+            onHelpRequested();
+    }
+};
+
+
+class OriDialog : public QDialog
+{
+public:
+    OriDialog() : QDialog(qApp->activeWindow()) {}
+
+    OriDialogHelpLabel *helpLabel = nullptr;
+
+protected:
+    void resizeEvent(QResizeEvent *e) override
+    {
+        QDialog::resizeEvent(e);
+        if (helpLabel)
+            helpLabel->move({width() - helpLabel->width() - 3, 3});
+    }
+};
+
+
 Dialog::Dialog(QWidget* content, bool ownContent): _content(content), _ownContent(ownContent)
 {
     _backupContentParent = _content->parentWidget();
@@ -289,7 +326,9 @@ bool Dialog::exec()
 void Dialog::makeDialog()
 {
     // Dialog window
-    _dialog = new QDialog(qApp->activeWindow());
+    _dialog = new OriDialog();
+    if (_windowModal)
+        _dialog->setWindowModality(Qt::WindowModal);
 
     auto flags = _dialog->windowFlags();
     flags.setFlag(Qt::WindowContextHelpButtonHint, false);
@@ -335,7 +374,7 @@ void Dialog::makeDialog()
 
     // Dialog buttons
     auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel |
-        (_onHelpRequested ? QDialogButtonBox::Help : QDialogButtonBox::NoButton) |
+        ((_onHelpRequested && _helpIcon.isNull()) ? QDialogButtonBox::Help : QDialogButtonBox::NoButton) |
         (_applyHandler ? QDialogButtonBox::Apply : QDialogButtonBox::NoButton)
     );
     qApp->connect(buttonBox, &QDialogButtonBox::accepted, _dialog, [this]{ acceptDialog(); });
@@ -345,12 +384,29 @@ void Dialog::makeDialog()
     foreach (const auto& signal, _acceptSignals)
         qApp->connect(signal.first ? signal.first : _content, signal.second, _dialog, SLOT(accept()));
     if (_applyHandler)
-        qApp->connect(buttonBox, &QDialogButtonBox::clicked, [buttonBox, this](QAbstractButton *button){
+        qApp->connect(buttonBox, &QDialogButtonBox::clicked, _dialog, [buttonBox, this](QAbstractButton *button){
             if ((void*)button == (void*)buttonBox->button(QDialogButtonBox::Apply))
                 _applyHandler();
         });
     if (_onHelpRequested)
-        qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, _onHelpRequested);
+    {
+        if (_helpIcon.isEmpty())
+            qApp->connect(buttonBox, &QDialogButtonBox::helpRequested, _onHelpRequested);
+        else
+        {
+            auto helpAction = new QAction(_dialog);
+            helpAction->setShortcut(QKeySequence::HelpContents);
+            helpAction->connect(helpAction, &QAction::triggered, _onHelpRequested);
+            _dialog->addAction(helpAction);
+
+            _dialog->helpLabel = new OriDialogHelpLabel(_dialog);
+            _dialog->helpLabel->setFixedSize(16, 16);
+            _dialog->helpLabel->setCursor(Qt::PointingHandCursor);
+            _dialog->helpLabel->setToolTip(qApp->tr("Show Help"));
+            _dialog->helpLabel->setPixmap(QIcon(_helpIcon).pixmap(16, 16));
+            _dialog->helpLabel->onHelpRequested = _onHelpRequested;
+        }
+    }
 
     // By default dialogLayout provides margins
     // When skipping content margins we still want to have margins around buttons

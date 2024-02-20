@@ -1,21 +1,20 @@
 #ifndef ORI_DIALOGS_H
 #define ORI_DIALOGS_H
 
-#include <QSize>
-#include <QString>
-#include <QVector>
 #include <QLineEdit>
+//#include <QSize>
+//#include <QVector>
 
 #include <functional>
 
 QT_BEGIN_NAMESPACE
 class QAbstractButton;
-class QObject;
-class QDialog;
-class QWidget;
-class QLayout;
 class QBoxLayout;
+class QLabel;
+class QLayout;
+class QObject;
 class QVBoxLayout;
+class QWidget;
 QT_END_NAMESPACE
 
 namespace Ori {
@@ -126,6 +125,7 @@ public:
     /// A handler that is called when the Help button pressed.
     /// The Help button is not shown if this hander is not provided.
     Dialog& withOnHelp(HandlerFunc handler) { _onHelpRequested = handler; return *this; }
+    Dialog& withHelpIcon(const QString& icon) { _helpIcon = icon; return *this; }
 
     /// A handler that is called when the Apply button pressed.
     /// The Apply button is not shown if this hander is not provided.
@@ -135,6 +135,8 @@ public:
     /// after dialog was closed and then restored on the next run.
     Dialog& withPersistenceId(const QString& id) { _persistenceId = id; return *this; }
 
+    Dialog& windowModal() { _windowModal = true; return *this; }
+
     bool exec();
 
     QSize size() const;
@@ -142,7 +144,7 @@ public:
     QAbstractButton* okButton() const { return _okButton; }
 
 private:
-    QDialog* _dialog = nullptr;
+    class OriDialog* _dialog = nullptr;
     QWidget *_content, *_backupContentParent;
     QString _title, _iconPath, _prompt;
     QBoxLayout* _contentLayout;
@@ -161,6 +163,8 @@ private:
     HandlerFunc _applyHandler;
     QString _persistenceId;
     bool _skipContentMargins = false;
+    bool _windowModal = false;
+    QString _helpIcon;
 
     void makeDialog();
     void acceptDialog();
