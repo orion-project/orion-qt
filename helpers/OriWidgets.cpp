@@ -218,6 +218,18 @@ QToolBar* toolbar(std::initializer_list<QObject*> items)
     return populate(new QToolBar, items);
 }
 
+QToolBar* toolbar(const QString& title, std::initializer_list<QObject*> items)
+{
+    return populate(new QToolBar(title), items);
+}
+
+QToolBar* toolbar(const QString& title, const QString& objectName, std::initializer_list<QObject*> items)
+{
+    auto tb = new QToolBar(title);
+    tb->setObjectName(objectName);
+    return populate(tb, items);
+}
+
 QToolBar* populate(QToolBar* toolbar, std::initializer_list<QObject*> items)
 {
     if (!toolbar) return nullptr;

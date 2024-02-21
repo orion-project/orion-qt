@@ -51,6 +51,8 @@ void append(QMenu* menu, QObject* item);
 QMenu* makeToggleWidgetsMenu(QMenu* parent, const QString& title, std::initializer_list<QWidget*> widgets);
 
 QToolBar* toolbar(std::initializer_list<QObject*> items);
+QToolBar* toolbar(const QString& title, std::initializer_list<QObject*> items);
+QToolBar* toolbar(const QString& title, const QString& objectName, std::initializer_list<QObject*> items);
 QToolBar* populate(QToolBar* toolbar, std::initializer_list<QObject*> items);
 void append(QToolBar* toolbar, QObject* item);
 
