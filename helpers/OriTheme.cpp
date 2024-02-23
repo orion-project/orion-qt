@@ -29,8 +29,6 @@ QString loadRawStyleSheet()
     return QString::fromUtf8(f.readAll());
 }
 
-// For dev mode only
-// Can be used by stylesheet editors available in the app under special dev cmd line keys (--dev)
 QString saveRawStyleSheet(const QString& text)
 {
     QFile f(rawFileName());
