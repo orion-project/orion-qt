@@ -1,11 +1,11 @@
 #ifndef ORI_WIDGETS_H
 #define ORI_WIDGETS_H
 
-#include <QString>
+#include <QAction>
 #include <QKeySequence>
+#include <QString>
 
 QT_BEGIN_NAMESPACE
-class QAction;
 class QBoxLayout;
 class QComboBox;
 class QGroupBox;
@@ -93,6 +93,35 @@ QAction* action(const QString& title, QObject* receiver, const char* slot, const
 QAction* action(const QString& title, const QString& tooltip, QObject* receiver, const char* slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence());
 QAction* toggledAction(const QString& title, QObject* receiver, const char* slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence());
 QAction* toggledAction(const QString& title, const QString& tooltip, QObject* receiver, const char* slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence());
+
+template <typename Func1>
+QAction* action(const QString& title, QObject* receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+    auto a = new QAction(title, receiver);
+    if (icon)
+        a->setIcon(QIcon(QString(icon)));
+#ifdef QT_NO_SHORTCUT
+    Q_UNUSED(shortcut)
+#else
+    a->setShortcut(shortcut);
+#endif
+    a->connect(a, &QAction::triggered, receiver, slot);
+    return a;
+}
+
+template <typename Func1>
+QAction* action(const QString& title, const QString& tooltip, QObject* receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+    auto a = new QAction(title, receiver);
+    if (icon)
+        a->setIcon(QIcon(QString(icon)));
+    a->setToolTip(tooltip);
+#ifdef QT_NO_SHORTCUT
+    Q_UNUSED(shortcut)
+#else
+    a->setShortcut(shortcut);
+#endif
+    a->connect(a, &QAction::triggered, receiver, slot);
+    return a;
+}
 
 QTreeWidget* twoColumnTree(const QString& title1, const QString& title2);
 
