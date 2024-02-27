@@ -43,7 +43,7 @@ public:
 
 void AnotherWindow::doSomething() {
     QString id = "Something has been done to this object";
-    Ori::MessageBus::instance().send(MSG_SOMETHING_HAPPENED, {{"id", id}});
+    Ori::MessageBus::send(MSG_SOMETHING_HAPPENED, {{"id", id}});
 }
 ```
 
@@ -53,7 +53,7 @@ class MessageBus :
     public Notifier<IMessageBusListener>
 {
 public:
-    void send(int event, const QMap<QString, QVariant>& params);
+    static void send(int event, const QMap<QString, QVariant>& params = {});
 
 private:
     MessageBus() {}

@@ -3,12 +3,10 @@
 
 #include <QStatusBar>
 
-QT_BEGIN_NAMESPACE
-class QLabel;
-QT_END_NAMESPACE
-
 namespace Ori {
 namespace Widgets {
+
+class Label;
 
 class StatusBar : public QStatusBar
 {
@@ -17,8 +15,25 @@ class StatusBar : public QStatusBar
 public:
     StatusBar(int count, QWidget *parent = nullptr);
 
+    /** Connect handler to a section using signal-slot sintax.
+     *
+     * Example:
+     *
+     * _statusBar->connect(STATUS_LAMBDA, SIGNAL(doubleClicked()), _operations, SLOT(setupWavelength()));
+     */
     void connect(int index, const char *signal, const QObject *receiver, const char *method);
 
+    /** Connect handler to a section using lambda syntax.
+     *
+     * Example:
+     *
+     * _statusBar->connect(STATUS_FACTOR_X, &Ori::Widgets::Label::doubleClicked, [this]{ axisFactorDlgX(); });
+     *
+     * Each section of the status bar is Ori::Widgets::Label (because QLabel doesn't provide click signals)
+     * so you have to include its header to make signals available:
+     *
+     * #include "widgets/OriLabels.h"
+     */
     template <typename Func1, typename Func2>
     void connect(int index, Func1 func1, Func2 func2) {
         QStatusBar::connect(_sections[index], func1, func2); }
@@ -40,7 +55,7 @@ public:
     QPoint mapToGlobal(int index, const QPoint& p);
 
 private:
-    QVector<QLabel*> _sections;
+    QVector<Label*> _sections;
     QSize _iconSize;
 };
 
