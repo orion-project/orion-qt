@@ -108,6 +108,7 @@ public:
     LayoutBox& setStretchFactor(QWidget* w, int s) { boxLayout()->setStretchFactor(w, s); return *this; }
     LayoutBox& useFor(QWidget* parent) { parent->setLayout(_layout); return *this; }
     QWidget* makeWidget() { auto w = new QWidget; w->setLayout(_layout); return w; }
+    QSharedPointer<QWidget> makeWidgetAuto() { auto w = new QWidget; w->setLayout(_layout); return QSharedPointer<QWidget>(w); }
     QGroupBox* makeGroupBox(const QString& title);
 
     QBoxLayout* boxLayout() const { return qobject_cast<QBoxLayout*>(_layout); }
