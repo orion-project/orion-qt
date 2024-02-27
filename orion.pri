@@ -27,6 +27,7 @@ HEADERS += \
     $$PWD/core/OriResult.h \
     $$PWD/helpers/OriTheme.h \
     $$PWD/tools/OriHighlighter.h \
+    $$PWD/tools/OriMessageBus.h \
     $$PWD/tools/OriPetname.h \
     $$PWD/widgets/OriActions.h \
     $$PWD/widgets/OriCodeEditor.h \
@@ -72,6 +73,7 @@ SOURCES += \
     $$PWD/helpers/OriLayouts.cpp \
     $$PWD/helpers/OriTheme.cpp \
     $$PWD/tools/OriHighlighter.cpp \
+    $$PWD/tools/OriMessageBus.cpp \
     $$PWD/tools/OriPetname.cpp \
     $$PWD/widgets/OriActions.cpp \
     $$PWD/widgets/OriCharMap.cpp \
