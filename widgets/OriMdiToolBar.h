@@ -19,12 +19,16 @@ public:
     explicit MdiToolBar(const QString& title, QMdiArea *parent);
     explicit MdiToolBar(QMdiArea *parent);
     bool flat;
+    QMenu *menuForButton = nullptr;
+    QMenu *menuForSpace = nullptr;
+    QMdiSubWindow *windowUnderMenu = nullptr;
 
 public slots:
     void subWindowActivated(QMdiSubWindow*);
 
 protected:
     void paintEvent(QPaintEvent*);
+    void contextMenuEvent(QContextMenuEvent *event);
 
 private:
     QMdiArea *mdiArea;

@@ -1,9 +1,11 @@
 #include "OriMdiToolBar.h"
 
 #include <QAction>
+#include <QContextMenuEvent>
 #include <QDebug>
 #include <QMdiArea>
 #include <QMdiSubWindow>
+#include <QMenu>
 
 #define ACTION_DATA(window) QVariant::fromValue(window)
 
@@ -27,6 +29,35 @@ MdiToolBar::MdiToolBar(const QString& title, QMdiArea *parent) : QToolBar(parent
 void MdiToolBar::paintEvent(QPaintEvent *event)
 {
     if (!flat) QToolBar::paintEvent(event);
+}
+
+void MdiToolBar::contextMenuEvent(QContextMenuEvent *event)
+{
+    if (!menuForButton && !menuForSpace)
+    {
+        QToolBar::contextMenuEvent(event);
+        return;
+    }
+    auto pos = event->pos();
+    for (auto action : qAsConst(actions))
+    {
+        auto button = widgetForAction(action);
+        if (!button) continue;
+        auto rect = button->rect();
+        rect.moveLeft(button->pos().x());
+        rect.moveTop(button->pos().y());
+        if (rect.contains(pos))
+        {
+            if (menuForButton)
+            {
+                windowUnderMenu = action->data().value<QMdiSubWindow*>();
+                menuForButton->popup(event->globalPos());
+                return;
+            }
+        }
+    }
+    if (menuForSpace)
+        menuForSpace->popup(event->globalPos());
 }
 
 void MdiToolBar::uncheckAll()
@@ -79,7 +110,7 @@ void MdiToolBar::subWindowDestroyed(QObject *window)
 QAction* MdiToolBar::findActionForWindow(QMdiSubWindow *window)
 {
     QVariant data = ACTION_DATA(window);
-    for (auto action : actions)
+    for (auto action : qAsConst(actions))
         if (action->data() == data)
             return action;
     return nullptr;
