@@ -80,6 +80,7 @@ public:
     typedef std::function<void()> HandlerFunc;
 
     Dialog(QWidget* content, bool ownContent);
+    Dialog(QSharedPointer<QWidget> content) : Dialog(content.get(), false) {}
     ~Dialog();
 
     Dialog& withTitle(const QString& title) { _title = title; return *this; }

@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QGroupBox>
+#include <QLabel>
 #include <QStyle>
 
 namespace Ori {
@@ -23,6 +24,16 @@ SpaceV::SpaceV(qreal factor)
 {
     _mode = LayoutItemMode::Space;
     _space = qRound(defSpacing(true) * qAbs(factor));
+}
+
+//------------------------------------------------------------------------------
+//                                    LayoutItem
+//------------------------------------------------------------------------------
+
+LayoutItem::LayoutItem(const QString& label)
+{
+    _mode = LayoutItemMode::Widget;
+    _widget = new QLabel(label);
 }
 
 //------------------------------------------------------------------------------
