@@ -417,6 +417,13 @@ void Dialog::makeDialog()
             style->pixelMetric(QStyle::PM_LayoutRightMargin),
             style->pixelMetric(QStyle::PM_LayoutBottomMargin));
 
+    if (_buttonsSeparator)
+    {
+        auto sep = new QFrame;
+        sep->setFrameShape(QFrame::HLine);
+        sep->setForegroundRole(QPalette::Mid);
+        dialogLayout->addWidget(sep);
+    }
     dialogLayout->addWidget(buttonBox);
 
     foreach (auto button, buttonBox->buttons())

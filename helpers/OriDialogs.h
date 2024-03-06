@@ -136,6 +136,8 @@ public:
     /// after dialog was closed and then restored on the next run.
     Dialog& withPersistenceId(const QString& id) { _persistenceId = id; return *this; }
 
+    Dialog& withButtonsSeparator() { _buttonsSeparator = true; return *this; }
+
     Dialog& windowModal() { _windowModal = true; return *this; }
 
     bool exec();
@@ -166,6 +168,7 @@ private:
     bool _skipContentMargins = false;
     bool _windowModal = false;
     QString _helpIcon;
+    bool _buttonsSeparator = false;
 
     void makeDialog();
     void acceptDialog();
