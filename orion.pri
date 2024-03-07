@@ -25,6 +25,7 @@ RESOURCES += \
 HEADERS += \
     $$PWD/core/OriArg.h \
     $$PWD/core/OriResult.h \
+    $$PWD/dialogs/OriConfigDlg.h \
     $$PWD/helpers/OriTheme.h \
     $$PWD/tools/OriHighlighter.h \
     $$PWD/tools/OriMessageBus.h \
@@ -70,6 +71,7 @@ HEADERS += \
     $$PWD/helpers/OriLayouts.h
 
 SOURCES += \
+    $$PWD/dialogs/OriConfigDlg.cpp \
     $$PWD/helpers/OriLayouts.cpp \
     $$PWD/helpers/OriTheme.cpp \
     $$PWD/tools/OriHighlighter.cpp \

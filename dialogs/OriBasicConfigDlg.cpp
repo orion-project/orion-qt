@@ -19,7 +19,8 @@ struct ConfigDialogState
 };
 
 namespace {
-QMap<QString, ConfigDialogState> __savedConfigDialogStates;
+typedef QMap<QString, ConfigDialogState> SavedStates;
+Q_GLOBAL_STATIC(SavedStates, __savedConfigDialogStates)
 }
 
 //------------------------------------------------------------------------------
@@ -120,15 +121,15 @@ void BasicConfigDialog::storeState()
     ConfigDialogState state = {};
     state.currentPageIndex = currentPageIndex();
     state.geometry = saveGeometry();
-    __savedConfigDialogStates[objectName()] = state;
+    (*__savedConfigDialogStates)[objectName()] = state;
 }
 
 bool BasicConfigDialog::restoreState()
 {
     QString objectName = this->objectName();
     if (objectName.isEmpty()) return false;
-    if (!__savedConfigDialogStates.contains(objectName)) return false;
-    auto state = __savedConfigDialogStates[objectName];
+    if (!__savedConfigDialogStates->contains(objectName)) return false;
+    auto state = (*__savedConfigDialogStates)[objectName];
     int savedPageIndex = state.currentPageIndex;
     if (savedPageIndex < 0 && savedPageIndex >= pageList->count()-1) return false;
     setCurrentPageIndex(savedPageIndex);
@@ -275,25 +276,29 @@ BasicConfigPage::BasicConfigPage(PageId id,
 void BasicConfigPage::add(std::initializer_list<QObject*> items)
 {
     for (auto item: items)
+        add(item);
+}
+
+void BasicConfigPage::add(QObject* item)
+{
+    if (item == &_stretchDummy)
     {
-        if (item == &_stretchDummy)
-        {
-            _mainLayout->addStretch();
-            continue;
-        }
-        auto widget = qobject_cast<QWidget*>(item);
-        if (widget)
-        {
-            _mainLayout->addWidget(widget);
-            continue;
-        }
-        auto layout = qobject_cast<QLayout*>(item);
-        if (layout)
-        {
-            _mainLayout->addLayout(layout);
-            continue;
-        }
+        _mainLayout->addStretch();
+        return;
     }
+    auto widget = qobject_cast<QWidget*>(item);
+    if (widget)
+    {
+        _mainLayout->addWidget(widget);
+        return;
+    }
+    auto layout = qobject_cast<QLayout*>(item);
+    if (layout)
+    {
+        _mainLayout->addLayout(layout);
+        return;
+    }
+    qWarning() << "BasicConfigPage::add: unsupported item type";
 }
 
 } // namespace Dlg

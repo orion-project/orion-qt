@@ -91,6 +91,7 @@ public:
     const QString& longTitle() const { return _longTitle; }
 
     void add(std::initializer_list<QObject*> items);
+    void add(QObject* item);
     QVBoxLayout* mainLayout() { return _mainLayout; }
     QObject* stretch() { return &_stretchDummy; }
 
