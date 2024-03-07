@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(ORI_SOURCES
     dialogs/OriBasicConfigDlg.cpp
+    dialogs/OriConfigDlg.cpp
     helpers/OriDialogs.cpp
     helpers/OriLayouts.cpp
     helpers/OriTheme.cpp
@@ -16,6 +17,7 @@ set(ORI_SOURCES
     tools/OriHighlighter.cpp
     tools/OriLog.cpp
     tools/OriLoremIpsum.cpp
+    tools/OriMessageBus.cpp
     tools/OriMruList.cpp
     tools/OriPetname.cpp
     tools/OriSettings.cpp
@@ -35,6 +37,7 @@ set(ORI_SOURCES
     widgets/OriMruMenu.cpp
     widgets/OriOptionsGroup.cpp
     widgets/OriPopupButton.cpp
+    widgets/OriPopupMessage.cpp
     widgets/OriSelectableTile.cpp
     widgets/OriStatusBar.cpp
     widgets/OriStylesMenu.cpp
@@ -42,9 +45,8 @@ set(ORI_SOURCES
     widgets/OriValueEdit.cpp
 )
 
-qt_add_resources(PROJECT_SOURCES resources.qrc)
-
 add_library(${ORI_NAME} STATIC
+    resources.qrc
     ${ORI_SOURCES}
 )
 
