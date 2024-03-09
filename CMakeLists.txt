@@ -46,7 +46,6 @@ set(ORI_SOURCES
 )
 
 add_library(${ORI_NAME} STATIC
-    resources.qrc
     ${ORI_SOURCES}
 )
 
