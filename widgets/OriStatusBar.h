@@ -52,6 +52,9 @@ public:
 
     void setIconSize(const QSize& size);
 
+    /// Adds a label with application version to the right side of the bar.
+    Label* addVersionLabel();
+
     QPoint mapToGlobal(int index, const QPoint& p);
 
 private:

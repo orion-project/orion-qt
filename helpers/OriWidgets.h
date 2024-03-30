@@ -108,8 +108,37 @@ QAction* action(const QString& title, QObject* receiver, Func1 slot, const char*
     return a;
 }
 
+template <typename Object, typename Func1>
+QAction* action(const QString& title, const Object receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+    auto a = new QAction(title, receiver);
+    if (icon)
+        a->setIcon(QIcon(QString(icon)));
+#ifdef QT_NO_SHORTCUT
+    Q_UNUSED(shortcut)
+#else
+    a->setShortcut(shortcut);
+#endif
+    a->connect(a, &QAction::triggered, receiver, slot);
+    return a;
+}
+
 template <typename Func1>
 QAction* action(const QString& title, const QString& tooltip, QObject* receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+    auto a = new QAction(title, receiver);
+    if (icon)
+        a->setIcon(QIcon(QString(icon)));
+    a->setToolTip(tooltip);
+#ifdef QT_NO_SHORTCUT
+    Q_UNUSED(shortcut)
+#else
+    a->setShortcut(shortcut);
+#endif
+    a->connect(a, &QAction::triggered, receiver, slot);
+    return a;
+}
+
+template <typename Object, typename Func1>
+QAction* action(const QString& title, const QString& tooltip, const Object receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
     auto a = new QAction(title, receiver);
     if (icon)
         a->setIcon(QIcon(QString(icon)));

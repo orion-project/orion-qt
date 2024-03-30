@@ -1,6 +1,7 @@
 #include "OriStatusBar.h"
 #include "OriLabels.h"
 
+#include <QApplication>
 #include <QIcon>
 
 namespace Ori {
@@ -78,6 +79,14 @@ void StatusBar::setIconSize(const QSize& size)
 QPoint StatusBar::mapToGlobal(int index, const QPoint& p)
 {
     return _sections[index]->mapToGlobal(p);
+}
+
+Label *StatusBar::addVersionLabel()
+{
+    auto label = new Label(qApp->applicationVersion());
+    label->setContentsMargins(3, 0, 3, 0);
+    addPermanentWidget(label);
+    return label;
 }
 
 } // namespace Widgets
