@@ -258,7 +258,7 @@ void setDlgIcon(QWidget *dlg, const QString &path)
 //------------------------------------------------------------------------------
 
 namespace {
-using SavedSizesMap = QMap<QString, QSize>;
+using SavedSizesMap = QMap<QString, QRect>;
 Q_GLOBAL_STATIC(SavedSizesMap, __savedSizes)
 }
 
@@ -319,7 +319,7 @@ bool Dialog::exec()
         _content->setParent(_backupContentParent);
     }
     if (!_persistenceId.isEmpty())
-        (*__savedSizes)[_persistenceId] = _dialog->size();
+        (*__savedSizes)[_persistenceId] = _dialog->geometry();
     return res;
 }
 
@@ -339,7 +339,7 @@ void Dialog::makeDialog()
     if (!_initialSize.isEmpty())
         _dialog->resize(_initialSize);
     if (!_persistenceId.isEmpty() && __savedSizes->contains(_persistenceId))
-        _dialog->resize((*__savedSizes)[_persistenceId]);
+        _dialog->setGeometry((*__savedSizes)[_persistenceId]);
     QVBoxLayout* dialogLayout = new QVBoxLayout(_dialog);
 
     // Dialog content
