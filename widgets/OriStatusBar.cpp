@@ -43,6 +43,16 @@ void StatusBar::setToolTip(int index, const QString& tooltip)
     _sections[index]->setToolTip(tooltip);
 }
 
+void StatusBar::setMargin(int index, int left, int right)
+{
+    _sections[index]->setContentsMargins(left, 0, right, 0);
+}
+
+void StatusBar::setVisible(int index, bool on)
+{
+    _sections[index]->setVisible(on);
+}
+
 void StatusBar::clear(int index)
 {
     setText(index, QString());

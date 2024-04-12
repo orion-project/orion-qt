@@ -39,6 +39,9 @@ public:
     bool autoSave() const { return _autoSave; }
     void setAutoSave(bool on) { _autoSave = on; }
 
+    bool isDisabled() const { return _disabled; }
+    void setDisabled(bool disabled);
+
 public slots:
     void append(const QString& item);
 
@@ -59,6 +62,7 @@ private:
     QAction *_actionClearInvalids = nullptr;
     int _maxCount = -1;
     bool _autoSave = true;
+    bool _disabled = false;
 
     void update();
     void save();

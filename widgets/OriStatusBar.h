@@ -43,6 +43,8 @@ public:
     void setIcon(int index, const QString& path);
     void setHint(int index, const QString& hint) { setToolTip(index, hint); }
     void setToolTip(int index, const QString& tooltip);
+    void setMargin(int index, int left, int right);
+    void setVisible(int index, bool on);
 
     void clear(int index);
     void clear();

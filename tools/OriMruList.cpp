@@ -132,6 +132,7 @@ QAction* MruList::makeAction(const QString &item)
 {
     QAction *action = new QAction(item, this);
     connect(action, &QAction::triggered, this, &MruList::actionTriggered);
+    action->setDisabled(_disabled);
     return action;
 }
 
@@ -213,6 +214,13 @@ void MruList::trimActions()
     }
     if (prevCount != _actions.size())
         emit changed();
+}
+
+void MruList::setDisabled(bool disabled)
+{
+    _disabled = disabled;
+    for (auto action : _actions)
+        action->setDisabled(disabled);
 }
 
 //------------------------------------------------------------------------------
