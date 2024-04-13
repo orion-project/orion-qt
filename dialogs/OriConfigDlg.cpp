@@ -36,26 +36,8 @@ class ConfigItemEditor : public QWidget
 {
 public:
     ConfigItemEditor(): QWidget() {}
-    virtual void populate() = 0;
-    virtual void collect() = 0;
-};
-
-//------------------------------------------------------------------------------
-//                            ConfigItemEditorBool
-//------------------------------------------------------------------------------
-
-class ConfigItemEditorSpace : public ConfigItemEditor
-{
-public:
-    ConfigItemEditorSpace(ConfigItemSpace* item): ConfigItemEditor(), item(item)
-    {
-        setFixedHeight(item->value);
-    }
-
-    void populate() override {}
-    void collect() override {}
-
-    ConfigItemSpace* item;
+    virtual void populate() {}
+    virtual void collect() {}
 };
 
 //------------------------------------------------------------------------------
@@ -189,8 +171,10 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
         if (item->pageId != page.id) continue;
 
         ConfigItemEditor* editor = nullptr;
+        if (auto it = dynamic_cast<ConfigItemWidget*>(item); it)
+            w->mainLayout()->addWidget(it->value);
         if (auto it = dynamic_cast<ConfigItemSpace*>(item); it)
-            editor = new ConfigItemEditorSpace(it);
+            w->mainLayout()->addSpacing(it->value);
         else if (auto it = dynamic_cast<ConfigItemBool*>(item); it)
             editor = new ConfigItemEditorBool(it);
         else if (auto it = dynamic_cast<ConfigItemInt*>(item); it)

@@ -68,6 +68,7 @@ class ImagedLabel : public QWidget
 
 public:
     explicit ImagedLabel(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
+    explicit ImagedLabel(const QString &text, const QString &imagePath);
 
     void setContent(const QString& text, const QString& imagePath = QString());
 

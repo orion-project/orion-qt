@@ -134,6 +134,11 @@ ImagedLabel::ImagedLabel(QWidget *parent, Qt::WindowFlags f) : QWidget(parent, f
     setLayout(layout);
 }
 
+ImagedLabel::ImagedLabel(const QString &text, const QString &imagePath) : ImagedLabel()
+{
+    setContent(text, imagePath);
+}
+
 void ImagedLabel::setContent(const QString& text, const QString& imagePath)
 {
     _text->setText(text);

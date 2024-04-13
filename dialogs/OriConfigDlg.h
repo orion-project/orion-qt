@@ -47,6 +47,16 @@ public:
 
 //------------------------------------------------------------------------------
 
+class ConfigItemWidget : public ConfigItem
+{
+public:
+    ConfigItemWidget(int pageId, QWidget *value) : ConfigItem(pageId, {}), value(value) {}
+
+    QWidget *value;
+};
+
+//------------------------------------------------------------------------------
+
 class ConfigItemSpace : public ConfigItem
 {
 public:
