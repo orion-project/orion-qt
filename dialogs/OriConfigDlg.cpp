@@ -7,6 +7,7 @@
 #include <QCheckBox>
 #include <QDebug>
 #include <QLabel>
+#include <QLineEdit>
 #include <QSpinBox>
 #include <QStyleHints>
 
@@ -50,7 +51,7 @@ public:
     ConfigItemEditorBool(ConfigItemBool* item): ConfigItemEditor(), item(item)
     {
         control = new QCheckBox(item->title);
-        LayoutH({control}).setMargin(0).useFor(this);
+        LayoutV({control, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
     }
 
     void populate() override
@@ -126,6 +127,35 @@ public:
 };
 
 //------------------------------------------------------------------------------
+//                            ConfigItemEditorStr
+//------------------------------------------------------------------------------
+
+class ConfigItemEditorStr : public ConfigItemEditor
+{
+public:
+    ConfigItemEditorStr(ConfigItemStr* item): ConfigItemEditor(), item(item)
+    {
+        control = new QLineEdit;
+        if (item->align.has_value())
+            control->setAlignment(item->align.value());
+        LayoutV({item->title, control, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
+    }
+
+    void populate() override
+    {
+        control->setText(*item->value);
+    }
+
+    void collect() override
+    {
+        *item->value = control->text();
+    }
+
+    ConfigItemStr* item;
+    QLineEdit* control;
+};
+
+//------------------------------------------------------------------------------
 //                              ConfigDlg
 //------------------------------------------------------------------------------
 
@@ -181,6 +211,8 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             editor = new ConfigItemEditorInt(it);
         else if (auto it = dynamic_cast<ConfigItemReal*>(item); it)
             editor = new ConfigItemEditorReal(it);
+        else if (auto it = dynamic_cast<ConfigItemStr*>(item); it)
+            editor = new ConfigItemEditorStr(it);
         if (editor)
         {
             w->add(editor);

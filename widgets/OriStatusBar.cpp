@@ -53,6 +53,11 @@ void StatusBar::setVisible(int index, bool on)
     _sections[index]->setVisible(on);
 }
 
+void StatusBar::setDblClick(int index, std::function<void()> handler)
+{
+    QWidget::connect(_sections[index], &Label::doubleClicked, handler);
+}
+
 void StatusBar::clear(int index)
 {
     setText(index, QString());

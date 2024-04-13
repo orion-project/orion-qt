@@ -45,6 +45,7 @@ public:
     void setToolTip(int index, const QString& tooltip);
     void setMargin(int index, int left, int right);
     void setVisible(int index, bool on);
+    void setDblClick(int index, std::function<void()> handler);
 
     void clear(int index);
     void clear();

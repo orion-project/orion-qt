@@ -100,6 +100,19 @@ public:
 
 //------------------------------------------------------------------------------
 
+class ConfigItemStr : public ConfigItem
+{
+public:
+    ConfigItemStr(int pageId, const QString& title, QString* value) : ConfigItem(pageId,  title), value(value) {}
+
+    ConfigItem* withAlignment(Qt::Alignment a) { align = a; return this; }
+
+    QString* value;
+    std::optional<Qt::Alignment> align;
+};
+
+//------------------------------------------------------------------------------
+
 struct ConfigDlgOpts
 {
     /// Dialog window title.
