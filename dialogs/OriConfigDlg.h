@@ -13,6 +13,8 @@ struct ConfigPage
     ConfigPage(int id, const QString& title, const QString& icon = QString()) : id(id), title(title), iconPath(icon) {}
 
     ConfigPage& withHelpTopic(const QString& topic) { helpTopic = topic; return *this; }
+    ConfigPage& withMargins(int m) { margin = m; return *this; }
+    ConfigPage& withSpacing(int s) { spacing = s; return *this; }
 
     int id;
     QString title;
@@ -22,8 +24,12 @@ struct ConfigPage
     /// If page has a topic, then the Help button is displaued in the dialog
     /// and the onHelpRequested handler is called
     QString helpTopic;
+
+    int margin = 6;
+    int spacing = -1;
 };
 
+//------------------------------------------------------------------------------
 
 class ConfigItem
 {
@@ -31,10 +37,25 @@ public:
     ConfigItem(int pageId, const QString& title) : pageId(pageId), title(title) {}
     virtual ~ConfigItem() {}
 
+    ConfigItem* withHint(const QString& h, bool wrap = true) { hint = h, wrapHint = wrap; return this; }
+
     int pageId;
     QString title;
+    QString hint;
+    bool wrapHint;
 };
 
+//------------------------------------------------------------------------------
+
+class ConfigItemSpace : public ConfigItem
+{
+public:
+    ConfigItemSpace(int pageId, int value = 0) : ConfigItem(pageId, {}), value(value) {}
+
+    int value;
+};
+
+//------------------------------------------------------------------------------
 
 class ConfigItemBool : public ConfigItem
 {
@@ -44,6 +65,30 @@ public:
     bool* value;
 };
 
+//------------------------------------------------------------------------------
+
+class ConfigItemInt : public ConfigItem
+{
+public:
+    ConfigItemInt(int pageId, const QString& title, int* value) : ConfigItem(pageId,  title), value(value) {}
+
+    ConfigItem* withMinMax(int min, int max) { minValue = min, maxValue = max; return this; }
+
+    int* value;
+    std::optional<int> minValue, maxValue;
+};
+
+//------------------------------------------------------------------------------
+
+class ConfigItemReal : public ConfigItem
+{
+public:
+    ConfigItemReal(int pageId, const QString& title, double* value) : ConfigItem(pageId,  title), value(value) {}
+
+    double* value;
+};
+
+//------------------------------------------------------------------------------
 
 struct ConfigDlgOpts
 {
@@ -72,6 +117,8 @@ struct ConfigDlgOpts
     /// Help request handler that should be called if page has a help topic
     std::function<void(const QString&)> onHelpRequested;
 };
+
+//------------------------------------------------------------------------------
 
 /**
     Generic configuration dialog.
