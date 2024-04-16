@@ -4,10 +4,12 @@
 #include "widgets/OriValueEdit.h"
 
 #include <QApplication>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QDebug>
 #include <QLabel>
 #include <QLineEdit>
+#include <QRadioButton>
 #include <QSpinBox>
 #include <QStyleHints>
 
@@ -50,22 +52,34 @@ class ConfigItemEditorBool : public ConfigItemEditor
 public:
     ConfigItemEditorBool(ConfigItemBool* item): ConfigItemEditor(), item(item)
     {
-        control = new QCheckBox(item->title);
+        QWidget *control;
+        if (item->radioGroupId.has_value()) {
+            control = radioBtn = new QRadioButton(item->title);
+            radioBtn->setDisabled(item->disabled);
+        } else {
+            control = checkBox = new QCheckBox(item->title);
+            checkBox->setDisabled(item->disabled);
+        }
         LayoutV({control, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
     }
 
     void populate() override
     {
-        control->setChecked(*item->value);
+        if (checkBox)
+            checkBox->setChecked(*item->value);
+        else radioBtn->setChecked(*item->value);
     }
 
     void collect() override
     {
-        *item->value = control->isChecked();
+        if (checkBox)
+            *item->value = checkBox->isChecked();
+        else *item->value = radioBtn->isChecked();
     }
 
     ConfigItemBool* item;
-    QCheckBox* control;
+    QCheckBox *checkBox = nullptr;
+    QRadioButton *radioBtn = nullptr;
 };
 
 //------------------------------------------------------------------------------
@@ -205,8 +219,15 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             w->mainLayout()->addWidget(it->value);
         if (auto it = dynamic_cast<ConfigItemSpace*>(item); it)
             w->mainLayout()->addSpacing(it->value);
-        else if (auto it = dynamic_cast<ConfigItemBool*>(item); it)
-            editor = new ConfigItemEditorBool(it);
+        else if (auto it = dynamic_cast<ConfigItemBool*>(item); it) {
+            auto boolEditor = new ConfigItemEditorBool(it);
+            if (it->radioGroupId) {
+                if (!_radioGroups.contains(*it->radioGroupId))
+                    _radioGroups[*it->radioGroupId] = new QButtonGroup(this);
+                _radioGroups[*it->radioGroupId]->addButton(boolEditor->radioBtn);
+            }
+            editor = boolEditor;
+        }
         else if (auto it = dynamic_cast<ConfigItemInt*>(item); it)
             editor = new ConfigItemEditorInt(it);
         else if (auto it = dynamic_cast<ConfigItemReal*>(item); it)
