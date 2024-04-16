@@ -12,12 +12,14 @@ struct ConfigPage
 {
     ConfigPage(int id, const QString& title, const QString& icon = QString()) : id(id), title(title), iconPath(icon) {}
 
+    ConfigPage& withLongTitle(const QString &title) { longTitle = title; return *this; }
     ConfigPage& withHelpTopic(const QString& topic) { helpTopic = topic; return *this; }
     ConfigPage& withMargins(int m) { margin = m; return *this; }
     ConfigPage& withSpacing(int s) { spacing = s; return *this; }
 
     int id;
     QString title;
+    QString longTitle;
     QString iconPath;
 
     /// Page help topic.

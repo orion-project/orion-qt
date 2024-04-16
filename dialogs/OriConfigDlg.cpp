@@ -219,6 +219,7 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             _editors.insert(item, editor);
         }
     }
+    w->setLongTitle(page.longTitle);
     w->setContentsMargins(page.margin, page.margin, page.margin, page.margin);
     if (page.spacing >= 0)
         w->mainLayout()->setSpacing(page.spacing);
