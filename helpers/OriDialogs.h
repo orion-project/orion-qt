@@ -109,6 +109,9 @@ public:
     Dialog& withOkSignal(const char* signal) { return withAcceptSignal(signal); }
     Dialog& withOkSignal(QObject* sender, const char* signal) { return withAcceptSignal(sender, signal); }
 
+    /// Override the OK button title.
+    Dialog& withAcceptTitle(const QString& title) { _okTitle = title; return *this; }
+
     /// A signal that must trigger the dialog's accept method.
     /// This way a content can accept the dialog.
     Dialog& withAcceptSignal(const char* signal);
@@ -169,6 +172,7 @@ private:
     bool _windowModal = false;
     QString _helpIcon;
     bool _buttonsSeparator = false;
+    QString _okTitle;
 
     void makeDialog();
     void acceptDialog();

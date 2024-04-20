@@ -432,6 +432,8 @@ void Dialog::makeDialog()
             _okButton = button;
             break;
         }
+    if (_okButton && !_okTitle.isEmpty())
+        _okButton->setText(_okTitle);
 
     if (_onDlgReady) _onDlgReady();
 }
