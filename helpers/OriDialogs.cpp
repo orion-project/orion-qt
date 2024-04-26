@@ -154,6 +154,7 @@ QString inputText(const QString& label, const QString& value, bool *ok)
     layout->addWidget(editor);
 
     *ok = Dialog(&content, false)
+            .withActiveWidget(editor)
             .withContentToButtonsSpacingFactor(2)
             .exec();
 
