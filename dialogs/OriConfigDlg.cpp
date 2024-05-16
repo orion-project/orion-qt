@@ -7,8 +7,10 @@
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QDebug>
+#include <QFileDialog>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
 #include <QStyleHints>
@@ -170,6 +172,54 @@ public:
 };
 
 //------------------------------------------------------------------------------
+//                            ConfigItemEditorDir
+//------------------------------------------------------------------------------
+
+class ConfigItemEditorDir : public ConfigItemEditor
+{
+public:
+    ConfigItemEditorDir(ConfigItemDir* item): ConfigItemEditor(), item(item)
+    {
+        control = new QLineEdit;
+        connect(control, &QLineEdit::editingFinished, this, &ConfigItemEditorDir::updateStatus);
+        status = new QLabel("<font color=red><b>" + qApp->tr("Directory does not exist") + "</b></font>");
+        auto but = new QPushButton("•••");
+        but->setFixedWidth(24);
+        but->connect(but, &QPushButton::pressed, this, &ConfigItemEditorDir::selectDir);
+        LayoutV({LayoutH({item->title, but}), control, status, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
+    }
+
+    void populate() override
+    {
+        control->setText(item->value->trimmed());
+        updateStatus();
+    }
+
+    void collect() override
+    {
+        *item->value = control->text().trimmed();
+    }
+
+    void selectDir()
+    {
+        QString dir = QFileDialog::getExistingDirectory(nullptr, QString(), control->text());
+        if (!dir.isEmpty()) {
+            control->setText(dir);
+            updateStatus();
+        }
+    }
+
+    void updateStatus()
+    {
+        status->setVisible(!QDir(control->text().trimmed()).exists());
+    }
+
+    ConfigItemDir* item;
+    QLabel *status;
+    QLineEdit* control;
+};
+
+//------------------------------------------------------------------------------
 //                              ConfigDlg
 //------------------------------------------------------------------------------
 
@@ -234,6 +284,8 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             editor = new ConfigItemEditorReal(it);
         else if (auto it = dynamic_cast<ConfigItemStr*>(item); it)
             editor = new ConfigItemEditorStr(it);
+        else if (auto it = dynamic_cast<ConfigItemDir*>(item); it)
+            editor = new ConfigItemEditorDir(it);
         if (editor)
         {
             w->add(editor);
