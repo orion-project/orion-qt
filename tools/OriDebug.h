@@ -1,8 +1,11 @@
 #ifndef ORI_DEBUG_H
 #define ORI_DEBUG_H
 
+#include <QApplication>
+#include <QEvent>
 #include <QTextEdit>
 #include <QPointer>
+#include <QVBoxLayout>
 
 namespace Ori {
 namespace Debug {
@@ -19,18 +22,62 @@ QString messageType(QtMsgType type)
     }
 }
 
-QTextEdit* consoleWindow()
+class LogMsgEvent : public QEvent
 {
-    static QPointer<QTextEdit> console;
+public:
+    LogMsgEvent(const QString& text) : QEvent(QEvent::User), text(text) {}
+    QString text;
+};
+
+class ConsoleWindow : public QWidget
+{
+public:
+    ConsoleWindow() : QWidget()
+    {
+        setWindowFlag(Qt::Tool, true);
+        setWindowFlag(Qt::WindowStaysOnTopHint, true);
+        setAttribute(Qt::WA_DeleteOnClose, true);
+        setWindowTitle(qApp->applicationName() + " Log");
+
+        _log = new QTextEdit;
+        _log->setReadOnly(true);
+    #ifdef Q_OS_WIN
+        _log->setFont(QFont("Courier", 9));
+    #else
+        _log->setFont(QFont("Monospace", 10));
+    #endif
+
+        auto layout = new QVBoxLayout(this);
+        layout->setContentsMargins(3, 3, 3, 3);
+        layout->addWidget(_log);
+    }
+
+    void append(const QString& msg)
+    {
+        qApp->sendEvent(this, new LogMsgEvent(msg));
+    }
+
+protected:
+    bool event(QEvent *event) override
+    {
+        if (auto e = dynamic_cast<LogMsgEvent*>(event); e) {
+            _log->append(e->text);
+            return true;
+        }
+        return QWidget::event(event);
+    }
+
+private:
+    QTextEdit *_log;
+};
+
+ConsoleWindow* consoleWindow()
+{
+    static QPointer<ConsoleWindow> console;
     if (!console)
     {
-        console = new QTextEdit;
-    #ifdef Q_OS_WIN
-        console->setFont(QFont("Courier", 9));
-    #else
-        console->setFont(QFont("Monospace", 10));
-    #endif
-        console->setGeometry(10, 30, 800, 300);
+        console = new ConsoleWindow;
+        console->resize(800, 300);
     }
     console->show();
     return console;
