@@ -220,6 +220,24 @@ public:
 };
 
 //------------------------------------------------------------------------------
+//                            ConfigItemEditorSection
+//------------------------------------------------------------------------------
+
+class ConfigItemEditorSection : public ConfigItemEditor
+{
+public:
+    ConfigItemEditorSection(ConfigItemSection* item): ConfigItemEditor()
+    {
+        auto label = new QLabel(item->title);
+        LayoutV({label, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
+        auto font = label->font();
+        font.setPointSizeF(font.pointSizeF() * 1.2);
+        font.setBold(true);
+        label->setFont(font);
+    }
+};
+
+//------------------------------------------------------------------------------
 //                              ConfigDlg
 //------------------------------------------------------------------------------
 
@@ -286,6 +304,8 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             editor = new ConfigItemEditorStr(it);
         else if (auto it = dynamic_cast<ConfigItemDir*>(item); it)
             editor = new ConfigItemEditorDir(it);
+        else if (auto it = dynamic_cast<ConfigItemSection*>(item); it)
+            editor = new ConfigItemEditorSection(it);
         if (editor)
         {
             w->add(editor);

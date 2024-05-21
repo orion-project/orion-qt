@@ -132,6 +132,14 @@ public:
 
 //------------------------------------------------------------------------------
 
+class ConfigItemSection : public ConfigItem
+{
+public:
+    ConfigItemSection(int pageId, const QString& title) : ConfigItem(pageId,  title) {}
+};
+
+//------------------------------------------------------------------------------
+
 struct ConfigDlgOpts
 {
     /// Dialog window title.
