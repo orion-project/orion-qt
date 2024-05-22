@@ -55,7 +55,7 @@ public:
     ConfigItemEditorBool(ConfigItemBool* item): ConfigItemEditor(), item(item)
     {
         QWidget *control;
-        if (item->radioGroupId.has_value()) {
+        if (!item->radioGroupId.isEmpty()) {
             control = radioBtn = new QRadioButton(item->title);
             radioBtn->setDisabled(item->disabled);
         } else {
@@ -289,10 +289,21 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             w->mainLayout()->addSpacing(it->value);
         else if (auto it = dynamic_cast<ConfigItemBool*>(item); it) {
             auto boolEditor = new ConfigItemEditorBool(it);
-            if (it->radioGroupId) {
-                if (!_radioGroups.contains(*it->radioGroupId))
-                    _radioGroups[*it->radioGroupId] = new QButtonGroup(this);
-                _radioGroups[*it->radioGroupId]->addButton(boolEditor->radioBtn);
+            if (!it->radioGroupId.isEmpty()) {
+                for (auto other = _editors.constBegin(); other != _editors.constEnd(); other++) {
+                    if (auto otherBool = dynamic_cast<ConfigItemBool*>(other.key()); otherBool) {
+                        if (otherBool->radioGroupId == it->radioGroupId && otherBool->pageId != it->pageId) {
+                            qWarning()
+                                << "Radio item" << it->title << "is on page" << it->pageId
+                                << "There is another radio item" << otherBool->title
+                                << "with the same group id" << it->radioGroupId
+                                << "but on a different page" << otherBool->pageId;
+                        }
+                    }
+                }
+                if (!_radioGroups.contains(it->radioGroupId))
+                    _radioGroups[it->radioGroupId] = new QButtonGroup(this);
+                _radioGroups[it->radioGroupId]->addButton(boolEditor->radioBtn);
             }
             editor = boolEditor;
         }

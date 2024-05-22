@@ -77,11 +77,11 @@ public:
     ConfigItemBool(int pageId, const QString& title, bool* value) : ConfigItem(pageId,  title), value(value) {}
 
     ConfigItemBool* setDisabled(bool disab) { disabled = disab; return this; }
-    ConfigItemBool* withRadioGroup(int groupId) { radioGroupId = groupId; return this; }
+    ConfigItemBool* withRadioGroup(const QString &groupId) { radioGroupId = groupId; return this; }
 
     bool* value;
     bool disabled;
-    std::optional<int> radioGroupId;
+    QString radioGroupId;
 };
 
 //------------------------------------------------------------------------------
@@ -194,7 +194,7 @@ public:
 
 private:
     QMap<ConfigItem*, class ConfigItemEditor*> _editors;
-    QMap<int, QButtonGroup*> _radioGroups;
+    QMap<QString, QButtonGroup*> _radioGroups;
 
     QWidget* makePage(const ConfigPage& page, const ConfigDlgOpts& opts);
 };
