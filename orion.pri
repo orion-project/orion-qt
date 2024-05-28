@@ -1,6 +1,7 @@
 INCLUDEPATH += $$PWD
 
 DEFINES += QT_USE_QSTRINGBUILDER
+macx: DEFINES += _LIBCPP_DISABLE_AVAILABILITY
 
 # Include methods info in debug messages
 greaterThan(QT_MAJOR_VERSION, 4) {
