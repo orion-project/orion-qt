@@ -44,14 +44,14 @@ TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
     connect(testsTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
             this, SLOT(showItemLog(QTreeWidgetItem*)));
 
-    _actionRunAll = Ori::Gui::action(tr("Run &All"), this, SLOT(runAll()), ":/ori_test_window/run_tests");
-    _actionRunSelected = Ori::Gui::action(tr("Run &Selected"), this, SLOT(runSelected()), ":/ori_test_window/run_test");
-    _actionStop = Ori::Gui::action(tr("Stop &Execution"), this, SLOT(stopExecution()), ":/ori_test_window/stop");
+    _actionRunAll = Ori::Gui::V0::action(tr("Run &All"), this, SLOT(runAll()), ":/ori_test_window/run_tests");
+    _actionRunSelected = Ori::Gui::V0::action(tr("Run &Selected"), this, SLOT(runSelected()), ":/ori_test_window/run_test");
+    _actionStop = Ori::Gui::V0::action(tr("Stop &Execution"), this, SLOT(stopExecution()), ":/ori_test_window/stop");
     _actionStop->setEnabled(false);
-    _actionResetState = Ori::Gui::action(tr("&Reset All"), this, SLOT(resetState()), ":/ori_test_window/reset_tests");
-    auto actionCollapseTree = Ori::Gui::action(tr("&Collapse All"), testsTree, SLOT(collapseAll()), ":/ori_test_window/collapse_tests");
-    auto actionExpandTree = Ori::Gui::action(tr("&Expand All"), testsTree, SLOT(expandAll()), ":/ori_test_window/expand_tests");
-    _actionSaveLog = Ori::Gui::toggledAction(tr("Save Results to Log File"), this, nullptr);
+    _actionResetState = Ori::Gui::V0::action(tr("&Reset All"), this, SLOT(resetState()), ":/ori_test_window/reset_tests");
+    auto actionCollapseTree = Ori::Gui::V0::action(tr("&Collapse All"), testsTree, SLOT(collapseAll()), ":/ori_test_window/collapse_tests");
+    auto actionExpandTree = Ori::Gui::V0::action(tr("&Expand All"), testsTree, SLOT(expandAll()), ":/ori_test_window/expand_tests");
+    _actionSaveLog = Ori::Gui::V0::toggledAction(tr("Save Results to Log File"), this, nullptr);
 
     auto toolbar = new Ori::Widgets::FlatToolBar;
     toolbar->setFloatable(false);
