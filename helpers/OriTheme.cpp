@@ -46,27 +46,31 @@ QString makeStyleSheet(const QString& rawStyleSheet)
     QString styleSheet = rawStyleSheet;
 
     // Interpolate vars
-    QMap<QString, QString> vars;
-    QRegularExpression varExpr(QStringLiteral("(\\$[a-zA-Z_][a-zA-Z_-]*)\\s*:\\s*(.+);"));
+    static QRegularExpression varExpr(QStringLiteral("(\\$[a-zA-Z_][a-zA-Z_-]*)\\s*:\\s*(.+);"));
     auto m = varExpr.match(styleSheet);
     while (m.hasMatch())
     {
-        vars[m.captured(1)] = m.captured(2);
-        m = varExpr.match(styleSheet, m.capturedEnd());
+        QString varName = m.captured(1);
+        QString varValue = m.captured(2);
+        styleSheet.remove(m.capturedStart(), m.capturedLength());
+        styleSheet.replace(varName, varValue);
+
+        m = varExpr.match(styleSheet);
     }
-    styleSheet.remove(varExpr);
-    auto it = vars.constBegin();
-    while (it != vars.constEnd())
+
+    static QRegularExpression commentExpr(QStringLiteral("^.*\\/\\/.*$"));
+    m = commentExpr.match(styleSheet);
+    while (m.hasMatch())
     {
-        styleSheet.replace(it.key(), it.value());
-        it++;
+        styleSheet.remove(m.capturedStart(), m.capturedLength());
+        m = commentExpr.match(styleSheet, m.capturedEnd());
     }
 
     // Process platform-dependeent props
     auto options = QRegularExpression::CaseInsensitiveOption | QRegularExpression::MultilineOption;
-    QRegularExpression propWin(QStringLiteral("^\\s*windows:(.*)$"), options);
-    QRegularExpression propLinux(QStringLiteral("^\\s*linux:(.*)$"), options);
-    QRegularExpression propMacos(QStringLiteral("^\\s*macos:(.*)$"), options);
+    static QRegularExpression propWin(QStringLiteral("^\\s*windows:(.*)$"), options);
+    static QRegularExpression propLinux(QStringLiteral("^\\s*linux:(.*)$"), options);
+    static QRegularExpression propMacos(QStringLiteral("^\\s*macos:(.*)$"), options);
 #if defined(Q_OS_WIN)
     styleSheet.replace(propWin, QStringLiteral("\\1"));
     styleSheet.remove(propLinux);

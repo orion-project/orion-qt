@@ -51,14 +51,20 @@ expr: '[^\\']*(\\.[^\\']*)*'
 expr: "[^\\"]*(\\.[^\\"]*)*"
 color: darkGreen
 
-rule: Comment
+rule: CommentMultiLine
 expr: \/\*
 expr: \*\/
 color: green
 opts: multiline
 
+rule: CommentSingleLine
+expr: \/\/.*$
+color: green
+
 ---
 $base-color: #dadbde;
+$border-color: silver;
+$default-border: 1px solid $border-color;
 
 /************************************
              Main window
@@ -103,9 +109,7 @@ QScrollBar::handle:vertical:hover {
   background-color: $base-color;
 }
 
-/************************************
-             Status bar
-************************************/
+/**********  Status bar **************/
 QStatusBar QLabel {
   font-size: 12px;
 }
@@ -116,5 +120,5 @@ QStatusBar [role='status_panel'] {
   margin-top: 2px;
 }
 
-/* pseudo-state with negation */
+// pseudo-state with negation
 QPushButton:hover:!pressed { color: blue; }

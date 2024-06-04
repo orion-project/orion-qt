@@ -515,6 +515,8 @@ static void setActionTooltip(QAction* action, const QString& tooltip, const QKey
     action->setToolTip(t);
 }
 
+namespace V0 {
+
 QAction* action(const QString& title, const QString& tooltip, QObject* receiver, const char* slot, const char* icon, const QKeySequence& shortcut)
 {
     auto action = new QAction(title, receiver);
@@ -545,6 +547,8 @@ QAction* toggledAction(const QString& title, const QString& tooltip, QObject* re
     if (slot) qApp->connect(action, SIGNAL(toggled(bool)), receiver, slot);
     return action;
 }
+
+} // namespace V0
 
 //--------------------------------------------------------------------------------------------------
 
