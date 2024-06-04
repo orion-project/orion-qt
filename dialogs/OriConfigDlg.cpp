@@ -152,6 +152,7 @@ public:
     ConfigItemEditorStr(ConfigItemStr* item): ConfigItemEditor(), item(item)
     {
         control = new QLineEdit;
+        control->setReadOnly(item->readOnly);
         if (item->align.has_value())
             control->setAlignment(item->align.value());
         LayoutV({item->title, control, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
@@ -164,7 +165,8 @@ public:
 
     void collect() override
     {
-        *item->value = control->text();
+        if (!control->isReadOnly())
+            *item->value = control->text();
     }
 
     ConfigItemStr* item;
