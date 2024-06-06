@@ -512,7 +512,12 @@ static void setActionTooltip(QAction* action, const QString& tooltip, const QKey
     if (!shortcut.isEmpty() && strlen(__actionTooltipFormat) > 0)
         t = QString::fromLatin1(__actionTooltipFormat).arg(t, shortcut.toString(QKeySequence::NativeText));
 
+#ifdef ORI_USE_STYLE_SHEETS
+    // Text color from QSS is not applyed if text is not HTML
+    action->setToolTip(QStringLiteral("<p>") + t);
+#else
     action->setToolTip(t);
+#endif
 }
 
 namespace V0 {

@@ -13,7 +13,7 @@ color: red
 group: 1
 
 rule: Platform prefix
-expr: (windows|linux|macos):
+expr: (windows|linux|macos|qt5|qt6):
 color: orange
 group: 1
 
@@ -54,12 +54,16 @@ color: darkGreen
 rule: CommentMultiLine
 expr: \/\*
 expr: \*\/
-color: green
+color: gray
 opts: multiline
 
 rule: CommentSingleLine
-expr: \/\/.*$
-color: green
+# Handle simple case with slashes in double quotes.
+# If there is a pair of quotes before slashes (opening and closing)
+# then highlighting will be wrong (doesn't really matter for QSS)
+expr: ^[^\"]*(\/{2}.*)$
+color: gray
+group: 1
 
 ---
 $base-color: #dadbde;
@@ -78,7 +82,8 @@ QMainWindow {
 
 QMenuBar::item {
   padding: 3px 6px;
-  border-radius: 3px;
+  qt5:border-radius: 4px;
+  qt6:border-radius: 3px;
 }
 QMenuBar::item:selected {
   color: white;
@@ -121,4 +126,7 @@ QStatusBar [role='status_panel'] {
 }
 
 // pseudo-state with negation
-QPushButton:hover:!pressed { color: blue; }
+QPushButton:hover:!pressed { 
+  color: blue; // text color
+  background-image: url("http://some-url")
+}

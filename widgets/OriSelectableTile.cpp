@@ -1,6 +1,9 @@
 #include "OriSelectableTile.h"
 
 #include "../helpers/OriTools.h"
+#ifdef ORI_USE_STYLE_SHEETS
+#include "../helpers/OriTheme.h"
+#endif
 
 #include <QDebug>
 #include <QVBoxLayout>
@@ -13,6 +16,15 @@ namespace Ori::Widgets {
 //                           SelectableTileContentDefault
 //------------------------------------------------------------------------------
 
+SelectableTileContent::SelectableTileContent() : QFrame()
+{
+    setProperty("ori_role", "selectable_tile_content");
+}
+
+//------------------------------------------------------------------------------
+//                           SelectableTileContentDefault
+//------------------------------------------------------------------------------
+
 SelectableTileContentDefault::SelectableTileContentDefault() : SelectableTileContent()
 {
     setAutoFillBackground(true);
@@ -20,47 +32,55 @@ SelectableTileContentDefault::SelectableTileContentDefault() : SelectableTileCon
 
 void SelectableTileContentDefault::updateState(bool focused, bool selected)
 {
+#ifdef ORI_USE_STYLE_SHEETS
+    auto baseColor = Ori::Theme::color(Ori::Theme::PaperColor);
+    auto selectedColor = Ori::Theme::color(Ori::Theme::SelectionColor);
+#else
     QPalette p;
     auto baseColor = p.color(QPalette::Base);
-    QColor color;
-    if (!focused and !selected)
-        color = baseColor;
-    else {
-        auto selectedColor = p.color(QPalette::Highlight);
-        color = Ori::Color::blend(
-            baseColor, selectedColor, selected && focused ? 0.2 : 0.1);
-    }
+    auto selectedColor = p.color(QPalette::Highlight);
+#endif
+    QColor color = (!focused and !selected) ? baseColor :
+        Ori::Color::blend(baseColor, selectedColor, selected && focused ? 0.2 : 0.1);
+#ifdef ORI_USE_STYLE_SHEETS
+    setStyleSheet(QStringLiteral("background:%1").arg(color.name()));
+#else
     p.setColor(QPalette::Window, color);
     setPalette(p);
+#endif
 }
 
 //------------------------------------------------------------------------------
 //                               SelectableTile
 //------------------------------------------------------------------------------
 
-SelectableTile::SelectableTile(QWidget *parent)
-    : SelectableTile(new SelectableTileContentDefault(), parent)
+SelectableTile::SelectableTile(bool makeDefaultLabels, QWidget *parent)
+    : SelectableTile(new SelectableTileContentDefault(), makeDefaultLabels, parent)
 {
 }
 
-SelectableTile::SelectableTile(SelectableTileContent *content, QWidget *parent)
+SelectableTile::SelectableTile(SelectableTileContent *content, bool makeDefaultLabels, QWidget *parent)
     : QFrame(parent), _content(content)
 {
+    setProperty("ori_role", "selectable_tile");
     setFrameShape(QFrame::StyledPanel);
     setFocusPolicy(Qt::StrongFocus);
     setAutoFillBackground(true);
 
-    _iconLabel = new QLabel;
-    _iconLabel->setAlignment(Qt::AlignHCenter);
+    if (makeDefaultLabels)
+    {
+        _iconLabel = new QLabel;
+        _iconLabel->setAlignment(Qt::AlignHCenter);
 
-    _titleLabel = new QLabel;
-    _titleLabel->setAlignment(Qt::AlignHCenter);
+        _titleLabel = new QLabel;
+        _titleLabel->setAlignment(Qt::AlignHCenter);
+        _titleLabel->setProperty("ori_role", "selectable_tile_title");
 
-    auto contentLayout = new QVBoxLayout(_content);
-    contentLayout->setContentsMargins(6, 6, 6, 6);
-    contentLayout->addWidget(_iconLabel);
-    contentLayout->addWidget(_titleLabel);
-
+        auto contentLayout = new QVBoxLayout(_content);
+        contentLayout->setContentsMargins(6, 6, 6, 6);
+        contentLayout->addWidget(_iconLabel);
+        contentLayout->addWidget(_titleLabel);
+    }
     auto mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(3, 3, 3, 3);
     mainLayout->addWidget(_content);
@@ -70,17 +90,20 @@ SelectableTile::SelectableTile(SelectableTileContent *content, QWidget *parent)
 
 void SelectableTile::setPixmap(const QPixmap& pixmap)
 {
-    _iconLabel->setPixmap(pixmap);
+    if (_iconLabel)
+        _iconLabel->setPixmap(pixmap);
 }
 
 void SelectableTile::setTitle(const QString& title)
 {
-    _titleLabel->setText(title);
+    if (_titleLabel)
+        _titleLabel->setText(title);
 }
 
 void SelectableTile::setTitleStyleSheet(const QString& styleSheet)
 {
-    _titleLabel->setStyleSheet(styleSheet);
+    if (_titleLabel)
+        _titleLabel->setStyleSheet(styleSheet);
 }
 
 void SelectableTile::setData(const QVariant& data)
@@ -138,18 +161,25 @@ void SelectableTile::mouseDoubleClickEvent(QMouseEvent *event)
 void SelectableTile::updateState()
 {
     bool focused = hasFocus();
+#ifdef ORI_USE_STYLE_SHEETS
+    auto baseColor = Ori::Theme::color(Ori::Theme::PaperColor);
+    auto selectedColor = Ori::Theme::color(Ori::Theme::SelectionColor);
+#else
     QPalette p;
     auto baseColor = p.color(QPalette::Base);
-    QColor color;
-    if (!focused and !_selected)
-        color = baseColor;
-    else {
-        auto selectedColor = p.color(QPalette::Highlight);
-        color = _selected ? selectedColor
-            : Ori::Color::blend(baseColor, selectedColor, 0.1);
-    }
+    auto selectedColor = p.color(QPalette::Highlight);
+#endif
+    QColor color = (!focused and !_selected) ? baseColor :
+        _selected ? selectedColor : Ori::Color::blend(baseColor, selectedColor, 0.1);
+#ifdef ORI_USE_STYLE_SHEETS
+    if (_selected)
+        setStyleSheet(QStringLiteral("background:%1;border-color:%1").arg(color.name()));
+    else
+        setStyleSheet(QStringLiteral("background:%1").arg(color.name()));
+#else
     p.setColor(QPalette::Window, color);
     setPalette(p);
+#endif
     _content->updateState(focused, _selected);
 }
 

@@ -2,6 +2,7 @@
 #define ORI_THEME_H
 
 #include <QString>
+#include <QColor>
 
 /**
 This module supposes that the main application stylesheet file is app.qss
@@ -61,9 +62,34 @@ $base-color: #dadbde;
 QMainWindow {
   background-color: $base-color;
 }
+
+- Single line comments
+
 ```
 */
 QString makeStyleSheet(const QString& rawStyleSheet);
+
+#ifdef ORI_USE_STYLE_SHEETS
+// Use style-sheets rather than palette for colorizing selected state of widgets.
+// This is for cases when application is styled using QSS style-sheet.
+// In this case
+// a) palette still returns colors from current QStyle (e.g. Fusion),
+//    not from style-sheet, and they don't match in most cases.
+// b) assigning changed palette to a widget has no effect or partial effect
+//    because palette colors get overriden by style-sheet colors.
+// Since there is no easy way to get proper colors from current style-sheet,
+// they should be set externally via setColors().
+
+enum Color
+{
+    SelectionColor,
+    PaperColor,
+};
+
+QColor color(Color kind);
+void setColors(const QMap<Color, QColor> &colors);
+
+#endif
 
 } // namespace Theme
 } // namespace Ori

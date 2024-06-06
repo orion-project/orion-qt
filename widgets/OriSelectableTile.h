@@ -10,12 +10,12 @@ QT_END_NAMESPACE
 
 namespace Ori::Widgets {
 
-class SelectableTileContent : public QWidget
+class SelectableTileContent : public QFrame
 {
     Q_OBJECT
 
 public:
-    SelectableTileContent() {}
+    SelectableTileContent();
     virtual void updateState(bool focused, bool selected) { Q_UNUSED(focused) Q_UNUSED(selected) }
 };
 
@@ -33,8 +33,8 @@ class SelectableTile : public QFrame
     Q_OBJECT
 
 public:
-    explicit SelectableTile(QWidget *parent = nullptr);
-    explicit SelectableTile(SelectableTileContent *content, QWidget *parent = nullptr);
+    explicit SelectableTile(bool makeDefaultLabels = true, QWidget *parent = nullptr);
+    explicit SelectableTile(SelectableTileContent *content, bool makeDefaultLabels = true, QWidget *parent = nullptr);
 
     void setPixmap(const QPixmap& pixmap);
 
@@ -64,7 +64,8 @@ protected:
 
 private:
     SelectableTileContent* _content;
-    QLabel *_iconLabel, *_titleLabel;
+    QLabel *_iconLabel = nullptr;
+    QLabel *_titleLabel = nullptr;
     QVariant _data;
     bool _selected = false;
 
