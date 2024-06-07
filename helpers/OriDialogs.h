@@ -126,6 +126,9 @@ public:
     /// A handler that is called when the dialog is ready but yet shown.
     Dialog& withOnDlgReady(HandlerFunc handler) { _onDlgReady = handler; return *this; }
 
+    /// A handler that is called from the dialog showEvent
+    Dialog& withOnDlgShown(HandlerFunc handler) { _onDlgShown = handler; return *this; }
+
     /// A handler that is called when the Help button pressed.
     /// The Help button is not shown if this hander is not provided.
     Dialog& withOnHelp(HandlerFunc handler) { _onHelpRequested = handler; return *this; }
@@ -134,6 +137,8 @@ public:
     /// A handler that is called when the Apply button pressed.
     /// The Apply button is not shown if this hander is not provided.
     Dialog& withOnApply(HandlerFunc handler) { _applyHandler = handler; return *this; }
+
+    Dialog& withFocusSetter(HandlerFunc handler) { _applyHandler = handler; return *this; }
 
     /// If the id is provided then the dialog size will be stored in memory
     /// after dialog was closed and then restored on the next run.
@@ -165,6 +170,7 @@ private:
     QWidget* _activeWidget = nullptr;
     QAbstractButton* _okButton = nullptr;
     HandlerFunc _onDlgReady;
+    HandlerFunc _onDlgShown;
     HandlerFunc _onHelpRequested;
     HandlerFunc _applyHandler;
     QString _persistenceId;

@@ -287,6 +287,7 @@ public:
     OriDialog() : QDialog(qApp->activeWindow()) {}
 
     OriDialogHelpLabel *helpLabel = nullptr;
+    Dialog::HandlerFunc onShow;
 
 protected:
     void resizeEvent(QResizeEvent *e) override
@@ -295,8 +296,19 @@ protected:
         if (helpLabel)
             helpLabel->move({width() - helpLabel->width() - 3, 3});
     }
-};
 
+    void showEvent(QShowEvent *e) override
+    {
+        QDialog::showEvent(e);
+        if (onShow && !_onShowCalled) {
+            _onShowCalled = true;
+            onShow();
+        }
+    }
+
+private:
+    bool _onShowCalled = false;
+};
 
 Dialog::Dialog(QWidget* content, bool ownContent): _content(content), _ownContent(ownContent)
 {
@@ -311,7 +323,10 @@ Dialog::~Dialog()
 bool Dialog::exec()
 {
     if (!_dialog) makeDialog();
-    if (_activeWidget) _activeWidget->setFocus();
+    if (_onDlgShown)
+        _dialog->onShow = _onDlgShown;
+    if (_activeWidget)
+        _activeWidget->setFocus();
     bool res = _dialog->exec() == QDialog::Accepted;
     if (!_ownContent)
     {
