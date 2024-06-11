@@ -18,7 +18,7 @@ public:
     State validate(QString& input, int& pos) const override
     {
         // use both point and comma as decimal separators
-        if (input[pos-1] == ',') input[pos-1] = '.';
+        if (pos > 0 && input[pos-1] == ',') input[pos-1] = '.';
         return QDoubleValidator::validate(input, pos);
     }
 };
