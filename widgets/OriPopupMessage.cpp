@@ -7,39 +7,58 @@
 #include <QLabel>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QPointer>
 #include <QPropertyAnimation>
 #include <QTimer>
 
 namespace Ori::Gui {
 
+void PopupMessage::setTarget(QWidget *target)
+{
+    _target = target;
+}
+
+#define GET_TARGET \
+    auto target = _target ? _target.get() : qApp->activeWindow(); \
+    if (!target) { \
+        qWarning() << "PopupMessage: explicit target window is not specified and app is not active"; \
+        return; \
+    }
+
 void PopupMessage::warning(const QString& text, int duration)
 {
-    (new PopupMessage(WARNING, text, duration, Qt::AlignHCenter|Qt::AlignVCenter, qApp->activeWindow()))->show();
+    GET_TARGET
+    (new PopupMessage(WARNING, text, duration, Qt::AlignHCenter|Qt::AlignVCenter, target))->show();
 }
 
 void PopupMessage::affirm(const QString& text, int duration)
 {
-    (new PopupMessage(AFFIRM, text, duration, Qt::AlignHCenter|Qt::AlignVCenter, qApp->activeWindow()))->show();
+    GET_TARGET
+    (new PopupMessage(AFFIRM, text, duration, Qt::AlignHCenter|Qt::AlignVCenter, target))->show();
 }
 
 void PopupMessage::error(const QString& text, int duration)
 {
-    (new PopupMessage(ERROR, text, duration, Qt::AlignHCenter|Qt::AlignVCenter, qApp->activeWindow()))->show();
+    GET_TARGET
+    (new PopupMessage(ERROR, text, duration, Qt::AlignHCenter|Qt::AlignVCenter, target))->show();
 }
 
 void PopupMessage::warning(const QString& text, Qt::Alignment align, int duration)
 {
-    (new PopupMessage(WARNING, text, duration, align, qApp->activeWindow()))->show();
+    GET_TARGET
+    (new PopupMessage(WARNING, text, duration, align, target))->show();
 }
 
 void PopupMessage::affirm(const QString& text, Qt::Alignment align, int duration)
 {
-    (new PopupMessage(AFFIRM, text, duration, align, qApp->activeWindow()))->show();
+    GET_TARGET
+    (new PopupMessage(AFFIRM, text, duration, align, target))->show();
 }
 
 void PopupMessage::error(const QString& text, Qt::Alignment align, int duration)
 {
-    (new PopupMessage(ERROR, text, duration, align, qApp->activeWindow()))->show();
+    GET_TARGET
+    (new PopupMessage(ERROR, text, duration, align, target))->show();
 }
 
 void PopupMessage::cancel()
@@ -54,6 +73,7 @@ void PopupMessage::cancel()
 int PopupMessage::windowMargin = 20;
 int PopupMessage::defaultDuration = 2000;
 PopupMessage* PopupMessage::_instance = nullptr;
+QPointer<QWidget> PopupMessage::_target;
 
 PopupMessage::PopupMessage(Mode mode, const QString& text, int duration, Qt::Alignment align, QWidget *parent) : QFrame(parent), _mode(mode)
 {

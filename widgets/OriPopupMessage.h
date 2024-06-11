@@ -52,6 +52,7 @@ class PopupMessage : public QFrame
 public:
     enum Mode {WARNING, AFFIRM, ERROR};
 
+    static void setTarget(QWidget *target);
     static void warning(const QString& text, int duration = -1);
     static void affirm(const QString& text, int duration = -1);
     static void error(const QString& text, int duration = -1);
@@ -73,6 +74,7 @@ protected:
 private:
     Mode _mode;
     static PopupMessage* _instance;
+    static QPointer<QWidget> _target;
 };
 
 } // namespace Ori::Gui
