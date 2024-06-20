@@ -35,6 +35,16 @@ struct ConfigPage
 
 //------------------------------------------------------------------------------
 
+class ConfigItemEditor : public QWidget
+{
+public:
+    ConfigItemEditor(): QWidget() {}
+    virtual void populate() {}
+    virtual void collect() {}
+};
+
+//------------------------------------------------------------------------------
+
 class ConfigItem
 {
 public:
@@ -138,6 +148,24 @@ class ConfigItemSection : public ConfigItem
 {
 public:
     ConfigItemSection(int pageId, const QString& title) : ConfigItem(pageId,  title) {}
+};
+
+//------------------------------------------------------------------------------
+
+class ConfigItemCustom : public ConfigItem
+{
+public:
+    ConfigItemCustom(int pageId, const QString& title, ConfigItemEditor *editor) : ConfigItem(pageId, title), editor(editor) {}
+
+    ConfigItemEditor *editor;
+};
+
+//------------------------------------------------------------------------------
+
+class ConfigItemEmpty : public ConfigItem
+{
+public:
+    ConfigItemEmpty(int pageId, const QString& title) : ConfigItem(pageId, title) {}
 };
 
 //------------------------------------------------------------------------------

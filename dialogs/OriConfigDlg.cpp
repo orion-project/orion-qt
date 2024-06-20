@@ -34,18 +34,6 @@ static QLabel* hintLabel(ConfigItem *it)
 };
 
 //------------------------------------------------------------------------------
-//                             ConfigItemEditor
-//------------------------------------------------------------------------------
-
-class ConfigItemEditor : public QWidget
-{
-public:
-    ConfigItemEditor(): QWidget() {}
-    virtual void populate() {}
-    virtual void collect() {}
-};
-
-//------------------------------------------------------------------------------
 //                            ConfigItemEditorBool
 //------------------------------------------------------------------------------
 
@@ -240,6 +228,44 @@ public:
 };
 
 //------------------------------------------------------------------------------
+//                            ConfigItemEditorCustom
+//------------------------------------------------------------------------------
+
+class ConfigItemEditorCustom : public ConfigItemEditor
+{
+public:
+    ConfigItemEditorCustom(ConfigItemCustom* item): ConfigItemEditor(), item(item)
+    {
+        LayoutV({item->title, item->editor, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
+    }
+
+    void populate() override
+    {
+        item->editor->populate();
+    }
+
+    void collect() override
+    {
+        item->editor->collect();
+    }
+
+    ConfigItemCustom *item;
+};
+
+//------------------------------------------------------------------------------
+//                            ConfigItemEditorEmpty
+//------------------------------------------------------------------------------
+
+class ConfigItemEditorEmpty : public ConfigItemEditor
+{
+public:
+    ConfigItemEditorEmpty(ConfigItemEmpty* item): ConfigItemEditor()
+    {
+        LayoutV({item->title, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
+    }
+};
+
+//------------------------------------------------------------------------------
 //                              ConfigDlg
 //------------------------------------------------------------------------------
 
@@ -319,6 +345,10 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             editor = new ConfigItemEditorDir(it);
         else if (auto it = dynamic_cast<ConfigItemSection*>(item); it)
             editor = new ConfigItemEditorSection(it);
+        else if (auto it = dynamic_cast<ConfigItemCustom*>(item); it)
+            editor = new ConfigItemEditorCustom(it);
+        else if (auto it = dynamic_cast<ConfigItemEmpty*>(item); it)
+            editor = new ConfigItemEditorEmpty(it);
         if (editor)
         {
             w->add(editor);
