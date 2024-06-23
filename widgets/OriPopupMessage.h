@@ -42,6 +42,10 @@ For example:
   border: 1px solid #e87e7e;
   background: #ffb5b5;
 }
+#OriPopupMessage[mode=hint] {
+  border: 1px solid #e5c300;
+  background: #ffec7c;
+}
 ```
 */
 
@@ -50,29 +54,41 @@ class PopupMessage : public QFrame
     Q_OBJECT
 
 public:
-    enum Mode {WARNING, AFFIRM, ERROR};
+    enum Mode {WARNING, AFFIRM, ERROR, HINT};
+
+    struct Options
+    {
+        Mode mode = AFFIRM;
+        QString text;
+        int duration = -1;
+        Qt::Alignment align = Qt::AlignHCenter|Qt::AlignVCenter;
+        Qt::Alignment textAlign = Qt::AlignHCenter;
+        QPixmap pixmap;
+    };
 
     static void setTarget(QWidget *target);
     static void warning(const QString& text, int duration = -1);
     static void affirm(const QString& text, int duration = -1);
     static void error(const QString& text, int duration = -1);
+    static void hint(const QString& text, int duration = -1);
     static void warning(const QString& text, Qt::Alignment align, int duration = -1);
     static void affirm(const QString& text, Qt::Alignment align, int duration = -1);
     static void error(const QString& text, Qt::Alignment align, int duration = -1);
-
+    static void hint(const QString& text, Qt::Alignment align, int duration = -1);
+    static void show(const Options &opts, QWidget *parent = nullptr);
     static void cancel();
 
     static int windowMargin;
     static int defaultDuration;
 
-    explicit PopupMessage(Mode mode, const QString& text, int duration, Qt::Alignment align, QWidget *parent);
     ~PopupMessage();
 
 protected:
     void mouseReleaseEvent(QMouseEvent*) override;
 
 private:
-    Mode _mode;
+    explicit PopupMessage(const Options &opts, QWidget *patent);
+
     static PopupMessage* _instance;
     static QPointer<QWidget> _target;
 };

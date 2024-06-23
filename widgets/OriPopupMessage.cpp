@@ -13,52 +13,51 @@
 
 namespace Ori::Gui {
 
-void PopupMessage::setTarget(QWidget *target)
-{
+void PopupMessage::setTarget(QWidget *target) {
     _target = target;
 }
 
-#define GET_TARGET \
-    auto target = _target ? _target.get() : qApp->activeWindow(); \
-    if (!target) { \
-        qWarning() << "PopupMessage: explicit target window is not specified and app is not active"; \
-        return; \
+void PopupMessage::warning(const QString& text, int duration) {
+    show({.mode=WARNING, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter});
+}
+
+void PopupMessage::affirm(const QString& text, int duration) {
+    show({.mode=AFFIRM, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter});
+}
+
+void PopupMessage::error(const QString& text, int duration) {
+    show({.mode=ERROR, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter});
+}
+
+void PopupMessage::hint(const QString& text, int duration) {
+    show({.mode=HINT, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter});
+}
+
+void PopupMessage::warning(const QString& text, Qt::Alignment align, int duration) {
+    show({.mode=WARNING, .text=text, .duration=duration, .align=align});
+}
+
+void PopupMessage::affirm(const QString& text, Qt::Alignment align, int duration) {
+    show({.mode=AFFIRM, .text=text, .duration=duration, .align=align});
+}
+
+void PopupMessage::error(const QString& text, Qt::Alignment align, int duration) {
+    show({.mode=ERROR, .text=text, .duration=duration, .align=align});
+}
+
+void PopupMessage::hint(const QString& text, Qt::Alignment align, int duration) {
+    show({.mode=HINT, .text=text, .duration=duration, .align=align});
+}
+
+void PopupMessage::show(const Options &opts, QWidget *parent)
+{
+    auto target = parent ? parent : _target ? _target.get() : qApp->activeWindow();
+    if (!target) {
+        qWarning() << "PopupMessage: explicit target window is not specified and app is not active";
+        return;
     }
-
-void PopupMessage::warning(const QString& text, int duration)
-{
-    GET_TARGET
-    (new PopupMessage(WARNING, text, duration, Qt::AlignHCenter|Qt::AlignVCenter, target))->show();
-}
-
-void PopupMessage::affirm(const QString& text, int duration)
-{
-    GET_TARGET
-    (new PopupMessage(AFFIRM, text, duration, Qt::AlignHCenter|Qt::AlignVCenter, target))->show();
-}
-
-void PopupMessage::error(const QString& text, int duration)
-{
-    GET_TARGET
-    (new PopupMessage(ERROR, text, duration, Qt::AlignHCenter|Qt::AlignVCenter, target))->show();
-}
-
-void PopupMessage::warning(const QString& text, Qt::Alignment align, int duration)
-{
-    GET_TARGET
-    (new PopupMessage(WARNING, text, duration, align, target))->show();
-}
-
-void PopupMessage::affirm(const QString& text, Qt::Alignment align, int duration)
-{
-    GET_TARGET
-    (new PopupMessage(AFFIRM, text, duration, align, target))->show();
-}
-
-void PopupMessage::error(const QString& text, Qt::Alignment align, int duration)
-{
-    GET_TARGET
-    (new PopupMessage(ERROR, text, duration, align, target))->show();
+    QWidget *wnd = new PopupMessage(opts, target);
+    wnd->show();
 }
 
 void PopupMessage::cancel()
@@ -75,20 +74,28 @@ int PopupMessage::defaultDuration = 2000;
 PopupMessage* PopupMessage::_instance = nullptr;
 QPointer<QWidget> PopupMessage::_target;
 
-PopupMessage::PopupMessage(Mode mode, const QString& text, int duration, Qt::Alignment align, QWidget *parent) : QFrame(parent), _mode(mode)
+PopupMessage::PopupMessage(const Options &opts, QWidget *parent) : QFrame(parent)
 {
     cancel();
 
     setObjectName("OriPopupMessage");
     setAttribute(Qt::WA_DeleteOnClose);
-    setProperty("mode", mode == WARNING ? "warning" : mode == AFFIRM ?  "affirm" : "error");
+    setProperty("mode", opts.mode == WARNING ? "warning" :
+                        opts.mode == AFFIRM ?  "affirm" :
+                        opts.mode == ERROR ? "error" : "hint");
     setFrameShape(QFrame::NoFrame);
 
-    auto label = new Ori::Widgets::Label(text);
-    label->setAlignment(Qt::AlignHCenter);
-    connect(label, &Ori::Widgets::Label::clicked, this, &PopupMessage::close);
-
     auto layout = new QHBoxLayout(this);
+
+    if (!opts.pixmap.isNull()) {
+        auto label = new QLabel;
+        label->setPixmap(opts.pixmap);
+        layout->addWidget(label);
+    }
+
+    auto label = new Ori::Widgets::Label(opts.text);
+    label->setAlignment(opts.textAlign);
+    connect(label, &Ori::Widgets::Label::clicked, this, &PopupMessage::close);
     layout->addWidget(label);
 
     auto shadow = new QGraphicsDropShadowEffect;
@@ -100,14 +107,15 @@ PopupMessage::PopupMessage(Mode mode, const QString& text, int duration, Qt::Ali
     auto sz = size();
     auto psz = parent->size();
 
-    int x = align.testFlag(Qt::AlignLeft) ? windowMargin
-        : align.testFlag(Qt::AlignRight) ? psz.width() - sz.width() - windowMargin
+    int x = opts.align.testFlag(Qt::AlignLeft) ? windowMargin
+        : opts.align.testFlag(Qt::AlignRight) ? psz.width() - sz.width() - windowMargin
         : (psz.width() - sz.width())/2;
-    int y = align.testFlag(Qt::AlignTop) ? windowMargin
-        : align.testFlag(Qt::AlignBottom) ? psz.height() - sz.height() - windowMargin
+    int y = opts.align.testFlag(Qt::AlignTop) ? windowMargin
+        : opts.align.testFlag(Qt::AlignBottom) ? psz.height() - sz.height() - windowMargin
         : (psz.height() - sz.height())/2;
     move(x, y);
 
+    int duration = opts.duration;
     if (duration < 0)
         duration = defaultDuration;
     if (duration > 0)
