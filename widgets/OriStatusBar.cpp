@@ -43,6 +43,11 @@ void StatusBar::setToolTip(int index, const QString& tooltip)
     _sections[index]->setToolTip(tooltip);
 }
 
+void StatusBar::setStyleSheet(int index, const QString &styleSheet)
+{
+    _sections[index]->setStyleSheet(styleSheet);
+}
+
 void StatusBar::setMargin(int index, int left, int right)
 {
     _sections[index]->setContentsMargins(left, 0, right, 0);

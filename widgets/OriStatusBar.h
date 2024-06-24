@@ -43,6 +43,7 @@ public:
     void setIcon(int index, const QString& path);
     void setHint(int index, const QString& hint) { setToolTip(index, hint); }
     void setToolTip(int index, const QString& tooltip);
+    void setStyleSheet(int index, const QString &styleSheet);
     void setMargin(int index, int left, int right);
     void setVisible(int index, bool on);
     void setDblClick(int index, std::function<void()> handler);
