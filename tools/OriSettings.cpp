@@ -50,7 +50,7 @@ QSettings* Settings::open()
     if (QFileInfo::exists(localIni))
         return new QSettings(localIni, QSettings::IniFormat);
 
-    QString app = qApp->applicationName();
+    QString app = QFileInfo(qApp->applicationFilePath()).baseName().toLower();
     if (app.isEmpty()) return new QSettings; // Qt knows what to do
     QString org = qApp->organizationName();
     if (org.isEmpty()) org = app;
