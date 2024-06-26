@@ -164,6 +164,38 @@ QString inputText(const QString& label, const QString& value, bool *ok)
     return newValue;
 }
 
+bool inputText(InputTextOptions &opts)
+{
+    auto editor = new InputTextEditor();
+    editor->setText(opts.value);
+    auto s = editor->size();
+    editor->resize(s.width() * 2, s.height());
+    if (opts.maxLength > 0)
+        editor->setMaxLength(opts.maxLength);
+
+    QWidget content;
+    auto layout = new QVBoxLayout(&content);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(new QLabel(opts.label));
+    layout->addWidget(editor);
+
+    if (!Dialog(&content, false)
+            .withActiveWidget(editor)
+            .withContentToButtonsSpacingFactor(2)
+            .exec())
+        return false;
+
+    auto newValue = editor->text();
+    if (opts.trimValue)
+        newValue = newValue.trimmed();
+    if (opts.rejectEmpty && newValue.isEmpty())
+        return false;
+    if (opts.rejectSame && newValue == opts.value)
+        return false;
+    opts.value = newValue;
+    return true;
+}
+
 //------------------------------------------------------------------------------
 
 QString getSaveFileName(const QString& title, const QString& filter, const QString& defaultExt)

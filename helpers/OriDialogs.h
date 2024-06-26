@@ -61,6 +61,17 @@ QString inputText(const QString& label, const QString& value);
 /// Returns the initial string if the dialog was canceled.
 QString inputText(const QString& label, const QString& value, bool *ok);
 
+struct InputTextOptions
+{
+    QString label;
+    QString value; // in|out
+    int maxLength = 0;
+    bool trimValue = true;
+    bool rejectSame = true;
+    bool rejectEmpty = false;
+};
+bool inputText(InputTextOptions &opts);
+
 QString getSaveFileName(const QString& title, const QString& filter, const QString& defaultExt);
 
 /// Shows a widget in a dialog with OK and Cancel buttons at the bottom.
