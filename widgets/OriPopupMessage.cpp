@@ -2,6 +2,7 @@
 #include "OriLabels.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -51,7 +52,7 @@ void PopupMessage::hint(const QString& text, Qt::Alignment align, int duration) 
 
 void PopupMessage::show(const Options &opts, QWidget *parent)
 {
-    auto target = parent ? parent : _target ? _target.get() : qApp->activeWindow();
+    auto target = parent ? parent : _target ? _target.data() : qApp->activeWindow();
     if (!target) {
         qWarning() << "PopupMessage: explicit target window is not specified and app is not active";
         return;

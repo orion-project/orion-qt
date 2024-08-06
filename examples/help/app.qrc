@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/syntax">
+        <file alias="css">../../syntax/css.ohl</file>
+    </qresource>
+    <qresource prefix="/style">
+        <file alias="help">help.css</file>
+    </qresource>
+</RCC>

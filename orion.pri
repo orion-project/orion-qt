@@ -13,7 +13,7 @@ DEFINES += QT_MESSAGELOGCONTEXT
 
 # Enable C++11
 greaterThan(QT_MAJOR_VERSION, 4) {
-    CONFIG += c++11
+    CONFIG += c++17
 }
 else {
     QMAKE_CXXFLAGS += -std=c++11
@@ -50,6 +50,7 @@ HEADERS += \
     $$PWD/widgets/OriStylesMenu.h \
     $$PWD/widgets/OriValueEdit.h \
     $$PWD/tools/OriDebug.h \
+    $$PWD/tools/OriHelpWindow.h \
     $$PWD/tools/OriLoremIpsum.h \
     $$PWD/tools/OriSettings.h \
     $$PWD/tools/OriStyler.h \
@@ -95,6 +96,7 @@ SOURCES += \
     $$PWD/widgets/OriStatusBar.cpp \
     $$PWD/widgets/OriStylesMenu.cpp \
     $$PWD/widgets/OriValueEdit.cpp \
+    $$PWD/tools/OriHelpWindow.cpp \
     $$PWD/tools/OriLoremIpsum.cpp \
     $$PWD/tools/OriSettings.cpp \
     $$PWD/tools/OriStyler.cpp \

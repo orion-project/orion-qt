@@ -1,5 +1,11 @@
 <RCC>
     <qresource prefix="/ori_images">
+        <file alias="book">img/book.svg</file>
+        <file alias="help">img/help.svg</file>
         <file alias="info">img/info.svg</file>
+        <file alias="protocol">img/protocol.svg</file>
+        <file alias="navigate_back">img/navigate_back.svg</file>
+        <file alias="navigate_fwd">img/navigate_fwd.svg</file>
+        <file alias="update">img/update.svg</file>
     </qresource>
 </RCC>
