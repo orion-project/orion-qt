@@ -185,7 +185,11 @@ struct ConfigDlgOpts
     int pageIconSize = 48;
 
     /// An id of page to be activated after dialog shown.
-    int currentPageId;
+    int currentPageId = -1;
+
+    /// Block only parent window. It's useful when dialog shows in-app help window.
+    /// Set to false to make the dialog app modal (block all app windows).
+    bool windowModal = true;
 
     /// Pages (categories) descriptors.
     QVector<ConfigPage> pages;

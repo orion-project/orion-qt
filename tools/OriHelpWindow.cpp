@@ -42,6 +42,12 @@ public:
         document()->setDefaultStyleSheet(QString::fromUtf8(f.readAll()));
     }
 
+    QString addExt(const QString &name)
+    {
+        static QRegularExpression hasExt("^.+\\.{1}.+$");
+        return hasExt.match(name).hasMatch() ? name : name + ".md";
+    }
+
     void load(const QString &name)
     {
         if (name.startsWith("http"))
@@ -49,9 +55,22 @@ public:
             QDesktopServices::openUrl(QUrl(name));
             return;
         }
-        static QRegularExpression hasExt("^.+\\.{1}.+$");
-        setSource(QUrl::fromLocalFile(
-            hasExt.match(name).hasMatch() ? name : name + ".md"));
+        QUrl url;
+        // Anchors are not parsed from local paths and browser complies
+        // No document for file:./cam_settings_plot.md%23rescale-pixels
+        if (int p = name.indexOf('#'); p > 0)
+        {
+            QString path = name.left(p);
+            QString fragment = name.right(name.length()-p-1);
+            url = QUrl::fromLocalFile(addExt(path));
+            url.setFragment(fragment);
+        }
+        else url = QUrl::fromLocalFile(addExt(name));
+        // TODO: browser does not navigate to the anchor created in markdown as
+        // `### Rescale pixels <a id=rescale-pixels>&nbsp;</a>`
+        // suggest a proper way to create anchors (another hack in updateHtml ?)
+        // or do navigation manually (the `<a name=..` exists in the result html)
+        setSource(url);
         updateHtml();
     }
 

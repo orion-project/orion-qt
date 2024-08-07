@@ -279,6 +279,8 @@ ConfigDlg::ConfigDlg(const ConfigDlgOpts& opts, QWidget* parent) : BasicConfigDi
 {
     setObjectName(opts.objectName);
     setTitleAndIcon(opts.title, opts.iconPath);
+    if (opts.windowModal)
+        setWindowModality(Qt::WindowModal);
 
     pageListIconSize = {opts.pageIconSize, opts.pageIconSize};
 
