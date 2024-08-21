@@ -181,7 +181,9 @@ bool inputText(InputTextOptions &opts)
 
     if (!Dialog(&content, false)
             .withActiveWidget(editor)
+            .withOnHelp(opts.onHelp)
             .withContentToButtonsSpacingFactor(2)
+            .windowModal()
             .exec())
         return false;
 

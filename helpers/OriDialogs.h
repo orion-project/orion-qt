@@ -65,6 +65,7 @@ struct InputTextOptions
 {
     QString label;
     QString value; // in|out
+    std::function<void()> onHelp;
     int maxLength = 0;
     bool trimValue = true;
     bool rejectSame = true;
