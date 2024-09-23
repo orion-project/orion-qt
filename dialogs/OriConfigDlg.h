@@ -124,8 +124,8 @@ class ConfigItemStr : public ConfigItem
 public:
     ConfigItemStr(int pageId, const QString& title, QString* value) : ConfigItem(pageId,  title), value(value) {}
 
-    ConfigItem* withAlignment(Qt::Alignment a) { align = a; return this; }
-    ConfigItem* withReadOnly() { readOnly = true; return this; }
+    ConfigItemStr* withAlignment(Qt::Alignment a) { align = a; return this; }
+    ConfigItemStr* withReadOnly() { readOnly = true; return this; }
 
     QString* value;
     std::optional<Qt::Alignment> align;
@@ -158,6 +158,19 @@ public:
     ConfigItemCustom(int pageId, const QString& title, ConfigItemEditor *editor) : ConfigItem(pageId, title), editor(editor) {}
 
     ConfigItemEditor *editor;
+};
+
+//------------------------------------------------------------------------------
+
+class ConfigItemDropDown : public ConfigItem
+{
+public:
+    ConfigItemDropDown(int pageId, const QString& title, int* value) : ConfigItem(pageId,  title), value(value) {}
+
+    ConfigItemDropDown* withOption(int id, const QString& text) { options << QPair<int, QString>{id, text}; return this; }
+
+    int* value;
+    QList<QPair<int, QString>> options;
 };
 
 //------------------------------------------------------------------------------

@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QButtonGroup>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDebug>
 #include <QFileDialog>
 #include <QLabel>
@@ -253,6 +254,40 @@ public:
 };
 
 //------------------------------------------------------------------------------
+//                           ConfigItemEditorDropDown
+//------------------------------------------------------------------------------
+
+class ConfigItemEditorDropDown : public ConfigItemEditor
+{
+public:
+    ConfigItemEditorDropDown(ConfigItemDropDown* item): ConfigItemEditor(), item(item)
+    {
+        control = new QComboBox;
+        for (const auto &op : item->options)
+            control->addItem(op.second, op.first);
+        LayoutV({item->title, control, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
+    }
+
+    void populate() override
+    {
+        for (int i = 0; i < control->count(); i++)
+            if (control->itemData(i).toInt() == *item->value) {
+                control->setCurrentIndex(i);
+                break;
+            }
+    }
+
+    void collect() override
+    {
+        if (control->currentIndex() >= 0)
+            *item->value = control->itemData(control->currentIndex()).toInt();
+    }
+
+    ConfigItemDropDown *item;
+    QComboBox *control;
+};
+
+//------------------------------------------------------------------------------
 //                            ConfigItemEditorEmpty
 //------------------------------------------------------------------------------
 
@@ -349,6 +384,8 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             editor = new ConfigItemEditorSection(it);
         else if (auto it = dynamic_cast<ConfigItemCustom*>(item); it)
             editor = new ConfigItemEditorCustom(it);
+        else if (auto it = dynamic_cast<ConfigItemDropDown*>(item); it)
+            editor = new ConfigItemEditorDropDown(it);
         else if (auto it = dynamic_cast<ConfigItemEmpty*>(item); it)
             editor = new ConfigItemEditorEmpty(it);
         if (editor)
