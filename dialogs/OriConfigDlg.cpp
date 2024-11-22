@@ -211,6 +211,54 @@ public:
 };
 
 //------------------------------------------------------------------------------
+//                            ConfigItemEditorFile
+//------------------------------------------------------------------------------
+
+class ConfigItemEditorFile : public ConfigItemEditor
+{
+public:
+    ConfigItemEditorFile(ConfigItemFile* item): ConfigItemEditor(), item(item)
+    {
+        control = new QLineEdit;
+        connect(control, &QLineEdit::editingFinished, this, &ConfigItemEditorFile::updateStatus);
+        status = new QLabel("<font color=red><b>" + qApp->tr("File does not exist") + "</b></font>");
+        auto but = new QPushButton("•••");
+        but->setFixedWidth(24);
+        but->connect(but, &QPushButton::pressed, this, &ConfigItemEditorFile::selectFile);
+        LayoutV({LayoutH({item->title, but}), control, status, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
+    }
+
+    void populate() override
+    {
+        control->setText(item->value->trimmed());
+        updateStatus();
+    }
+
+    void collect() override
+    {
+        *item->value = control->text().trimmed();
+    }
+
+    void selectFile()
+    {
+        QString file = QFileDialog::getOpenFileName(nullptr, QString(), control->text(), item->filter);
+        if (!file.isEmpty()) {
+            control->setText(file);
+            updateStatus();
+        }
+    }
+
+    void updateStatus()
+    {
+        status->setVisible(!QFile(control->text().trimmed()).exists());
+    }
+
+    ConfigItemFile* item;
+    QLabel *status;
+    QLineEdit* control;
+};
+
+//------------------------------------------------------------------------------
 //                            ConfigItemEditorSection
 //------------------------------------------------------------------------------
 
@@ -285,6 +333,53 @@ public:
 
     ConfigItemDropDown *item;
     QComboBox *control;
+};
+
+
+//------------------------------------------------------------------------------
+//                           ConfigItemEditorIntPair
+//------------------------------------------------------------------------------
+
+class ConfigItemEditorIntPair : public ConfigItemEditor
+{
+public:
+    ConfigItemEditorIntPair(ConfigItemIntPair* item): ConfigItemEditor(), item(item)
+    {
+        control1 = new QSpinBox;
+        auto p = control1->sizePolicy();
+        p.setHorizontalPolicy(QSizePolicy::Expanding);
+        control1->setSizePolicy(p);
+        if (item->minValue1.has_value())
+            control1->setMinimum(item->minValue1.value());
+        if (item->maxValue1.has_value())
+            control1->setMaximum(item->maxValue1.value());
+
+        control2 = new QSpinBox;
+        control2->setSizePolicy(p);
+        if (item->minValue2.has_value())
+            control2->setMinimum(item->minValue2.value());
+        if (item->maxValue2.has_value())
+            control2->setMaximum(item->maxValue2.value());
+
+        LayoutV({item->title, LayoutH(
+            {item->title1, control1, SpaceH(2), item->title2, control2}
+        ), hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
+    }
+
+    void populate() override
+    {
+        control1->setValue(*item->value1);
+        control2->setValue(*item->value2);
+    }
+
+    void collect() override
+    {
+        *item->value1 = control1->value();
+        *item->value2 = control2->value();
+    }
+
+    ConfigItemIntPair* item;
+    QSpinBox *control1, *control2;
 };
 
 //------------------------------------------------------------------------------
@@ -380,12 +475,16 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             editor = new ConfigItemEditorStr(it);
         else if (auto it = dynamic_cast<ConfigItemDir*>(item); it)
             editor = new ConfigItemEditorDir(it);
+        else if (auto it = dynamic_cast<ConfigItemFile*>(item); it)
+            editor = new ConfigItemEditorFile(it);
         else if (auto it = dynamic_cast<ConfigItemSection*>(item); it)
             editor = new ConfigItemEditorSection(it);
         else if (auto it = dynamic_cast<ConfigItemCustom*>(item); it)
             editor = new ConfigItemEditorCustom(it);
         else if (auto it = dynamic_cast<ConfigItemDropDown*>(item); it)
             editor = new ConfigItemEditorDropDown(it);
+        else if (auto it = dynamic_cast<ConfigItemIntPair*>(item); it)
+            editor = new ConfigItemEditorIntPair(it);
         else if (auto it = dynamic_cast<ConfigItemEmpty*>(item); it)
             editor = new ConfigItemEditorEmpty(it);
         if (editor)
