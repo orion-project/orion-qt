@@ -5,6 +5,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(ORI_WITH_TESTS "Include testing framework and internal tests" OFF)
+
 set(ORI_SOURCES
     core/OriArg.h
     core/OriFilter.h
@@ -53,6 +55,21 @@ set(ORI_SOURCES
     widgets/OriTableWidgetBase.h widgets/OriTableWidgetBase.cpp
     widgets/OriValueEdit.h widgets/OriValueEdit.cpp
 )
+
+if(ORI_WITH_TESTS)
+    list(APPEND ORI_SOURCES
+        testing/OriTestBase.h testing/OriTestBase.cpp
+        testing/OriTestManager.h
+        testing/OriTestWindow.h testing/OriTestWindow.cpp
+        testing/OriTestWindowTests.cpp
+        testing/OriTimeMeter.h testing/OriTimeMeter.cpp
+        tests/ori_test_Filter.cpp
+        tests/ori_test_Math.cpp
+        tests/ori_test_Templates.cpp
+        tests/ori_test_Version.cpp
+        tests/orion_tests.h
+    )
+endif()
 
 add_library(${ORI_NAME} STATIC
     ${ORI_SOURCES}
