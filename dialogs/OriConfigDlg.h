@@ -96,6 +96,17 @@ public:
 
 //------------------------------------------------------------------------------
 
+class ConfigItemRadio : public ConfigItem
+{
+public:
+    ConfigItemRadio(int pageId, const QString& title, const QStringList &items, int *value) : ConfigItem(pageId, title), items(items), value(value) {}
+
+    QStringList items;
+    int *value;
+};
+
+//------------------------------------------------------------------------------
+
 class ConfigItemInt : public ConfigItem
 {
 public:

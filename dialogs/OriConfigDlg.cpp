@@ -9,6 +9,7 @@
 #include <QComboBox>
 #include <QDebug>
 #include <QFileDialog>
+#include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
@@ -71,6 +72,44 @@ public:
     ConfigItemBool* item;
     QCheckBox *checkBox = nullptr;
     QRadioButton *radioBtn = nullptr;
+};
+
+//------------------------------------------------------------------------------
+//                            ConfigItemEditorRadio
+//------------------------------------------------------------------------------
+
+class ConfigItemEditorRadio : public ConfigItemEditor
+{
+public:
+    ConfigItemEditorRadio(ConfigItemRadio* item): ConfigItemEditor(), item(item)
+    {
+        auto group = new QGroupBox(item->title);
+        auto layout = new QHBoxLayout(group);
+        for (const auto &it : item->items) {
+            auto but = new QRadioButton(it);
+            layout->addWidget(but);
+            buttons << but;
+        }
+        LayoutV({group, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
+    }
+
+    void populate() override
+    {
+        if (*item->value >= 0 && *item->value < buttons.size())
+            buttons[*item->value]->setChecked(true);
+    }
+
+    void collect() override
+    {
+        for (int i = 0; i < buttons.size(); i++)
+            if (buttons[i]->isChecked()) {
+                *item->value = i;
+                break;
+            }
+    }
+
+    ConfigItemRadio* item;
+    QList<QRadioButton*> buttons;
 };
 
 //------------------------------------------------------------------------------
@@ -467,6 +506,8 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             }
             editor = boolEditor;
         }
+        else if (auto it = dynamic_cast<ConfigItemRadio*>(item); it)
+            editor = new ConfigItemEditorRadio(it);
         else if (auto it = dynamic_cast<ConfigItemInt*>(item); it)
             editor = new ConfigItemEditorInt(it);
         else if (auto it = dynamic_cast<ConfigItemReal*>(item); it)
