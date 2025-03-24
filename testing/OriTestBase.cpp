@@ -419,6 +419,7 @@ void TestBase::logAssertion(const QString& assertion, const QString& condition,
     QString msg;
     QTextStream stream(&msg);
     stream << "Assertion : " << assertion << '\n'
+           << "Message   : " << _message << '\n'
            << "Condition : " << condition << '\n'
            << "Expected  : " << expected << '\n'
            << "Actual    : " << actual << '\n'
