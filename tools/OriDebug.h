@@ -6,6 +6,7 @@
 #include <QEvent>
 #include <QFileInfo>
 #include <QTextEdit>
+#include <QThread>
 #include <QPointer>
 #include <QVBoxLayout>
 
@@ -151,8 +152,11 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
         msg += QString("<br><font color=gray>(%1:%2, %3</font>")
             .arg(context.file).arg(context.line).arg(context.function);
 
-    consoleWindow()->append(msg);
-    
+    if (!qApp->instance()->thread()->isCurrentThread()) {
+        QMetaObject::invokeMethod(qApp, [msg]{
+            consoleWindow()->append(msg);
+        });
+    } else consoleWindow()->append(msg);
 }
 #else
 void messageHandler(QtMsgType type, const char* msg)
