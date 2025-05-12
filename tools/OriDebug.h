@@ -2,13 +2,38 @@
 #define ORI_DEBUG_H
 
 #include <QApplication>
+#include <QDateTime>
 #include <QEvent>
+#include <QFileInfo>
 #include <QTextEdit>
 #include <QPointer>
 #include <QVBoxLayout>
 
 namespace Ori {
 namespace Debug {
+
+struct LogFile
+{
+    LogFile()
+    {
+        path = qApp->applicationDirPath()
+            % '/'
+            % QFileInfo(qApp->applicationFilePath()).baseName().toLower()
+            % '-'
+            % QDateTime::currentDateTime().toString("yyyy-MM-ddTHH-mm-ss")
+            % ".log";
+    }
+
+    QString path;
+};
+
+bool __saveLogs = false;
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+QtMessageHandler __defaultHandler = nullptr;
+#else
+QtMsgHandler __defaultHandler = nullptr;
+#endif
+Q_GLOBAL_STATIC(LogFile, __logFile);
 
 QString messageType(QtMsgType type)
 {
@@ -101,7 +126,22 @@ bool mayInoreMessage(const QString& message)
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
+    if (__defaultHandler)
+        (*__defaultHandler)(type, context, message);
+
+#ifdef Q_OS_LINUX
     if (mayInoreMessage(message)) return;
+#endif
+
+    if (__saveLogs)
+    {
+        QString msg = qFormatLogMessage(type, context, message);
+        // Note that the C++ standard guarantees that static FILE *f is initialized in a thread-safe way.
+        // We can also expect fprintf() and fflush() to be thread-safe, so no further synchronization is necessary
+        static FILE *f = fopen(qPrintable(__logFile->path), "a");
+        fprintf(f, "%s\n", qPrintable(msg));
+        fflush(f);
+    }
 
     QString msg = QString("<p><b>%1</b>: %2").arg(messageType(type), sanitizeHtml(message));
 
@@ -112,24 +152,36 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
             .arg(context.file).arg(context.line).arg(context.function);
 
     consoleWindow()->append(msg);
+    
 }
 #else
 void messageHandler(QtMsgType type, const char* msg)
 {
-    QString message = QString::fromUtf8(msg);
+    if (__defaultHandler)
+        (*__defaultHandler)(type, msg);
 
+#ifdef Q_OS_LINUX
     if (mayInoreMessage(message)) return;
+#endif
 
+    QString message = QString::fromUtf8(msg);
     consoleWindow()->append(QString("<p><b>%1</b>: %2<br>").arg(messageType(type)).arg(sanitizeHtml(message)));
 }
 #endif
 
-void installMessageHandler()
+void installMessageHandler(bool saveLogs = false)
 {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
-    qInstallMessageHandler(messageHandler);
+    __saveLogs = saveLogs;
+
+    if (__saveLogs) {
+        if (qEnvironmentVariable("QT_MESSAGE_PATTERN").isEmpty())
+            qSetMessagePattern("%{time yyyy-MM-ddTHH:mm:ss.zzz} [%{type}] %{message}");
+    }
+
+    __defaultHandler = qInstallMessageHandler(messageHandler);
 #else
-    qInstallMsgHandler(messageHandler);
+    __defaultHandler = qInstallMsgHandler(messageHandler);
 #endif
 }
 
