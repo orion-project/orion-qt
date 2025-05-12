@@ -68,6 +68,11 @@ public:
             *item->value = checkBox->isChecked();
         else *item->value = radioBtn->isChecked();
     }
+    
+    void setEnabled(bool on) override
+    {
+        checkBox->setEnabled(on && !item->disabled);
+    }
 
     ConfigItemBool* item;
     QCheckBox *checkBox = nullptr;
@@ -504,6 +509,11 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
                     _radioGroups[it->radioGroupId] = new QButtonGroup(this);
                 _radioGroups[it->radioGroupId]->addButton(boolEditor->radioBtn);
             }
+            if (boolEditor->checkBox) {
+                connect(boolEditor->checkBox, &QCheckBox::checkStateChanged, this, [this, item, &opts](Qt::CheckState state){
+                    enableChildItems(item, opts, state == Qt::Checked);
+                });
+            }
             editor = boolEditor;
         }
         else if (auto it = dynamic_cast<ConfigItemRadio*>(item); it)
@@ -530,7 +540,12 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             editor = new ConfigItemEditorEmpty(it);
         if (editor)
         {
-            w->add(editor);
+            if (int indent = getItemIndent(item, opts, 0); indent > 0) {
+                auto l = LayoutH({editor}).setMargins(indent, 0, 0, 0);
+                w->add(l.boxLayout());
+            }
+            else w->add(editor);
+            
             _editors.insert(item, editor);
         }
     }
@@ -542,10 +557,58 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
     return w;
 }
 
+int ConfigDlg::getItemIndent(ConfigItem *item, const ConfigDlgOpts& opts, int indent) const
+{
+    if (item->parent)
+        for (auto it : opts.items)
+        {   
+            if (it != item && it->pageId == item->pageId && it->valuePtr() == item->parent)
+                return indent + 16 + getItemIndent(it, opts, indent);
+        }
+    return indent;
+}
+
+void ConfigDlg::enableChildItems(ConfigItem *item, const ConfigDlgOpts &opts, bool on)
+{
+    for (auto it : opts.items)
+        if (it != item && it->pageId == item->pageId && it->parent == item->valuePtr()) {
+            auto editor = _editors.value(it);
+            if (editor) {
+                editor->setEnabled(on);
+                enableChildItems(it, opts, on);
+            }
+        }
+}
+
+void ConfigDlg::enableChildEditors(ConfigItem *item, bool on)
+{
+    for (auto itr = _editors.constBegin(); itr != _editors.constEnd(); itr++) {
+        auto it = itr.key();
+        auto editor = itr.value();
+        if (it != item && it->pageId == item->pageId && it->parent == item->valuePtr()) {
+            editor->setEnabled(on);
+
+            bool enabled = on;
+            auto boolEditor = dynamic_cast<ConfigItemEditorBool*>(editor);
+            if (boolEditor && boolEditor->checkBox) {
+                enabled &= boolEditor->checkBox->isChecked();
+            }
+            enableChildEditors(it, enabled);
+        }
+    }
+}
+
 void ConfigDlg::populate()
 {
     for (auto it = _editors.constBegin(); it != _editors.constEnd(); it++)
         it.value()->populate();
+        
+    for (auto it = _editors.constBegin(); it != _editors.constEnd(); it++) {
+        auto boolEditor = dynamic_cast<ConfigItemEditorBool*>(it.value());
+        if (boolEditor && boolEditor->checkBox) {
+            enableChildEditors(it.key(), boolEditor->checkBox->isChecked());
+        }
+    }
 }
 
 bool ConfigDlg::collect()

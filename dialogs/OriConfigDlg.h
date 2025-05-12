@@ -41,6 +41,7 @@ public:
     ConfigItemEditor(): QWidget() {}
     virtual void populate() {}
     virtual void collect() {}
+    virtual void setEnabled(bool on) {}
 };
 
 //------------------------------------------------------------------------------
@@ -52,11 +53,15 @@ public:
     virtual ~ConfigItem() {}
 
     ConfigItem* withHint(const QString& h, bool wrap = true) { hint = h, wrapHint = wrap; return this; }
+    ConfigItem* withParent(void *value) { parent = value; return this; }
+    
+    virtual void* valuePtr() const { return nullptr; }
 
     int pageId;
     QString title;
     QString hint;
     bool wrapHint;
+    void* parent = nullptr;
 };
 
 //------------------------------------------------------------------------------
@@ -65,6 +70,8 @@ class ConfigItemWidget : public ConfigItem
 {
 public:
     ConfigItemWidget(int pageId, QWidget *value) : ConfigItem(pageId, {}), value(value) {}
+
+    void* valuePtr() const override { return value; }
 
     QWidget *value;
 };
@@ -89,6 +96,8 @@ public:
     ConfigItemBool* setDisabled(bool disab) { disabled = disab; return this; }
     ConfigItemBool* withRadioGroup(const QString &groupId) { radioGroupId = groupId; return this; }
 
+    void* valuePtr() const override { return value; }
+
     bool* value;
     bool disabled;
     QString radioGroupId;
@@ -100,6 +109,8 @@ class ConfigItemRadio : public ConfigItem
 {
 public:
     ConfigItemRadio(int pageId, const QString& title, const QStringList &items, int *value) : ConfigItem(pageId, title), items(items), value(value) {}
+
+    void* valuePtr() const override { return value; }
 
     QStringList items;
     int *value;
@@ -114,6 +125,8 @@ public:
 
     ConfigItem* withMinMax(int min, int max) { minValue = min, maxValue = max; return this; }
 
+    void* valuePtr() const override { return value; }
+    
     int* value;
     std::optional<int> minValue, maxValue;
 };
@@ -124,6 +137,8 @@ class ConfigItemReal : public ConfigItem
 {
 public:
     ConfigItemReal(int pageId, const QString& title, double* value) : ConfigItem(pageId,  title), value(value) {}
+
+    void* valuePtr() const override { return value; }
 
     double* value;
 };
@@ -138,6 +153,8 @@ public:
     ConfigItemStr* withAlignment(Qt::Alignment a) { align = a; return this; }
     ConfigItemStr* withReadOnly() { readOnly = true; return this; }
 
+    void* valuePtr() const override { return value; }
+
     QString* value;
     std::optional<Qt::Alignment> align;
     bool readOnly = false;
@@ -150,6 +167,8 @@ class ConfigItemDir : public ConfigItem
 public:
     ConfigItemDir(int pageId, const QString& title, QString* value) : ConfigItem(pageId,  title), value(value) {}
 
+    void* valuePtr() const override { return value; }
+
     QString* value;
 };
 
@@ -161,6 +180,8 @@ public:
     ConfigItemFile(int pageId, const QString& title, QString* value) : ConfigItem(pageId,  title), value(value) {}
 
     ConfigItemFile* withFilter(const QString& f) { filter = f; return this; }
+
+    void* valuePtr() const override { return value; }
 
     QString* value;
     QString filter;
@@ -193,6 +214,8 @@ public:
 
     ConfigItemDropDown* withOption(int id, const QString& text) { options << QPair<int, QString>{id, text}; return this; }
 
+    void* valuePtr() const override { return value; }
+    
     int* value;
     QList<QPair<int, QString>> options;
 };
@@ -208,6 +231,8 @@ public:
     ConfigItem* withMinMax(int min, int max) { minValue1 = minValue2 = min, maxValue1 = maxValue2 = max; return this; }
     ConfigItem* withMinMax1(int min, int max) { minValue1 = min, maxValue1 = max; return this; }
     ConfigItem* withMinMax2(int min, int max) { minValue2 = min, maxValue2 = max; return this; }
+
+    void* valuePtr() const override { return value1; }
 
     QString title1, title2;
     int *value1, *value2;
@@ -286,6 +311,9 @@ private:
     QMap<QString, QButtonGroup*> _radioGroups;
 
     QWidget* makePage(const ConfigPage& page, const ConfigDlgOpts& opts);
+    int getItemIndent(ConfigItem *item, const ConfigDlgOpts &opts, int indent) const;
+    void enableChildItems(ConfigItem *item, const ConfigDlgOpts& opts, bool on);
+    void enableChildEditors(ConfigItem *item, bool on);
 };
 
 } // namespace Dlg
