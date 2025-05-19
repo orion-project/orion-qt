@@ -62,7 +62,7 @@ public:
     int pageId;
     QString title;
     QString hint;
-    bool wrapHint;
+    bool wrapHint = true;
     void* parent = nullptr;
 };
 
@@ -101,7 +101,7 @@ public:
     void* valuePtr() const override { return value; }
 
     bool* value;
-    bool disabled;
+    bool disabled = false;
     QString radioGroupId;
 };
 

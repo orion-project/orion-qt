@@ -88,13 +88,14 @@ class ConfigItemEditorRadio : public ConfigItemEditor
 public:
     ConfigItemEditorRadio(ConfigItemRadio* item): ConfigItemEditor(), item(item)
     {
-        auto group = new QGroupBox(item->title);
-        auto layout = new QHBoxLayout(group);
-        for (const auto &it : item->items) {
+        auto layout = new QHBoxLayout;
+        for (const auto &it : std::as_const(item->items)) {
             auto but = new QRadioButton(it);
             layout->addWidget(but);
             buttons << but;
         }
+        auto group = new QGroupBox(item->title);
+        group->setLayout(layout);
         LayoutV({group, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
     }
 
@@ -355,7 +356,7 @@ public:
     ConfigItemEditorDropDown(ConfigItemDropDown* item): ConfigItemEditor(), item(item)
     {
         control = new QComboBox;
-        for (const auto &op : item->options)
+        for (const auto &op : std::as_const(item->options))
             control->addItem(op.second, op.first);
         LayoutV({item->title, control, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
     }
