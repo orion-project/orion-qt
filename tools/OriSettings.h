@@ -10,7 +10,11 @@ class Settings;
 #ifdef __GXX_EXPERIMENTAL_CXX0X__ // TODO condition
 typedef std::unique_ptr<QSettings> QSettingsPtr;
 #else
+    #ifdef Q_CC_MSVC
+typedef std::unique_ptr<QSettings> QSettingsPtr;
+    #else
 typedef std::auto_ptr<QSettings> QSettingsPtr;
+    #endif
 #endif
 
 QT_BEGIN_NAMESPACE

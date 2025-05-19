@@ -54,6 +54,11 @@ class PopupMessage : public QFrame
     Q_OBJECT
 
 public:
+    // There seems some undesirable def goes into scope in older Qt
+    // (<= 6.2; it's ok for 6.7+, not's sure what's in between)
+    #ifdef ERROR
+        #undef ERROR
+    #endif
     enum Mode {WARNING, AFFIRM, ERROR, HINT};
 
     struct Options

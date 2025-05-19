@@ -152,7 +152,11 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
         msg += QString("<br><font color=gray>(%1:%2, %3</font>")
             .arg(context.file).arg(context.line).arg(context.function);
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
     if (!qApp->instance()->thread()->isCurrentThread()) {
+#else
+    if (qApp->instance()->thread() != QThread::currentThread()) {
+#endif
         QMetaObject::invokeMethod(qApp, [msg]{
             consoleWindow()->append(msg);
         });

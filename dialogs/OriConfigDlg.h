@@ -3,6 +3,8 @@
 
 #include "OriBasicConfigDlg.h"
 
+#include <optional>
+
 #include <QMap>
 
 class QButtonGroup;

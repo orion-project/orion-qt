@@ -510,9 +510,15 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
                 _radioGroups[it->radioGroupId]->addButton(boolEditor->radioBtn);
             }
             if (boolEditor->checkBox) {
+            #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
                 connect(boolEditor->checkBox, &QCheckBox::checkStateChanged, this, [this, item, &opts](Qt::CheckState state){
                     enableChildItems(item, opts, state == Qt::Checked);
                 });
+            #else
+                connect(boolEditor->checkBox, &QCheckBox::stateChanged, this, [this, item, &opts](int state){
+                    enableChildItems(item, opts, state == Qt::Checked);
+                });
+            #endif
             }
             editor = boolEditor;
         }
