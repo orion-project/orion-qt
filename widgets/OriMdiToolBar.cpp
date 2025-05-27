@@ -39,7 +39,7 @@ void MdiToolBar::contextMenuEvent(QContextMenuEvent *event)
         return;
     }
     auto pos = event->pos();
-    for (auto action : qAsConst(actions))
+    for (auto action : std::as_const(actions))
     {
         auto button = widgetForAction(action);
         if (!button) continue;
@@ -110,7 +110,7 @@ void MdiToolBar::subWindowDestroyed(QObject *window)
 QAction* MdiToolBar::findActionForWindow(QMdiSubWindow *window)
 {
     QVariant data = ACTION_DATA(window);
-    for (auto action : qAsConst(actions))
+    for (auto action : std::as_const(actions))
         if (action->data() == data)
             return action;
     return nullptr;

@@ -43,7 +43,7 @@ public:
     ConfigItemEditor(): QWidget() {}
     virtual void populate() {}
     virtual void collect() {}
-    virtual void setEnabled(bool on) {}
+    virtual void setEnabled(bool) {}
 };
 
 //------------------------------------------------------------------------------
@@ -228,7 +228,7 @@ class ConfigItemIntPair : public ConfigItem
 {
 public:
     ConfigItemIntPair(int pageId, const QString& title, const QString& title1, int* value1, const QString& title2, int* value2)
-        : ConfigItem(pageId,  title), title1(title1), value1(value1), title2(title2), value2(value2) {}
+        : ConfigItem(pageId,  title), title1(title1), title2(title2), value1(value1), value2(value2) {}
 
     ConfigItem* withMinMax(int min, int max) { minValue1 = minValue2 = min, maxValue1 = maxValue2 = max; return this; }
     ConfigItem* withMinMax1(int min, int max) { minValue1 = min, maxValue1 = max; return this; }

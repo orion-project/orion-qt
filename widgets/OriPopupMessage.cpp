@@ -19,35 +19,35 @@ void PopupMessage::setTarget(QWidget *target) {
 }
 
 void PopupMessage::warning(const QString& text, int duration) {
-    show({.mode=WARNING, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter});
+    show(Options {.mode=WARNING, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter, .pixmap = QPixmap()});
 }
 
 void PopupMessage::affirm(const QString& text, int duration) {
-    show({.mode=AFFIRM, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter});
+    show(Options {.mode=AFFIRM, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter, .pixmap = QPixmap()});
 }
 
 void PopupMessage::error(const QString& text, int duration) {
-    show({.mode=ERROR, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter});
+    show(Options {.mode=ERROR, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter, .pixmap = QPixmap()});
 }
 
 void PopupMessage::hint(const QString& text, int duration) {
-    show({.mode=HINT, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter});
+    show(Options {.mode=HINT, .text=text, .duration=duration, .align=Qt::AlignHCenter|Qt::AlignVCenter, .pixmap = QPixmap()});
 }
 
 void PopupMessage::warning(const QString& text, Qt::Alignment align, int duration) {
-    show({.mode=WARNING, .text=text, .duration=duration, .align=align});
+    show(Options {.mode=WARNING, .text=text, .duration=duration, .align=align, .pixmap = QPixmap()});
 }
 
 void PopupMessage::affirm(const QString& text, Qt::Alignment align, int duration) {
-    show({.mode=AFFIRM, .text=text, .duration=duration, .align=align});
+    show(Options {.mode=AFFIRM, .text=text, .duration=duration, .align=align, .pixmap = QPixmap()});
 }
 
 void PopupMessage::error(const QString& text, Qt::Alignment align, int duration) {
-    show({.mode=ERROR, .text=text, .duration=duration, .align=align});
+    show(Options {.mode=ERROR, .text=text, .duration=duration, .align=align, .pixmap = QPixmap()});
 }
 
 void PopupMessage::hint(const QString& text, Qt::Alignment align, int duration) {
-    show({.mode=HINT, .text=text, .duration=duration, .align=align});
+    show(Options {.mode=HINT, .text=text, .duration=duration, .align=align, .pixmap = QPixmap()});
 }
 
 void PopupMessage::show(const Options &opts, QWidget *parent)
