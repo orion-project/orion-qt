@@ -237,7 +237,7 @@ void TestSession::notifyTestFinished(TestBase* test)
     if (emitSignals)
         emit testFinished(test);
 
-    if (test->kind() == TestKind::Test)
+    if (test->kind() == TestKind::Test || test->kind() == TestKind::GuiTest)
     {
         switch (test->result())
         {
@@ -262,6 +262,7 @@ int TestSession::countTestsInGroup(const TestSuite& tests) const
         switch (test->kind())
         {
         case TestKind::Test:
+        case TestKind::GuiTest:
             count++;
             break;
         case TestKind::Group:
@@ -355,6 +356,7 @@ void TestBase::setResult(bool pass)
             switch (_kind)
             {
             case TestKind::Test:
+            case TestKind::GuiTest:
             case TestKind::Group:
                 if (_parent->message().isEmpty())
                     _parent->setMessage(QStringLiteral("Some of children tests failed"));
@@ -408,8 +410,15 @@ void TestBase::runTest()
 
 void TestBase::run()
 {
-    if (_method)
-        _method(this);
+    if (_method) {
+        if (_kind == TestKind::GuiTest) {
+            QMetaObject::invokeMethod(qApp, [this]{
+                _method(this);
+            });
+        } else {
+            _method(this);
+        }
+    }
 }
 
 void TestBase::logAssertion(const QString& assertion, const QString& condition,

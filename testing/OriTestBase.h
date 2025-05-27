@@ -357,6 +357,9 @@ inline QString formatPtr(const void* ptr)
 #define ADD_TEST(method)                                                                  \
     new Ori::Testing::TestBase(#method, method)
 
+#define ADD_GUI_TEST(method)                                                              \
+    new Ori::Testing::TestBase(#method, method, Ori::Testing::TestKind::GuiTest)
+
 #define BEFORE_ALL(method)                                                                \
     new Ori::Testing::TestBase(#method, method, Ori::Testing::TestKind::BeforeAll)
 
@@ -418,7 +421,7 @@ private:
 
 typedef void (*TestMethod) (TestBase *test);
 
-enum class TestKind {Test, Group, BeforeAll, AfterAll, BeforeEach, AfterEach};
+enum class TestKind {Test, GuiTest, Group, BeforeAll, AfterAll, BeforeEach, AfterEach};
 enum class TestResult {None, Pass, Fail};
 
 class TestBase
