@@ -7,6 +7,7 @@
 
 #include <QAction>
 #include <QApplication>
+#include <QClipboard>
 #include <QDebug>
 #include <QHeaderView>
 #include <QLabel>
@@ -51,7 +52,13 @@ TestWindow::TestWindow(QWidget *parent) : QMainWindow(parent)
     _actionResetState = Ori::Gui::V0::action(tr("&Reset All"), this, SLOT(resetState()), ":/ori_test_window/reset_tests");
     auto actionCollapseTree = Ori::Gui::V0::action(tr("&Collapse All"), testsTree, SLOT(collapseAll()), ":/ori_test_window/collapse_tests");
     auto actionExpandTree = Ori::Gui::V0::action(tr("&Expand All"), testsTree, SLOT(expandAll()), ":/ori_test_window/expand_tests");
+    auto actionCopySelected = Ori::Gui::V0::action(tr("&Copy Test Name"), this, SLOT(copySelected()), ":/ori_images/copy");
     _actionSaveLog = Ori::Gui::V0::toggledAction(tr("Save Results to Log File"), this, nullptr);
+    
+    testsTree->setContextMenuPolicy(Qt::ActionsContextMenu);
+    testsTree->addAction(_actionRunSelected);
+    testsTree->addAction(Ori::Gui::separatorAction(this));
+    testsTree->addAction(actionCopySelected);
 
     auto toolbar = new Ori::Widgets::FlatToolBar;
     toolbar->setFloatable(false);
@@ -309,9 +316,10 @@ void TestWindow::setStatusDuration(int64_t tests, int64_t session)
         labelDuration->setToolTip(QString());
         return;
     }
-    labelDuration->setText(QStringLiteral("   Duration: %1 (%2)   ")
-                           .arg(formatDuration(tests))
-                           .arg((session == 0) ? QStringLiteral("?") : formatDuration(session)));
+    labelDuration->setText(QStringLiteral("   Duration: %1 (%2)   ").arg(
+        formatDuration(tests),
+        ((session == 0) ? QStringLiteral("?") : formatDuration(session))
+    ));
     labelDuration->setToolTip(tr("Summary tests duration (Total session duration including all additional times)"));
 }
 
@@ -331,6 +339,13 @@ void TestWindow::runAll()
 void TestWindow::runSelected()
 {
     runTestSession(testsTree->selectedItems());
+}
+
+void TestWindow::copySelected()
+{
+    auto items = testsTree->selectedItems();
+    if (!items.isEmpty())
+        qApp->clipboard()->setText(items.first()->text(0));
 }
 
 void TestWindow::runTestSession(QList<QTreeWidgetItem*> items)

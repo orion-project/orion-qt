@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/ori_images">
         <file alias="book">img/book.svg</file>
+        <file alias="copy">img/copy.svg</file>
         <file alias="help">img/help.svg</file>
         <file alias="info">img/info.svg</file>
         <file alias="protocol">img/protocol.svg</file>

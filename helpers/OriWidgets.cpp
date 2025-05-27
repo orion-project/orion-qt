@@ -555,6 +555,14 @@ QAction* toggledAction(const QString& title, const QString& tooltip, QObject* re
 
 } // namespace V0
 
+
+QAction* separatorAction(QObject *parent)
+{
+    auto a = new QAction(parent);
+    a->setSeparator(true);
+    return a;
+}
+
 //--------------------------------------------------------------------------------------------------
 
 QTreeWidget* twoColumnTree(const QString& title1, const QString& title2)

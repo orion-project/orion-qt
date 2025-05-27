@@ -88,6 +88,7 @@ private:
 private slots:
     void runAll();
     void runSelected();
+    void copySelected();
     void resetState();
     void stopExecution();
     void stopTimerTick();

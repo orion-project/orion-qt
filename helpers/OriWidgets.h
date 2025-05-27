@@ -96,6 +96,8 @@ QAction* toggledAction(const QString& title, QObject* receiver, const char* slot
 QAction* toggledAction(const QString& title, const QString& tooltip, QObject* receiver, const char* slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence());
 }
 
+QAction* separatorAction(QObject *parent);
+
 template <typename Func1>
 QAction* action(const QString& title, QObject* receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
     auto a = new QAction(title, receiver);
