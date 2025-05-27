@@ -1,17 +1,17 @@
 <RCC>
     <qresource prefix="/ori_test_window">
         <file alias="icon">img/test_window.svg</file>
-        <file alias="run_test">img/run_24.png</file>
-        <file alias="run_tests">img/run_all_24.png</file>
+        <file alias="run_test">img/run.svg</file>
+        <file alias="run_tests">img/run_all.svg</file>
         <file alias="expand_tests">img/expand_all.svg</file>
         <file alias="collapse_tests">img/collapse_all.svg</file>
         <file alias="reset_tests">img/reset_all.svg</file>
         <file alias="stop">img/stop.svg</file>
     </qresource>
     <qresource prefix="/ori_test_states">
-        <file alias="pass">img/test_pass_16.png</file>
-        <file alias="fail">img/test_fail_16.png</file>
-        <file alias="run">img/test_run_16.png</file>
-        <file alias="undef">img/test_undef_16.png</file>
+        <file alias="pass">img/test_pass.svg</file>
+        <file alias="fail">img/test_fail.svg</file>
+        <file alias="run">img/test_run.svg</file>
+        <file alias="undef">img/test_undef.svg</file>
     </qresource>
 </RCC>
