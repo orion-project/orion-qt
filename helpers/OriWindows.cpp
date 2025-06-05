@@ -75,11 +75,29 @@ void setGeometry(QWidget* w, const QRect& g, bool maximized, const QSize& defSiz
 {
     if (g.width() > 0 and g.height() > 0)
     {
+        bool screenFound = false;
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
-        if (QGuiApplication::screenAt(g.topLeft()))
+    #if (QT_VERSION >= QT_VERSION_CHECK(6, 2, 0)) and (QT_VERSION < QT_VERSION_CHECK(6, 7, 0))
+        // It's something broken with multi-screen handling in earlier versions of Qt6
+        // (not sure about exact versions 6.2 and 6.7, it's just what's been checked)
+        // It can't find screenAt when the saved geometry is outside of the main screen
+        // There is also something wrong with saved geometry when window is moved between screens
+        // But this workaround works at least when geometry is saved-restored on the same non-main screen
+        foreach (auto s, qApp->screens()) {
+            if (s->virtualGeometry().contains(g.topLeft())) {
+                screenFound = true;
+                w->setScreen(s);
+                w->setGeometry(g);
+                break;
+            }
+        }
+    #else
+        if (QGuiApplication::screenAt(g.topLeft())) {
+            screenFound = true;
             w->setGeometry(g);
-        else
-        {
+        }
+    #endif
+        if (!screenFound) {
             qWarning() << "Stored geometry is out of available screens, ignoring" << w->objectName() << g;
             if (defSize.width() > 0 and defSize.height() > 0)
                 w->resize(defSize);
