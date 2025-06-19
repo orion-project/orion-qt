@@ -73,7 +73,7 @@ void moveToScreenCenter(QWidget* w, QWidget* screenOfThisWidget)
 
 void setGeometry(QWidget* w, const QRect& g, bool maximized, const QSize& defSize)
 {
-    if (g.width() > 0 and g.height() > 0)
+    if (g.width() > 0 && g.height() > 0)
     {
         bool screenFound = false;
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
@@ -99,7 +99,7 @@ void setGeometry(QWidget* w, const QRect& g, bool maximized, const QSize& defSiz
     #endif
         if (!screenFound) {
             qWarning() << "Stored geometry is out of available screens, ignoring" << w->objectName() << g;
-            if (defSize.width() > 0 and defSize.height() > 0)
+            if (defSize.width() > 0 && defSize.height() > 0)
                 w->resize(defSize);
             // This function is mostly called from constructors and window size is not yet fully defined there,
             // e.g. at this moment window size could be 640x480, which is probably some QWidget's default value,
@@ -113,7 +113,7 @@ void setGeometry(QWidget* w, const QRect& g, bool maximized, const QSize& defSiz
     }
     else
     {
-        if (defSize.width() > 0 and defSize.height() > 0)
+        if (defSize.width() > 0 && defSize.height() > 0)
             w->resize(defSize);
         moveToScreenCenter(w, qApp->activeWindow());
     }

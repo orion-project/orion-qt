@@ -40,7 +40,7 @@ void SelectableTileContentDefault::updateState(bool focused, bool selected)
     auto baseColor = p.color(QPalette::Base);
     auto selectedColor = p.color(QPalette::Highlight);
 #endif
-    QColor color = (!focused and !selected) ? baseColor :
+    QColor color = (!focused && !selected) ? baseColor :
         Ori::Color::blend(baseColor, selectedColor, selected && focused ? 0.2 : 0.1);
 #ifdef ORI_USE_STYLE_SHEETS
     setStyleSheet(QStringLiteral("background:%1").arg(color.name()));
@@ -169,7 +169,7 @@ void SelectableTile::updateState()
     auto baseColor = p.color(QPalette::Base);
     auto selectedColor = p.color(QPalette::Highlight);
 #endif
-    QColor color = (!focused and !_selected) ? baseColor :
+    QColor color = (!focused && !_selected) ? baseColor :
         _selected ? selectedColor : Ori::Color::blend(baseColor, selectedColor, 0.1);
 #ifdef ORI_USE_STYLE_SHEETS
     if (_selected)

@@ -126,7 +126,7 @@ void PopupGrid::paintEvent(QPaintEvent *event)
         for(int col = 0; col < mColCount; ++col)
         {
             int index = row * mColCount + col;
-            if(index < mItems.count() and event->rect().intersects(itemRect))
+            if(index < mItems.count() && event->rect().intersects(itemRect))
             {
                 //set the clip region to be extra safe
                 QRegion itemReg(itemRect);

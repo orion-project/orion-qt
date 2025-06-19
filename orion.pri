@@ -11,14 +11,15 @@ DEFINES += QT_MESSAGELOGCONTEXT
 }}
 
 
+# The main project config must declare the standard
 # Enable C++11
-greaterThan(QT_MAJOR_VERSION, 4) {
-    CONFIG += c++17
-}
-else {
-    QMAKE_CXXFLAGS += -std=c++11
-    QMAKE_LFLAGS += -std=c++11
-}
+# greaterThan(QT_MAJOR_VERSION, 4) {
+#     CONFIG += c++17
+# }
+# else {
+#     QMAKE_CXXFLAGS += -std=c++11
+#     QMAKE_LFLAGS += -std=c++11
+# }
 
 RESOURCES += \
     $$PWD/resources.qrc

@@ -104,7 +104,7 @@ void TableWidgetBase::setSelectedRow(int row)
 
 void TableWidgetBase::setSelectedId(int id)
 {
-    if (!_tableModel or !tableView) return;
+    if (!_tableModel || !tableView) return;
     QModelIndexList indexes = _tableModel->match(
             _tableModel->index(0, columnIndexId), Qt::DisplayRole,
             QVariant::fromValue(id), 1, Qt::MatchExactly);

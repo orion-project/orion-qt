@@ -16,7 +16,7 @@ TEST_METHOD(learn_nan)
     double nan = Double::nan();
     ASSERT_IS_TRUE(Double(nan).isNan())
     ASSERT_IS_TRUE(std::isnan(nan));
-    ASSERT_IS_TRUE(__isnan(nan));
+    ASSERT_IS_TRUE(qIsNaN(nan));
     ASSERT_IS_FALSE(nan > 0);
     ASSERT_IS_FALSE(nan < 0);
     ASSERT_IS_FALSE(2 > nan);
@@ -25,12 +25,12 @@ TEST_METHOD(learn_nan)
     ASSERT_IS_FALSE(2 == nan);
     ASSERT_IS_FALSE(nan == nan);
 
-    ASSERT_IS_TRUE(__isnan(2 * nan));
-    ASSERT_IS_TRUE(__isnan(nan * 2));
-    ASSERT_IS_TRUE(__isnan(2 / nan));
-    ASSERT_IS_TRUE(__isnan(nan / 2.0));
-    ASSERT_IS_TRUE(__isnan(2 + nan));
-    ASSERT_IS_TRUE(__isnan(nan + 2));
+    ASSERT_IS_TRUE(qIsNaN(2 * nan));
+    ASSERT_IS_TRUE(qIsNaN(nan * 2));
+    ASSERT_IS_TRUE(qIsNaN(2 / nan));
+    ASSERT_IS_TRUE(qIsNaN(nan / 2.0));
+    ASSERT_IS_TRUE(qIsNaN(2 + nan));
+    ASSERT_IS_TRUE(qIsNaN(nan + 2));
 }
 
 TEST_METHOD(learn_infinity)
@@ -47,25 +47,31 @@ TEST_METHOD(learn_infinity)
     ASSERT_IS_TRUE(Double(pos_inf).isInfinity());
     ASSERT_IS_TRUE(std::isinf(pos_inf));
     ASSERT_IS_TRUE(pos_inf == +std::numeric_limits<double>::infinity());
+#ifndef Q_CC_MSVC
     ASSERT_IS_TRUE(pos_inf == +1/0.0);
+#endif
     ASSERT_IS_TRUE(pos_inf > 0);
     ASSERT_IS_FALSE(pos_inf < 0);
     ASSERT_IS_FALSE(pos_inf == 0);
 
-    double neg_inf = -Double::infinity();
+    const double neg_inf = -Double::infinity();
     ASSERT_IS_TRUE(Double(neg_inf).isInfinity());
     ASSERT_IS_TRUE(std::isinf(neg_inf));
     ASSERT_IS_TRUE(neg_inf == -std::numeric_limits<double>::infinity());
+#ifndef Q_CC_MSVC
     ASSERT_IS_TRUE(neg_inf == -1/0.0);
+#endif
     ASSERT_IS_FALSE(neg_inf > 0);
     ASSERT_IS_TRUE(neg_inf < 0);
     ASSERT_IS_FALSE(neg_inf == 0);
 
-    ASSERT_IS_TRUE(__isnan(pos_inf + neg_inf));
+    ASSERT_IS_TRUE(qIsNaN(pos_inf + neg_inf));
 
     ASSERT_IS_TRUE(std::isnan(inf * 0.0));
     ASSERT_IS_TRUE(std::isnan(0.0 * inf));
+#ifndef Q_CC_MSVC
     ASSERT_IS_TRUE(std::isinf(inf / 0.0));
+#endif
     ASSERT_IS_TRUE(0.0 / inf == 0);
 
     ASSERT_IS_TRUE(std::isinf(inf * 2.0));
@@ -81,6 +87,7 @@ TEST_METHOD(learn_infinity)
 // The standard supports signed zero, as well as infinity and NaN (not a number).
 TEST_METHOD(division_by_zero)
 {
+#ifndef Q_CC_MSVC
     double pos_inf = 1 / 0.0;
     TEST_LOG_DOUBLE(pos_inf);
     ASSERT_IS_TRUE(Double(pos_inf).isInfinity());
@@ -95,29 +102,34 @@ TEST_METHOD(division_by_zero)
 
     double nan = 0 / 0.0;
     TEST_LOG_DOUBLE(nan);
-    ASSERT_IS_TRUE(__isnan(nan));
+    ASSERT_IS_TRUE(qIsNaN(nan));
 
     ASSERT_IS_TRUE(1/+0.0 == pos_inf);
     ASSERT_IS_TRUE(1/-0.0 == neg_inf);
+#else
+    ASSERT_IS_TRUE(true)
+#endif
 }
 
 TEST_METHOD(invalid_sqrt)
 {
-    ASSERT_IS_TRUE(__isnan(std::sqrt(nan(""))));
-    ASSERT_IS_TRUE(__isnan(sqrt(nan(""))));
+    ASSERT_IS_TRUE(qIsNaN(std::sqrt(nan(""))));
+    ASSERT_IS_TRUE(qIsNaN(sqrt(nan(""))));
 
     ASSERT_IS_TRUE(sqrt(0) == 0);
 
-    ASSERT_IS_TRUE(__isnan(std::sqrt(-1)));
-    ASSERT_IS_TRUE(__isnan(sqrt(-1)));
+    ASSERT_IS_TRUE(qIsNaN(std::sqrt(-1)));
+    ASSERT_IS_TRUE(qIsNaN(sqrt(-1)));
 
     ASSERT_IS_TRUE(std::isinf(std::sqrt(Double::infinity())));
     ASSERT_IS_TRUE(std::isinf(sqrt(Double::infinity())));
 
+#ifndef Q_CC_MSVC
     ASSERT_IS_TRUE(std::isinf(std::sqrt(1/0.0)));
     ASSERT_IS_TRUE(std::isinf(sqrt(1/0.0)));
     ASSERT_IS_TRUE(std::isnan(std::sqrt(-1/0.0)));
     ASSERT_IS_TRUE(std::isnan(sqrt(-1/0.0)));
+#endif
 }
 
 //------------------------------------------------------------------------------

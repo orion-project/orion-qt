@@ -128,7 +128,7 @@ void TestSession::runTest(TestBase *test, bool isLastInGroup)
 {
     TestGroup *parentGroup = asGroup(test->parent());
 
-    if (parentGroup and parentGroup->_beforeAll)
+    if (parentGroup && parentGroup->_beforeAll)
     {
         if (parentGroup->_beforeAll->result() == TestResult::None)
         {
@@ -156,7 +156,7 @@ void TestSession::runTest(TestBase *test, bool isLastInGroup)
         _testsRun++;
 
         bool runTest = true;
-        if (parentGroup and parentGroup->_beforeEach)
+        if (parentGroup && parentGroup->_beforeEach)
         {
             parentGroup->_beforeEach->reset();
             parentGroup->_beforeEach->run();
@@ -179,7 +179,7 @@ void TestSession::runTest(TestBase *test, bool isLastInGroup)
         {
             test->runTest();
 
-            if (parentGroup and parentGroup->_afterEach)
+            if (parentGroup && parentGroup->_afterEach)
             {
                 parentGroup->_afterEach->reset();
                 parentGroup->_afterEach->run();
@@ -214,7 +214,7 @@ void TestSession::runTest(TestBase *test, bool isLastInGroup)
         notifyTestFinished(test);
     }
 
-    if (parentGroup and parentGroup->_afterAll and isLastInGroup)
+    if (parentGroup && parentGroup->_afterAll && isLastInGroup)
         parentGroup->_afterAll->runTest();
 }
 
