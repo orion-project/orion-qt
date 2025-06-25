@@ -41,7 +41,9 @@ add_executable(${PROJECT_NAME}
 
 Some useful things are
 
+- [Widgets](./widgets/README.md)
 - [Testing](./testing/README.md)
+- [Tools](./tools/README.md)
 
 *TODO:* describe more components and add links here
 

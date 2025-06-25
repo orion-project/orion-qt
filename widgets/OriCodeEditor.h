@@ -3,6 +3,16 @@
 
 #include <QPlainTextEdit>
 
+/**
+
+A simple wrapper around QPlainTextEdit providing several additional features conventional for code editors
+
+- line numbering
+- current line highlighting
+- line hints for error highlighting
+
+*/
+
 namespace Ori {
 namespace Widgets {
 
@@ -18,6 +28,9 @@ public:
 
     void setLineHints(const QMap<int, QString>& hints);
     QString getLineHint(int y) const;
+    
+    void setShowWhitespaces(bool on);
+    bool showWhitespaces() const;
 
 protected:
     void resizeEvent(QResizeEvent *e) override;

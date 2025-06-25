@@ -8,6 +8,12 @@ QT += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+CONFIG += c++20
+
+win32-msvc* {
+    QMAKE_CXXFLAGS += /std:c++20
+} 
+
 TARGET = ohl_editor
 TEMPLATE = app
 

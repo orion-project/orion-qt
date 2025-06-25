@@ -1,5 +1,6 @@
 #include "OriCodeEditor.h"
 
+#include <QDebug>
 #include <QPainter>
 #include <QTextBlock>
 #include <QToolTip>
@@ -76,6 +77,8 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
 
     updateLineNumberAreaWidth(0);
     highlightCurrentLine();
+    
+    setTabStopDistance(40); // twice less that the default
 }
 
 void CodeEditor::resizeEvent(QResizeEvent *e)
@@ -180,8 +183,9 @@ int CodeEditor::findLineNumber(int y) const
     int lineBot = lineTop + qRound(blockBoundingRect(block).height());
     while (block.isValid())
     {
-        if (y >= lineTop && y < lineBot)
+        if (y >= lineTop && y < lineBot) {
             return lineNum;
+        }
         block = block.next();
         lineTop = lineBot;
         lineBot = lineTop + qRound(blockBoundingRect(block).height());
@@ -192,7 +196,21 @@ int CodeEditor::findLineNumber(int y) const
 
 QString CodeEditor::getLineHint(int y) const
 {
-    return _lineHints.isEmpty() ? QString() : _lineHints[findLineNumber(y)];
+    return _lineHints.isEmpty() ? QString() : _lineHints.value(findLineNumber(y));
+}
+
+void CodeEditor::setShowWhitespaces(bool on)
+{
+    QTextOption option =  document()->defaultTextOption();
+    auto flags = option.flags();
+    flags.setFlag(QTextOption::ShowTabsAndSpaces, on);
+    option.setFlags(flags);
+    document()->setDefaultTextOption(option);
+}
+
+bool CodeEditor::showWhitespaces() const
+{
+    return document()->defaultTextOption().flags().testFlag(QTextOption::ShowTabsAndSpaces);
 }
 
 } // namespace Widgets

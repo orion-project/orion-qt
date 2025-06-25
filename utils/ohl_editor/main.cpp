@@ -6,6 +6,7 @@
 #include "widgets/OriCodeEditor.h"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QDebug>
 #include <QFileDialog>
 #include <QLabel>
@@ -34,6 +35,7 @@ public:
     Highlighter *highlighter = new Highlighter(editorSample, spec);
     QString lastDir;
     QLabel *labelFile = new QLabel("(file not selected)");
+    QCheckBox *flagShowSpaces = new QCheckBox("Show spaces");
 
     MainWindow()
     {
@@ -46,6 +48,7 @@ public:
         setHighlighter(editorCode, qApp->applicationDirPath() + "/../syntax/ohl.ohl");
 
         setFontMonospace(editorSample);
+        editorSample->setTabStopDistance(40);
 
         setFontMonospace(logView);
 
@@ -57,6 +60,8 @@ public:
         connect(butSaveAs, &QPushButton::clicked, this, [this]{ saveSpec(true); });
         auto butApply = new QPushButton("Parse and Highlight");
         connect(butApply, &QPushButton::clicked, this, [this]{ applySpec(false); });
+        
+        connect(flagShowSpaces, &QCheckBox::stateChanged, this, &MainWindow::toggleShowSpaces);
 
         auto content = splitterH(
                       LayoutV({
@@ -75,6 +80,7 @@ public:
                                   LayoutH({
                                       new QLabel("<b>Sample Text</b>"),
                                       Stretch(),
+                                      flagShowSpaces,
                                       butApply,
                                   }),
                                   new QLabel("This text will also be stored to highlighter spec file"),
@@ -196,6 +202,16 @@ public:
             logView->addItem(text);
             it++;
         }
+    }
+    
+    void toggleShowSpaces()
+    {
+        auto doc = editorSample->document();
+        QTextOption option =  doc->defaultTextOption();
+        auto flags = option.flags();
+        flags.setFlag(QTextOption::ShowTabsAndSpaces, flagShowSpaces->isChecked());
+        option.setFlags(flags);
+        doc->setDefaultTextOption(option);
     }
 };
 

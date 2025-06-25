@@ -6,6 +6,16 @@
 #include <QPlainTextEdit>
 #include <QTextDocument>
 
+/**
+
+Simple implementation of QSyntaxHighlighter based on regular expressions and 
+predefined rule sets stored in custom format.
+
+- [Example rules](../syntax/README.md)
+- [Rule editor](../utils/ohl_editor/README.md)
+
+*/
+
 namespace Ori {
 namespace Highlighter {
 
