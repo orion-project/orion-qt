@@ -2,7 +2,7 @@ name: python
 title: Python code
 
 rule: Keywords
-terms: and,assert,break,continue,del,elif,else,except,exec,finally
+terms: and,as,assert,break,continue,del,elif,else,except,exec,finally
 terms: for,from,global,if,import,in,is,lambda,not,or,pass,print,raise,return
 terms: try,while,yield,None,True,False
 color: #af00db
@@ -20,6 +20,13 @@ group: 1
 rule: Special names
 terms: self,__name__
 color: #001080
+
+rule: Builtin funcs
+terms: int,float,str,list,tuple,set,dict,bool
+terms: abs,max,min,sum,pow
+terms: print,input
+terms: len,type,isinstance,range,enumerate
+color: teal
 
 rule: String
 # Single-quoted string, possibly containing escaped quote \'
@@ -60,6 +67,7 @@ Enumerate files in folder example
 '''
 
 import os
+import numpy as np
 
 class Enumerator:
 	def __init__(self, dir):
@@ -85,6 +93,9 @@ def enumerate_files_variant_2(folder):
             print(f"File: \"{filename}\" ('{file}')\n")
             count += 1
     return res
+
+for i in range(10):
+	print(str(float(pow(sum(i,i),i))))
 
 """
 "Main" function
