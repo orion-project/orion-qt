@@ -31,6 +31,25 @@ public:
     
     void setShowWhitespaces(bool on);
     bool showWhitespaces() const;
+    
+    bool loadCode(const QString &fileName);
+    bool saveCode(const QString &fileName);
+
+    struct Style
+    {
+        QColor currentLineColor;
+        QColor lineNumTextColor;
+        QColor lineNumTextColorErr;
+        QColor lineNumBorderColor;
+        QColor lineNumBackColor;
+        QColor lineNumBackColorErr;
+        int lineNumRightPadding;
+        int lineNumLeftPadding;
+        int lineNumMargin;
+        int lineNumFontSizeDec;
+    };
+    Style style() const { return _style; }
+    void setStyle(const Style &s) { _style = s; }
 
 protected:
     void resizeEvent(QResizeEvent *e) override;
@@ -38,6 +57,7 @@ protected:
 private:
     QWidget *_lineNumArea;
     QMap<int, QString> _lineHints;
+    Style _style;
     void updateLineNumberAreaWidth(int blockCount);
     void updateLineNumberArea(const QRect &rect, int dy);
     void highlightCurrentLine();

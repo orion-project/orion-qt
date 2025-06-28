@@ -43,23 +43,6 @@ private:
     Ori::Widgets::CodeEditor *_editor;
 };
 
-struct EditorStyle
-{
-    QBrush currentLineColor = QColor("steelBlue").lighter(220);
-    QPen lineNumTextColor = QPen(Qt::gray);
-    QPen lineNumTextColorErr = QPen(Qt::white);
-    QPen lineNumBorderColor = QColor("silver");
-    QBrush lineNumBackColorErr = QColor(Qt::red).lighter(130);
-    int lineNumRightMargin = 4;
-    int lineNumLeftMargin = 6;
-};
-
-const EditorStyle& editorStyle()
-{
-    static EditorStyle style;
-    return style;
-}
-
 } // namespace
 
 namespace Ori {
@@ -70,6 +53,18 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
     setWordWrapMode(QTextOption::NoWrap);
 
     _lineNumArea = new LineNumberArea(this);
+
+    // default style
+    _style.currentLineColor = QColor("steelBlue").lighter(220);
+    _style.lineNumTextColor = Qt::gray;
+    _style.lineNumTextColorErr = Qt::white;
+    _style.lineNumBorderColor = QColor(0xfff0f0f0);
+    _style.lineNumBackColor = QColor(0xfffafafa);
+    _style.lineNumBackColorErr = QColor(Qt::red).lighter(130);
+    _style.lineNumRightPadding = 8;
+    _style.lineNumLeftPadding = 12;
+    _style.lineNumMargin = 4;
+    _style.lineNumFontSizeDec = 2;
 
     connect(this, &CodeEditor::blockCountChanged, this, &CodeEditor::updateLineNumberAreaWidth);
     connect(this, &CodeEditor::updateRequest, this, &CodeEditor::updateLineNumberArea);
@@ -99,8 +94,7 @@ int CodeEditor::lineNumberAreaWidth() const
         max /= 10;
         digits++;
     }
-    const auto& style = editorStyle();
-    return style.lineNumLeftMargin + style.lineNumRightMargin +
+    return _style.lineNumLeftPadding + _style.lineNumRightPadding + _style.lineNumMargin +
             fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
 }
 
@@ -124,7 +118,7 @@ void CodeEditor::updateLineNumberArea(const QRect &rect, int dy)
 void CodeEditor::highlightCurrentLine()
 {
     QTextEdit::ExtraSelection selection;
-    selection.format.setBackground(editorStyle().currentLineColor);
+    selection.format.setBackground(_style.currentLineColor);
     selection.format.setProperty(QTextFormat::FullWidthSelection, true);
     selection.cursor = textCursor();
     selection.cursor.clearSelection();
@@ -133,14 +127,24 @@ void CodeEditor::highlightCurrentLine()
 
 void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 {
-    const auto& style = editorStyle();
+    auto r = event->rect();
+    int lineNumW = r.width();
+    int borderPos = lineNumW - _style.lineNumMargin;
 
     QPainter painter(_lineNumArea);
-    painter.fillRect(event->rect(), Qt::white);
-    const auto& r = event->rect();
-    int lineNumW = _lineNumArea->width();
-    painter.setPen(style.lineNumBorderColor);
-    painter.drawLine(lineNumW-1, r.top(), lineNumW-1, r.bottom());
+    if (_style.lineNumMargin > 0)
+        painter.fillRect(r, Qt::white);
+    r.setWidth(r.width() - _style.lineNumMargin);
+    painter.fillRect(r, _style.lineNumBackColor);
+
+    painter.setPen(_style.lineNumBorderColor);
+    painter.drawLine(borderPos, r.top(), borderPos, r.bottom());
+
+    if (_style.lineNumFontSizeDec > 0) {
+        auto f = painter.font();
+        f.setPointSize(f.pointSize()-_style.lineNumFontSizeDec);
+        painter.setFont(f);
+    }
 
     QTextBlock block = firstVisibleBlock();
     int lineNum = block.blockNumber() + 1;
@@ -153,12 +157,12 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
         {
             if (_lineHints.contains(lineNum))
             {
-                painter.setPen(style.lineNumTextColorErr);
-                painter.fillRect(0, lineTop, lineNumW, lineH, style.lineNumBackColorErr);
+                painter.setPen(_style.lineNumTextColorErr);
+                painter.fillRect(0, lineTop, lineNumW - _style.lineNumMargin, lineH, _style.lineNumBackColorErr);
             }
             else
-                painter.setPen(style.lineNumTextColor);
-            painter.drawText(0, lineTop, lineNumW - style.lineNumRightMargin, lineH,
+                painter.setPen(_style.lineNumTextColor);
+            painter.drawText(0, lineTop, lineNumW - _style.lineNumRightPadding - _style.lineNumMargin, lineH,
                 Qt::AlignRight|Qt::AlignVCenter, QString::number(lineNum));
         }
         block = block.next();
@@ -211,6 +215,28 @@ void CodeEditor::setShowWhitespaces(bool on)
 bool CodeEditor::showWhitespaces() const
 {
     return document()->defaultTextOption().flags().testFlag(QTextOption::ShowTabsAndSpaces);
+}
+
+bool CodeEditor::loadCode(const QString &fileName)
+{
+    QFile f(fileName);
+    if (!f.open(QIODevice::ReadOnly|QIODevice::Text)) {
+        qWarning() << "Failed to open" << fileName << f.errorString();
+        return false;
+    }
+    setPlainText(QString::fromUtf8(f.readAll()));
+    return true;
+}
+
+bool CodeEditor::saveCode(const QString &fileName)
+{
+    QFile f(fileName);
+    if (!f.open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Truncate)){
+        qWarning() << "Failed to open" << fileName << f.errorString();
+        return false;
+    }
+    f.write(toPlainText().toUtf8());
+    return true;
 }
 
 } // namespace Widgets
