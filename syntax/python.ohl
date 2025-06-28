@@ -55,10 +55,6 @@ opts: multiline
 expr: """
 color: #a31515
 
-rule: F-string
-expr: (\{\})
-color: red
-
 rule: Spaces
 expr: \s+
 color: #dddddd
