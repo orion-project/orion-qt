@@ -28,6 +28,16 @@ terms: print,input
 terms: len,type,isinstance,range,enumerate
 color: teal
 
+rule: Numbers
+expr: \b[+-]?[0-9]+[lL]?\b
+expr: \b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b
+expr: \b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b
+color: #098658
+
+rule: Comment
+expr: #[^\n]*
+color: green
+
 rule: String
 # Single-quoted string, possibly containing escaped quote \'
 expr: '[^\\']*(\\.[^\\']*)*'
@@ -45,15 +55,9 @@ opts: multiline
 expr: """
 color: #a31515
 
-rule: Numbers
-expr: \b[+-]?[0-9]+[lL]?\b
-expr: \b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b
-expr: \b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b
-color: #098658
-
-rule: Comment
-expr: #[^\n]*
-color: green
+rule: F-string
+expr: (\{\})
+color: red
 
 rule: Spaces
 expr: \s+
@@ -94,15 +98,19 @@ def enumerate_files_variant_2(folder):
             count += 1
     return res
 
+print('Numbers in string 1 2.3')
+print("Numbers in string 1 2.3")
+
 for i in range(10):
 	print(str(float(pow(sum(i,i),i))))
 
 """
-"Main" function
+"Main" #1 function
+Numbers in multi-line string 1 2.3
 """
 if __name__ == '__main__':
     folder = '/bin'
     # use variant 2 for enumeration (+1)
     files = enumerate_files_variant_2(folder)
-    for file in files:
-        print(f'file: \'{file}\' ("{file}")\n')
+    for i, file in enumerate(files):
+        print(f'file: #{i} \'{file}\' ("{file}")\n')
