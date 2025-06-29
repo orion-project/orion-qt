@@ -4,6 +4,8 @@
 #include <QPainter>
 #include <QTextBlock>
 #include <QToolTip>
+#include <QKeyEvent>
+#include <QTextCursor>
 
 namespace {
 
@@ -53,6 +55,7 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
     setWordWrapMode(QTextOption::NoWrap);
 
     _lineNumArea = new LineNumberArea(this);
+    _commentSymbol = "#"; // default comment symbol for Python
 
     // default style
     _style.currentLineColor = QColor("steelBlue").lighter(220);
@@ -237,6 +240,225 @@ bool CodeEditor::saveCode(const QString &fileName)
     }
     f.write(toPlainText().toUtf8());
     return true;
+}
+
+void CodeEditor::keyPressEvent(QKeyEvent *e)
+{
+    // Handle Ctrl+/ for toggle comment
+    if (e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_Slash) {
+        toggleCommentSelection();
+        return;
+    }
+    
+    QPlainTextEdit::keyPressEvent(e);
+}
+
+void CodeEditor::setCommentSymbol(const QString& symbol)
+{
+    _commentSymbol = symbol;
+}
+
+QString CodeEditor::commentSymbol() const
+{
+    return _commentSymbol;
+}
+
+void CodeEditor::commentSelection()
+{
+    QTextCursor cursor = textCursor();
+    
+    // If no selection, work with current line
+    if (!cursor.hasSelection()) {
+        cursor.select(QTextCursor::LineUnderCursor);
+    }
+    
+    int startPos = cursor.selectionStart();
+    int endPos = cursor.selectionEnd();
+    
+    // Get start and end blocks
+    QTextCursor startCursor(document());
+    startCursor.setPosition(startPos);
+    QTextCursor endCursor(document());
+    endCursor.setPosition(endPos);
+    
+    int startBlock = startCursor.blockNumber();
+    int endBlock = endCursor.blockNumber();
+    
+    // If selection ends at the beginning of a line, don't include that line
+    if (endCursor.atBlockStart() && endPos > startPos) {
+        endBlock--;
+    }
+    
+    cursor.beginEditBlock();
+    
+    // Comment each line
+    for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+        QTextBlock block = document()->findBlockByNumber(blockNum);
+        if (!block.isValid()) continue;
+        
+        QString line = block.text();
+        if (line.trimmed().isEmpty()) continue; // Skip empty lines
+        
+        QString indentation = getLineIndentation(line);
+        QString commentedLine = indentation + _commentSymbol + " " + line.mid(indentation.length());
+        
+        QTextCursor lineCursor(block);
+        lineCursor.select(QTextCursor::LineUnderCursor);
+        lineCursor.insertText(commentedLine);
+    }
+    
+    cursor.endEditBlock();
+    
+    // Restore selection
+    selectLines(startBlock, endBlock);
+}
+
+void CodeEditor::uncommentSelection()
+{
+    QTextCursor cursor = textCursor();
+    
+    // If no selection, work with current line
+    if (!cursor.hasSelection()) {
+        cursor.select(QTextCursor::LineUnderCursor);
+    }
+    
+    int startPos = cursor.selectionStart();
+    int endPos = cursor.selectionEnd();
+    
+    // Get start and end blocks
+    QTextCursor startCursor(document());
+    startCursor.setPosition(startPos);
+    QTextCursor endCursor(document());
+    endCursor.setPosition(endPos);
+    
+    int startBlock = startCursor.blockNumber();
+    int endBlock = endCursor.blockNumber();
+    
+    // If selection ends at the beginning of a line, don't include that line
+    if (endCursor.atBlockStart() && endPos > startPos) {
+        endBlock--;
+    }
+    
+    cursor.beginEditBlock();
+    
+    // Uncomment each line
+    for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+        QTextBlock block = document()->findBlockByNumber(blockNum);
+        if (!block.isValid()) continue;
+        
+        QString line = block.text();
+        if (!isLineCommented(line)) continue; // Skip non-commented lines
+        
+        QString indentation = getLineIndentation(line);
+        QString trimmedLine = line.mid(indentation.length());
+        
+        // Remove comment symbol and optional following space
+        if (trimmedLine.startsWith(_commentSymbol)) {
+            trimmedLine = trimmedLine.mid(_commentSymbol.length());
+            if (trimmedLine.startsWith(" ")) {
+                trimmedLine = trimmedLine.mid(1);
+            }
+        }
+        
+        QString uncommentedLine = indentation + trimmedLine;
+        
+        QTextCursor lineCursor(block);
+        lineCursor.select(QTextCursor::LineUnderCursor);
+        lineCursor.insertText(uncommentedLine);
+    }
+    
+    cursor.endEditBlock();
+    
+    // Restore selection
+    selectLines(startBlock, endBlock);
+}
+
+void CodeEditor::toggleCommentSelection()
+{
+    QTextCursor cursor = textCursor();
+    
+    // If no selection, work with current line
+    if (!cursor.hasSelection()) {
+        cursor.select(QTextCursor::LineUnderCursor);
+    }
+    
+    int startPos = cursor.selectionStart();
+    int endPos = cursor.selectionEnd();
+    
+    // Get start and end blocks
+    QTextCursor startCursor(document());
+    startCursor.setPosition(startPos);
+    QTextCursor endCursor(document());
+    endCursor.setPosition(endPos);
+    
+    int startBlock = startCursor.blockNumber();
+    int endBlock = endCursor.blockNumber();
+    
+    // If selection ends at the beginning of a line, don't include that line
+    if (endCursor.atBlockStart() && endPos > startPos) {
+        endBlock--;
+    }
+    
+    // Check if majority of lines are commented
+    int commentedLines = 0;
+    int totalLines = 0;
+    
+    for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+        QTextBlock block = document()->findBlockByNumber(blockNum);
+        if (!block.isValid()) continue;
+        
+        QString line = block.text();
+        if (line.trimmed().isEmpty()) continue; // Skip empty lines
+        
+        totalLines++;
+        if (isLineCommented(line)) {
+            commentedLines++;
+        }
+    }
+    
+    // If majority are commented, uncomment; otherwise comment
+    if (commentedLines > totalLines / 2) {
+        uncommentSelection();
+    } else {
+        commentSelection();
+    }
+}
+
+bool CodeEditor::isLineCommented(const QString& line) const
+{
+    QString trimmedLine = line.trimmed();
+    return trimmedLine.startsWith(_commentSymbol);
+}
+
+QString CodeEditor::getLineIndentation(const QString& line) const
+{
+    int i = 0;
+    while (i < line.length() && (line[i] == ' ' || line[i] == '\t')) {
+        i++;
+    }
+    return line.left(i);
+}
+
+void CodeEditor::selectLines(int startLine, int endLine)
+{
+    QTextBlock startBlock = document()->findBlockByNumber(startLine);
+    QTextBlock endBlock = document()->findBlockByNumber(endLine);
+    
+    if (!startBlock.isValid() || !endBlock.isValid()) return;
+    
+    QTextCursor cursor(startBlock);
+    cursor.movePosition(QTextCursor::StartOfBlock);
+    
+    // Set the anchor at the start of the first line
+    int startPos = cursor.position();
+    
+    // Move to the end of the last line
+    cursor.setPosition(endBlock.position() + endBlock.length() - 1);
+    
+    // Create selection from start to end
+    cursor.setPosition(startPos, QTextCursor::KeepAnchor);
+    
+    setTextCursor(cursor);
 }
 
 } // namespace Widgets

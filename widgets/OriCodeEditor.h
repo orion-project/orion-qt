@@ -34,6 +34,13 @@ public:
     
     bool loadCode(const QString &fileName);
     bool saveCode(const QString &fileName);
+    
+    // Comment/uncomment functionality
+    void setCommentSymbol(const QString& symbol);
+    QString commentSymbol() const;
+    void commentSelection();
+    void uncommentSelection();
+    void toggleCommentSelection();
 
     struct Style
     {
@@ -53,15 +60,23 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent *e) override;
+    void keyPressEvent(QKeyEvent *e) override;
 
 private:
     QWidget *_lineNumArea;
     QMap<int, QString> _lineHints;
     Style _style;
+    QString _commentSymbol;
+    
     void updateLineNumberAreaWidth(int blockCount);
     void updateLineNumberArea(const QRect &rect, int dy);
     void highlightCurrentLine();
     int findLineNumber(int y) const;
+    
+    // Comment/uncomment helper methods
+    bool isLineCommented(const QString& line) const;
+    QString getLineIndentation(const QString& line) const;
+    void selectLines(int startLine, int endLine);
 };
 
 } // namespace Widgets
