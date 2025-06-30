@@ -38,13 +38,16 @@ public:
         auto aSetCommentSymbol = A_("Set Comment Symbol to //", this, [this]{
             editor->setCommentSymbol("//");
         });
-        auto aResetCommentSymbol = A_("Reset Comment Symbol to #", this, [this]{
+        auto aResetCommentSymbol = A_("Set Comment Symbol to #", this, [this]{
             editor->setCommentSymbol("#");
         });
         
-        auto aToggleTabReplacement = A_("Toggle Tab Replacement", this, [this]{
+        auto aReplaceTabsWithSpaces = A_("Replace Tabs With Spaces", this, [this]{
             editor->setReplaceTabsWithSpaces(!editor->replaceTabsWithSpaces());
+            qobject_cast<QAction*>(sender())->setChecked(editor->replaceTabsWithSpaces());
         });
+        aReplaceTabsWithSpaces->setCheckable(true);
+        aReplaceTabsWithSpaces->setChecked(editor->replaceTabsWithSpaces());
         auto aSetTabSpaces2 = A_("Set Tab Spaces to 2", this, [this]{
             editor->setTabSpaceCount(2);
         });
@@ -62,9 +65,12 @@ public:
             editor->unindentSelection();
         });
         
-        auto aToggleAutoIndent = A_("Toggle Auto Indent", this, [this]{
+        auto aToggleAutoIndent = A_("Auto Indent", this, [this]{
             editor->setAutoIndentEnabled(!editor->autoIndentEnabled());
+            qobject_cast<QAction*>(sender())->setChecked(editor->autoIndentEnabled());
         });
+        aToggleAutoIndent->setCheckable(true);
+        aToggleAutoIndent->setChecked(editor->autoIndentEnabled());
         auto aSetBlockSymbolColon = A_("Set Block Symbol to :", this, [this]{
             editor->setBlockStartSymbol(":");
         });
@@ -72,8 +78,17 @@ public:
             editor->setBlockStartSymbol("{");
         });
         
-        auto aNormalizeDocument = A_("Normalize Document Indentation", this, [this]{
-            editor->normalizeDocumentIndentation();
+        auto aNormalizeAll = A_("Normalize Document (All)", this, [this]{
+            editor->normalizeDocument();
+        });
+        auto aNormalizeIndentOnly = A_("Normalize Document (Indentation)", this, [this]{
+            editor->normalizeDocument(Ori::Widgets::CodeEditor::NormalizeIndentation);
+        });
+        auto aNormalizeTrimOnly = A_("Normalize Document (Trailing Spaces)", this, [this]{
+            editor->normalizeDocument(Ori::Widgets::CodeEditor::NormalizeTrimTrailingSpaces);
+        });
+        auto aNormalizeNewlineOnly = A_("Normalize Document (Newline at End)", this, [this]{
+            editor->normalizeDocument(Ori::Widgets::CodeEditor::NormalizeEnsureNewlineAtEnd);
         });
         
         Ori::Gui::populate(menuBar()->addMenu("View"), {
@@ -83,10 +98,10 @@ public:
         Ori::Gui::populate(menuBar()->addMenu("Edit"), {
             aCommentSelection, aUncommentSelection, aToggleComment, nullptr,
             aSetCommentSymbol, aResetCommentSymbol, nullptr,
-            aToggleTabReplacement, aSetTabSpaces2, aSetTabSpaces4, aSetTabSpaces8, nullptr,
+            aReplaceTabsWithSpaces, aSetTabSpaces2, aSetTabSpaces4, aSetTabSpaces8, nullptr,
             aIndentSelection, aUnindentSelection, nullptr,
             aToggleAutoIndent, aSetBlockSymbolColon, aSetBlockSymbolBrace, nullptr,
-            aNormalizeDocument
+            aNormalizeAll, aNormalizeIndentOnly, aNormalizeTrimOnly, aNormalizeNewlineOnly
         });
         
         setCentralWidget(editor);

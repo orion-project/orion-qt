@@ -237,8 +237,8 @@ bool CodeEditor::loadCode(const QString &fileName)
 
 bool CodeEditor::saveCode(const QString &fileName)
 {
-    // Normalize indentation before saving
-    normalizeDocumentIndentation();
+    // Normalize document before saving (both indentation and trailing spaces)
+    normalizeDocument();
     
     QFile f(fileName);
     if (!f.open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Truncate)){
@@ -647,7 +647,7 @@ QString CodeEditor::normalizeIndentation(const QString& line) const
         // Convert spaces to tabs (groups of _tabSpaceCount spaces become one tab)
         QString normalizedIndent;
         int spaceCount = 0;
-        for (QChar c : indentation) {
+        for (QChar c : std::as_const(indentation)) {
             if (c == ' ') {
                 spaceCount++;
                 if (spaceCount == _tabSpaceCount) {
@@ -689,12 +689,12 @@ QString CodeEditor::removeOneIndentLevel(const QString& line) const
                 if (indentation[i] == ' ') {
                     removed++;
                 } else {
-                    newIndentation += indentation.mid(i);
+                    newIndentation += indentation.midRef(i);
                     break;
                 }
             }
             if (removed == spacesToRemove && removed < indentation.length()) {
-                newIndentation += indentation.mid(removed);
+                newIndentation += indentation.midRef(removed);
             }
         }
     } else {
@@ -708,12 +708,12 @@ QString CodeEditor::removeOneIndentLevel(const QString& line) const
                 if (indentation[i] == ' ') {
                     removed++;
                 } else {
-                    newIndentation += indentation.mid(i);
+                    newIndentation += indentation.midRef(i);
                     break;
                 }
             }
             if (removed == spacesToRemove && removed < indentation.length()) {
-                newIndentation += indentation.mid(removed);
+                newIndentation += indentation.midRef(removed);
             }
         }
     }
@@ -814,7 +814,7 @@ bool CodeEditor::isCursorInIndentation() const
     return cursorPosInLine <= indentation.length();
 }
 
-void CodeEditor::normalizeDocumentIndentation()
+void CodeEditor::normalizeDocument(NormalizationOptions options)
 {
     QTextCursor cursor = textCursor();
     cursor.beginEditBlock();
@@ -826,20 +826,43 @@ void CodeEditor::normalizeDocumentIndentation()
     QTextBlock block = document()->firstBlock();
     while (block.isValid()) {
         QString line = block.text();
+        QString normalizedLine = line;
         
-        // Skip empty lines
-        if (!line.trimmed().isEmpty()) {
-            QString normalizedLine = normalizeIndentation(line);
-            
-            // Only update if the line actually changed
-            if (normalizedLine != line) {
-                QTextCursor blockCursor(block);
-                blockCursor.select(QTextCursor::LineUnderCursor);
-                blockCursor.insertText(normalizedLine);
+        // Apply normalization steps based on options
+        if (options & NormalizeTrimTrailingSpaces) {
+            // Remove trailing spaces and tabs
+            while (!normalizedLine.isEmpty() && 
+                   (normalizedLine.right(1) == " " || normalizedLine.right(1) == "\t")) {
+                normalizedLine.chop(1);
             }
         }
         
+        if (options & NormalizeIndentation) {
+            // Skip empty lines for indentation normalization
+            if (!normalizedLine.trimmed().isEmpty()) {
+                normalizedLine = normalizeIndentation(normalizedLine);
+            }
+        }
+        
+        // Only update if the line actually changed
+        if (normalizedLine != line) {
+            QTextCursor blockCursor(block);
+            blockCursor.select(QTextCursor::LineUnderCursor);
+            blockCursor.insertText(normalizedLine);
+        }
+        
         block = block.next();
+    }
+    
+    // Ensure newline at end of document if requested
+    if (options & NormalizeEnsureNewlineAtEnd) {
+        QTextBlock lastBlock = document()->lastBlock();
+        if (lastBlock.isValid() && !lastBlock.text().isEmpty()) {
+            // Document doesn't end with an empty line, add newline
+            QTextCursor endCursor(document());
+            endCursor.movePosition(QTextCursor::End);
+            endCursor.insertText("\n");
+        }
     }
     
     cursor.endEditBlock();

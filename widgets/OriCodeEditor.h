@@ -10,6 +10,11 @@ A simple wrapper around QPlainTextEdit providing several additional features con
 - line numbering
 - current line highlighting
 - line hints for error highlighting
+- tab to space replacement
+- selection (un)indentation
+- automatic block indentation
+- smart home key
+- document normalization
 
 */
 
@@ -58,8 +63,17 @@ public:
     void setAutoIndentEnabled(bool enabled);
     bool autoIndentEnabled() const;
     
-    // Document-wide indentation normalization
-    void normalizeDocumentIndentation();
+    // Document normalization options
+    enum NormalizationOption {
+        NormalizeIndentation = 0x01,
+        NormalizeTrimTrailingSpaces = 0x02,
+        NormalizeEnsureNewlineAtEnd = 0x04,
+        NormalizeAll = NormalizeIndentation | NormalizeTrimTrailingSpaces | NormalizeEnsureNewlineAtEnd
+    };
+    Q_DECLARE_FLAGS(NormalizationOptions, NormalizationOption)
+    
+    // Document-wide normalization
+    void normalizeDocument(NormalizationOptions options = NormalizeAll);
 
     struct Style
     {
@@ -111,6 +125,8 @@ private:
     bool isCursorInIndentation() const;
     bool handleSmartHome();
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(CodeEditor::NormalizationOptions)
 
 } // namespace Widgets
 } // namespace Ori
