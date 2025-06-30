@@ -295,9 +295,6 @@ bool CodeEditor::loadCode(const QString &fileName)
 
 bool CodeEditor::saveCode(const QString &fileName)
 {
-    // Normalize document before saving (both indentation and trailing spaces)
-    normalizeDocument();
-    
     QFile f(fileName);
     if (!f.open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Truncate)){
         qWarning() << "Failed to open" << fileName << f.errorString();
@@ -365,16 +362,6 @@ void CodeEditor::keyPressEvent(QKeyEvent *e)
     }
     
     QPlainTextEdit::keyPressEvent(e);
-}
-
-void CodeEditor::setCommentSymbol(const QString& symbol)
-{
-    _commentSymbol = symbol;
-}
-
-QString CodeEditor::commentSymbol() const
-{
-    return _commentSymbol;
 }
 
 void CodeEditor::commentSelection()
@@ -575,26 +562,6 @@ void CodeEditor::selectLines(int startLine, int endLine)
     setTextCursor(cursor);
 }
 
-void CodeEditor::setReplaceTabsWithSpaces(bool enabled)
-{
-    _replaceTabsWithSpaces = enabled;
-}
-
-bool CodeEditor::replaceTabsWithSpaces() const
-{
-    return _replaceTabsWithSpaces;
-}
-
-void CodeEditor::setTabSpaceCount(int count)
-{
-    _tabSpaceCount = count;
-}
-
-int CodeEditor::tabSpaceCount() const
-{
-    return _tabSpaceCount;
-}
-
 void CodeEditor::indentSelection()
 {
     QTextCursor cursor = textCursor();
@@ -788,26 +755,6 @@ QString CodeEditor::removeOneIndentLevel(const QString& line) const
     return newIndentation + content;
 }
 
-void CodeEditor::setBlockStartSymbol(const QString& symbol)
-{
-    _blockStartSymbol = symbol;
-}
-
-QString CodeEditor::blockStartSymbol() const
-{
-    return _blockStartSymbol;
-}
-
-void CodeEditor::setAutoIndentEnabled(bool enabled)
-{
-    _autoIndentEnabled = enabled;
-}
-
-bool CodeEditor::autoIndentEnabled() const
-{
-    return _autoIndentEnabled;
-}
-
 void CodeEditor::handleAutoIndentOnEnter()
 {
     QTextCursor cursor = textCursor();
@@ -967,14 +914,20 @@ bool CodeEditor::handleSmartHome()
     return true;
 }
 
-void CodeEditor::fold()
-{
-    _textFolder->fold(textCursor());
-}
-
 void CodeEditor::unfold()
 {
     _textFolder->unfold(textCursor());
+}
+
+void CodeEditor::unfoldAll()
+{
+    if (hasFoldedBlocks())
+        setPlainText(getUnfoldedText());
+}
+
+void CodeEditor::foldSelection()
+{
+    _textFolder->fold(textCursor());
 }
 
 void CodeEditor::foldBlock()
@@ -1158,10 +1111,17 @@ int CodeEditor::getLineIndentationLevel(const QString& line) const
 {
     int level = 0;
     for (int i = 0; i < line.length(); i++) {
-        if (line[i] == ' ') {
-            level++;
-        } else if (line[i] == '\t') {
-            level += _tabSpaceCount; // Convert tab to equivalent spaces
+        if (line[i] == '\t') {
+            level++; // Each tab counts as one indentation level
+        } else if (line[i] == ' ') {
+            // Count spaces, but only increment level when we have enough spaces for one indent
+            int spaceCount = 0;
+            while (i < line.length() && line[i] == ' ') {
+                spaceCount++;
+                i++;
+            }
+            i--; // Adjust because the for loop will increment i
+            level += spaceCount / _tabSpaceCount; // Convert spaces to indentation levels
         } else {
             break; // Found non-whitespace character
         }

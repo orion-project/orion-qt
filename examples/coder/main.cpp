@@ -39,9 +39,10 @@ public:
                 editor->setShowWhitespaces(!editor->showWhitespaces());
             }),
             ________
-            A_("Fold Selection", this, [this]{ editor->fold(); }),
+            A_("Fold Selection", this, [this]{ editor->foldSelection(); }),
             A_("Fold Block", this, [this]{ editor->foldBlock(); }),
             A_("Unfold", this, [this]{ editor->unfold(); }),
+            A_("Unfold All", this, [this]{ editor->unfoldAll(); }),
         });
         
         Ori::Gui::populate(menuBar()->addMenu("Edit"), {

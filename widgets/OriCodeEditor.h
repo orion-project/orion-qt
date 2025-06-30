@@ -59,27 +59,27 @@ public:
     bool saveCode(const QString &fileName);
     
     // Comment/uncomment functionality
-    void setCommentSymbol(const QString& symbol);
-    QString commentSymbol() const;
+    void setCommentSymbol(const QString& s) { _commentSymbol = s; }
+    QString commentSymbol() const { return _commentSymbol; }
     void commentSelection();
     void uncommentSelection();
     void toggleCommentSelection();
     
     // Tab replacement functionality
-    void setReplaceTabsWithSpaces(bool enabled);
-    bool replaceTabsWithSpaces() const;
-    void setTabSpaceCount(int count);
-    int tabSpaceCount() const;
+    void setReplaceTabsWithSpaces(bool on) { _replaceTabsWithSpaces = on; }
+    bool replaceTabsWithSpaces() const { return _replaceTabsWithSpaces; }
+    void setTabSpaceCount(int count) { _tabSpaceCount = count; }
+    int tabSpaceCount() const { return _tabSpaceCount; }
     
     // Indentation functionality
     void indentSelection();
     void unindentSelection();
     
     // Auto-indentation functionality
-    void setBlockStartSymbol(const QString& symbol);
-    QString blockStartSymbol() const;
-    void setAutoIndentEnabled(bool enabled);
-    bool autoIndentEnabled() const;
+    void setBlockStartSymbol(const QString& s) { _blockStartSymbol = s; }
+    QString blockStartSymbol() const { return _blockStartSymbol; }
+    void setAutoIndentEnabled(bool on) { _autoIndentEnabled = on; }
+    bool autoIndentEnabled() const { return _autoIndentEnabled; }
     
     // Document normalization options
     enum NormalizationOption {
@@ -109,9 +109,10 @@ public:
     Style style() const { return _style; }
     void setStyle(const Style &s) { _style = s; }
 
-    void fold();
-    void unfold();
+    void foldSelection();
     void foldBlock();
+    void unfold();
+    void unfoldAll();
     
 protected:
     void resizeEvent(QResizeEvent *e) override;
