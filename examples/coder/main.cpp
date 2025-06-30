@@ -62,6 +62,16 @@ public:
             editor->unindentSelection();
         });
         
+        auto aToggleAutoIndent = A_("Toggle Auto Indent", this, [this]{
+            editor->setAutoIndentEnabled(!editor->autoIndentEnabled());
+        });
+        auto aSetBlockSymbolColon = A_("Set Block Symbol to :", this, [this]{
+            editor->setBlockStartSymbol(":");
+        });
+        auto aSetBlockSymbolBrace = A_("Set Block Symbol to {", this, [this]{
+            editor->setBlockStartSymbol("{");
+        });
+        
         Ori::Gui::populate(menuBar()->addMenu("View"), {
             aShowLineHints, aClearLineHints
         });
@@ -70,7 +80,8 @@ public:
             aCommentSelection, aUncommentSelection, aToggleComment, nullptr,
             aSetCommentSymbol, aResetCommentSymbol, nullptr,
             aToggleTabReplacement, aSetTabSpaces2, aSetTabSpaces4, aSetTabSpaces8, nullptr,
-            aIndentSelection, aUnindentSelection
+            aIndentSelection, aUnindentSelection, nullptr,
+            aToggleAutoIndent, aSetBlockSymbolColon, aSetBlockSymbolBrace
         });
         
         setCentralWidget(editor);

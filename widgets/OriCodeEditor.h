@@ -51,6 +51,12 @@ public:
     // Indentation functionality
     void indentSelection();
     void unindentSelection();
+    
+    // Auto-indentation functionality
+    void setBlockStartSymbol(const QString& symbol);
+    QString blockStartSymbol() const;
+    void setAutoIndentEnabled(bool enabled);
+    bool autoIndentEnabled() const;
 
     struct Style
     {
@@ -79,6 +85,8 @@ private:
     QString _commentSymbol;
     bool _replaceTabsWithSpaces;
     int _tabSpaceCount;
+    QString _blockStartSymbol;
+    bool _autoIndentEnabled;
     
     void updateLineNumberAreaWidth(int blockCount);
     void updateLineNumberArea(const QRect &rect, int dy);
@@ -93,6 +101,11 @@ private:
     // Indentation helper methods
     QString normalizeIndentation(const QString& line) const;
     QString removeOneIndentLevel(const QString& line) const;
+    
+    // Auto-indentation helper methods
+    void handleAutoIndentOnEnter();
+    bool handleAutoUnindentOnBackspace();
+    bool isCursorInIndentation() const;
 };
 
 } // namespace Widgets

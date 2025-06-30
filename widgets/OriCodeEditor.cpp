@@ -58,6 +58,8 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
     _commentSymbol = "#"; // default comment symbol for Python
     _replaceTabsWithSpaces = true; // enabled by default
     _tabSpaceCount = 4; // 4 spaces by default
+    _blockStartSymbol = ":"; // default block start symbol for Python
+    _autoIndentEnabled = true; // enabled by default
 
     // default style
     _style.currentLineColor = QColor("steelBlue").lighter(220);
@@ -250,6 +252,21 @@ void CodeEditor::keyPressEvent(QKeyEvent *e)
     if (e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_Slash) {
         toggleCommentSelection();
         return;
+    }
+    
+    // Handle auto-indentation on Enter
+    if (e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) {
+        if (_autoIndentEnabled) {
+            handleAutoIndentOnEnter();
+            return;
+        }
+    }
+    
+    // Handle auto-unindent on Backspace
+    if (e->key() == Qt::Key_Backspace) {
+        if (_autoIndentEnabled && handleAutoUnindentOnBackspace()) {
+            return;
+        }
     }
     
     // Handle Tab and Shift+Tab for indentation when text is selected
@@ -692,6 +709,97 @@ QString CodeEditor::removeOneIndentLevel(const QString& line) const
     }
     
     return newIndentation + content;
+}
+
+void CodeEditor::setBlockStartSymbol(const QString& symbol)
+{
+    _blockStartSymbol = symbol;
+}
+
+QString CodeEditor::blockStartSymbol() const
+{
+    return _blockStartSymbol;
+}
+
+void CodeEditor::setAutoIndentEnabled(bool enabled)
+{
+    _autoIndentEnabled = enabled;
+}
+
+bool CodeEditor::autoIndentEnabled() const
+{
+    return _autoIndentEnabled;
+}
+
+void CodeEditor::handleAutoIndentOnEnter()
+{
+    QTextCursor cursor = textCursor();
+    QTextBlock currentBlock = cursor.block();
+    QString currentLine = currentBlock.text();
+    
+    // Get indentation of current line
+    QString indentation = getLineIndentation(currentLine);
+    
+    // Check if current line ends with block start symbol
+    QString trimmedLine = currentLine.trimmed();
+    bool shouldIndentMore = trimmedLine.endsWith(_blockStartSymbol);
+    
+    // Insert new line
+    cursor.insertText("\n");
+    
+    // Add base indentation
+    cursor.insertText(indentation);
+    
+    // Add extra indentation if needed
+    if (shouldIndentMore) {
+        QString extraIndent = _replaceTabsWithSpaces ? QString(_tabSpaceCount, ' ') : "\t";
+        cursor.insertText(extraIndent);
+    }
+}
+
+bool CodeEditor::handleAutoUnindentOnBackspace()
+{
+    QTextCursor cursor = textCursor();
+    
+    // Only handle if cursor is in indentation area
+    if (!isCursorInIndentation()) {
+        return false; // Let default backspace handle it
+    }
+    
+    QTextBlock currentBlock = cursor.block();
+    QString currentLine = currentBlock.text();
+    QString indentation = getLineIndentation(currentLine);
+    
+    if (indentation.isEmpty()) {
+        return false; // No indentation to remove
+    }
+    
+    // Remove one indentation level
+    QString newIndentation = removeOneIndentLevel(currentLine);
+    newIndentation = normalizeIndentation(newIndentation);
+    
+    // Replace the entire line
+    QTextCursor lineCursor(currentBlock);
+    lineCursor.select(QTextCursor::LineUnderCursor);
+    lineCursor.insertText(newIndentation);
+    
+    // Position cursor at end of new indentation
+    cursor.setPosition(currentBlock.position() + getLineIndentation(newIndentation).length());
+    setTextCursor(cursor);
+    
+    return true; // We handled the backspace
+}
+
+bool CodeEditor::isCursorInIndentation() const
+{
+    QTextCursor cursor = textCursor();
+    QTextBlock currentBlock = cursor.block();
+    QString currentLine = currentBlock.text();
+    
+    int cursorPosInLine = cursor.positionInBlock();
+    QString indentation = getLineIndentation(currentLine);
+    
+    return cursorPosInLine <= indentation.length();
 }
 
 } // namespace Widgets
