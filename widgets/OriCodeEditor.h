@@ -57,6 +57,9 @@ public:
     QString blockStartSymbol() const;
     void setAutoIndentEnabled(bool enabled);
     bool autoIndentEnabled() const;
+    
+    // Document-wide indentation normalization
+    void normalizeDocumentIndentation();
 
     struct Style
     {

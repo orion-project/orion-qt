@@ -72,6 +72,10 @@ public:
             editor->setBlockStartSymbol("{");
         });
         
+        auto aNormalizeDocument = A_("Normalize Document Indentation", this, [this]{
+            editor->normalizeDocumentIndentation();
+        });
+        
         Ori::Gui::populate(menuBar()->addMenu("View"), {
             aShowLineHints, aClearLineHints
         });
@@ -81,7 +85,8 @@ public:
             aSetCommentSymbol, aResetCommentSymbol, nullptr,
             aToggleTabReplacement, aSetTabSpaces2, aSetTabSpaces4, aSetTabSpaces8, nullptr,
             aIndentSelection, aUnindentSelection, nullptr,
-            aToggleAutoIndent, aSetBlockSymbolColon, aSetBlockSymbolBrace
+            aToggleAutoIndent, aSetBlockSymbolColon, aSetBlockSymbolBrace, nullptr,
+            aNormalizeDocument
         });
         
         setCentralWidget(editor);

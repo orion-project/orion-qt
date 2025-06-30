@@ -237,6 +237,9 @@ bool CodeEditor::loadCode(const QString &fileName)
 
 bool CodeEditor::saveCode(const QString &fileName)
 {
+    // Normalize indentation before saving
+    normalizeDocumentIndentation();
+    
     QFile f(fileName);
     if (!f.open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Truncate)){
         qWarning() << "Failed to open" << fileName << f.errorString();
@@ -800,6 +803,41 @@ bool CodeEditor::isCursorInIndentation() const
     QString indentation = getLineIndentation(currentLine);
     
     return cursorPosInLine <= indentation.length();
+}
+
+void CodeEditor::normalizeDocumentIndentation()
+{
+    QTextCursor cursor = textCursor();
+    cursor.beginEditBlock();
+    
+    // Save current cursor position
+    int originalPosition = cursor.position();
+    
+    // Process each block in the document
+    QTextBlock block = document()->firstBlock();
+    while (block.isValid()) {
+        QString line = block.text();
+        
+        // Skip empty lines
+        if (!line.trimmed().isEmpty()) {
+            QString normalizedLine = normalizeIndentation(line);
+            
+            // Only update if the line actually changed
+            if (normalizedLine != line) {
+                QTextCursor blockCursor(block);
+                blockCursor.select(QTextCursor::LineUnderCursor);
+                blockCursor.insertText(normalizedLine);
+            }
+        }
+        
+        block = block.next();
+    }
+    
+    cursor.endEditBlock();
+    
+    // Restore cursor position (adjust if text length changed)
+    cursor.setPosition(qMin(originalPosition, document()->characterCount() - 1));
+    setTextCursor(cursor);
 }
 
 } // namespace Widgets
