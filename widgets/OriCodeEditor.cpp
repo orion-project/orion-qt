@@ -56,6 +56,8 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
 
     _lineNumArea = new LineNumberArea(this);
     _commentSymbol = "#"; // default comment symbol for Python
+    _replaceTabsWithSpaces = true; // enabled by default
+    _tabSpaceCount = 4; // 4 spaces by default
 
     // default style
     _style.currentLineColor = QColor("steelBlue").lighter(220);
@@ -247,6 +249,13 @@ void CodeEditor::keyPressEvent(QKeyEvent *e)
     // Handle Ctrl+/ for toggle comment
     if (e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_Slash) {
         toggleCommentSelection();
+        return;
+    }
+    
+    // Handle Tab replacement with spaces
+    if (e->key() == Qt::Key_Tab && _replaceTabsWithSpaces) {
+        QString spaces(static_cast<int>(_tabSpaceCount), ' ');
+        insertPlainText(spaces);
         return;
     }
     
@@ -459,6 +468,26 @@ void CodeEditor::selectLines(int startLine, int endLine)
     cursor.setPosition(startPos, QTextCursor::KeepAnchor);
     
     setTextCursor(cursor);
+}
+
+void CodeEditor::setReplaceTabsWithSpaces(bool enabled)
+{
+    _replaceTabsWithSpaces = enabled;
+}
+
+bool CodeEditor::replaceTabsWithSpaces() const
+{
+    return _replaceTabsWithSpaces;
+}
+
+void CodeEditor::setTabSpaceCount(int count)
+{
+    _tabSpaceCount = count;
+}
+
+int CodeEditor::tabSpaceCount() const
+{
+    return _tabSpaceCount;
 }
 
 } // namespace Widgets

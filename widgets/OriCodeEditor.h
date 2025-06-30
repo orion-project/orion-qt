@@ -41,6 +41,12 @@ public:
     void commentSelection();
     void uncommentSelection();
     void toggleCommentSelection();
+    
+    // Tab replacement functionality
+    void setReplaceTabsWithSpaces(bool enabled);
+    bool replaceTabsWithSpaces() const;
+    void setTabSpaceCount(int count);
+    int tabSpaceCount() const;
 
     struct Style
     {
@@ -67,6 +73,8 @@ private:
     QMap<int, QString> _lineHints;
     Style _style;
     QString _commentSymbol;
+    bool _replaceTabsWithSpaces;
+    int _tabSpaceCount;
     
     void updateLineNumberAreaWidth(int blockCount);
     void updateLineNumberArea(const QRect &rect, int dy);

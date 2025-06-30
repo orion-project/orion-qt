@@ -42,13 +42,27 @@ public:
             editor->setCommentSymbol("#");
         });
         
+        auto aToggleTabReplacement = A_("Toggle Tab Replacement", this, [this]{
+            editor->setReplaceTabsWithSpaces(!editor->replaceTabsWithSpaces());
+        });
+        auto aSetTabSpaces2 = A_("Set Tab Spaces to 2", this, [this]{
+            editor->setTabSpaceCount(2);
+        });
+        auto aSetTabSpaces4 = A_("Set Tab Spaces to 4", this, [this]{
+            editor->setTabSpaceCount(4);
+        });
+        auto aSetTabSpaces8 = A_("Set Tab Spaces to 8", this, [this]{
+            editor->setTabSpaceCount(8);
+        });
+        
         Ori::Gui::populate(menuBar()->addMenu("View"), {
             aShowLineHints, aClearLineHints
         });
         
         Ori::Gui::populate(menuBar()->addMenu("Edit"), {
             aCommentSelection, aUncommentSelection, aToggleComment, nullptr,
-            aSetCommentSymbol, aResetCommentSymbol
+            aSetCommentSymbol, aResetCommentSymbol, nullptr,
+            aToggleTabReplacement, aSetTabSpaces2, aSetTabSpaces4, aSetTabSpaces8
         });
         
         setCentralWidget(editor);
