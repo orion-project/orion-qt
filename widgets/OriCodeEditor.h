@@ -109,6 +109,7 @@ private:
     void handleAutoIndentOnEnter();
     bool handleAutoUnindentOnBackspace();
     bool isCursorInIndentation() const;
+    bool handleSmartHome();
 };
 
 } // namespace Widgets

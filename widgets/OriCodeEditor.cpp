@@ -272,6 +272,13 @@ void CodeEditor::keyPressEvent(QKeyEvent *e)
         }
     }
     
+    // Handle smart Home key
+    if (e->key() == Qt::Key_Home && e->modifiers() == Qt::NoModifier) {
+        if (handleSmartHome()) {
+            return;
+        }
+    }
+    
     // Handle Tab and Shift+Tab for indentation when text is selected
     if (e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
         QTextCursor cursor = textCursor();
@@ -743,9 +750,11 @@ void CodeEditor::handleAutoIndentOnEnter()
     // Get indentation of current line
     QString indentation = getLineIndentation(currentLine);
     
-    // Check if current line ends with block start symbol
-    QString trimmedLine = currentLine.trimmed();
-    bool shouldIndentMore = trimmedLine.endsWith(_blockStartSymbol);
+    // Check if text before cursor ends with block start symbol
+    int cursorPosInLine = cursor.positionInBlock();
+    QString textBeforeCursor = currentLine.left(cursorPosInLine);
+    QString trimmedTextBeforeCursor = textBeforeCursor.trimmed();
+    bool shouldIndentMore = trimmedTextBeforeCursor.endsWith(_blockStartSymbol);
     
     // Insert new line
     cursor.insertText("\n");
@@ -838,6 +847,34 @@ void CodeEditor::normalizeDocumentIndentation()
     // Restore cursor position (adjust if text length changed)
     cursor.setPosition(qMin(originalPosition, document()->characterCount() - 1));
     setTextCursor(cursor);
+}
+
+bool CodeEditor::handleSmartHome()
+{
+    QTextCursor cursor = textCursor();
+    QTextBlock currentBlock = cursor.block();
+    QString currentLine = currentBlock.text();
+    
+    int cursorPosInLine = cursor.positionInBlock();
+    QString indentation = getLineIndentation(currentLine);
+    int indentationEnd = indentation.length();
+    
+    // If cursor is already at the beginning of text content, move to line start
+    if (cursorPosInLine == indentationEnd) {
+        cursor.movePosition(QTextCursor::StartOfBlock);
+        setTextCursor(cursor);
+        return true;
+    }
+    
+    // If cursor is in indentation area, use default Home behavior
+    if (cursorPosInLine <= indentationEnd) {
+        return false; // Let default Home handle it
+    }
+    
+    // If cursor is in text content, move to beginning of text (end of indentation)
+    cursor.setPosition(currentBlock.position() + indentationEnd);
+    setTextCursor(cursor);
+    return true;
 }
 
 } // namespace Widgets
