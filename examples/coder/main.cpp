@@ -55,6 +55,13 @@ public:
             editor->setTabSpaceCount(8);
         });
         
+        auto aIndentSelection = A_("Indent Selection", this, [this]{
+            editor->indentSelection();
+        });
+        auto aUnindentSelection = A_("Unindent Selection", this, [this]{
+            editor->unindentSelection();
+        });
+        
         Ori::Gui::populate(menuBar()->addMenu("View"), {
             aShowLineHints, aClearLineHints
         });
@@ -62,7 +69,8 @@ public:
         Ori::Gui::populate(menuBar()->addMenu("Edit"), {
             aCommentSelection, aUncommentSelection, aToggleComment, nullptr,
             aSetCommentSymbol, aResetCommentSymbol, nullptr,
-            aToggleTabReplacement, aSetTabSpaces2, aSetTabSpaces4, aSetTabSpaces8
+            aToggleTabReplacement, aSetTabSpaces2, aSetTabSpaces4, aSetTabSpaces8, nullptr,
+            aIndentSelection, aUnindentSelection
         });
         
         setCentralWidget(editor);

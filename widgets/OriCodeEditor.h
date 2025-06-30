@@ -47,6 +47,10 @@ public:
     bool replaceTabsWithSpaces() const;
     void setTabSpaceCount(int count);
     int tabSpaceCount() const;
+    
+    // Indentation functionality
+    void indentSelection();
+    void unindentSelection();
 
     struct Style
     {
@@ -85,6 +89,10 @@ private:
     bool isLineCommented(const QString& line) const;
     QString getLineIndentation(const QString& line) const;
     void selectLines(int startLine, int endLine);
+    
+    // Indentation helper methods
+    QString normalizeIndentation(const QString& line) const;
+    QString removeOneIndentLevel(const QString& line) const;
 };
 
 } // namespace Widgets

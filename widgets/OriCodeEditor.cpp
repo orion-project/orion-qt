@@ -252,11 +252,22 @@ void CodeEditor::keyPressEvent(QKeyEvent *e)
         return;
     }
     
-    // Handle Tab replacement with spaces
-    if (e->key() == Qt::Key_Tab && _replaceTabsWithSpaces) {
-        QString spaces(static_cast<int>(_tabSpaceCount), ' ');
-        insertPlainText(spaces);
-        return;
+    // Handle Tab and Shift+Tab for indentation when text is selected
+    if (e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
+        QTextCursor cursor = textCursor();
+        if (cursor.hasSelection()) {
+            if (e->key() == Qt::Key_Backtab || e->modifiers() == Qt::ShiftModifier) {
+                unindentSelection();
+            } else {
+                indentSelection();
+            }
+            return;
+        } else if (e->key() == Qt::Key_Tab && _replaceTabsWithSpaces) {
+            // Handle Tab replacement with spaces for single cursor
+            QString spaces(static_cast<int>(_tabSpaceCount), ' ');
+            insertPlainText(spaces);
+            return;
+        }
     }
     
     QPlainTextEdit::keyPressEvent(e);
@@ -488,6 +499,199 @@ void CodeEditor::setTabSpaceCount(int count)
 int CodeEditor::tabSpaceCount() const
 {
     return _tabSpaceCount;
+}
+
+void CodeEditor::indentSelection()
+{
+    QTextCursor cursor = textCursor();
+    
+    // If no selection, work with current line
+    if (!cursor.hasSelection()) {
+        cursor.select(QTextCursor::LineUnderCursor);
+    }
+    
+    int startPos = cursor.selectionStart();
+    int endPos = cursor.selectionEnd();
+    
+    // Get start and end blocks
+    QTextCursor startCursor(document());
+    startCursor.setPosition(startPos);
+    QTextCursor endCursor(document());
+    endCursor.setPosition(endPos);
+    
+    int startBlock = startCursor.blockNumber();
+    int endBlock = endCursor.blockNumber();
+    
+    // If selection ends at the beginning of a line, don't include that line
+    if (endCursor.atBlockStart() && endPos > startPos) {
+        endBlock--;
+    }
+    
+    cursor.beginEditBlock();
+    
+    // Determine indentation string based on settings
+    QString indentString = _replaceTabsWithSpaces ? QString(_tabSpaceCount, ' ') : "\t";
+    
+    // Indent each line
+    for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+        QTextBlock block = document()->findBlockByNumber(blockNum);
+        if (!block.isValid()) continue;
+        
+        QString line = block.text();
+        if (line.trimmed().isEmpty()) continue; // Skip empty lines
+        
+        // Normalize existing indentation if needed
+        QString normalizedLine = normalizeIndentation(line);
+        QString indentedLine = indentString + normalizedLine;
+        
+        QTextCursor lineCursor(block);
+        lineCursor.select(QTextCursor::LineUnderCursor);
+        lineCursor.insertText(indentedLine);
+    }
+    
+    cursor.endEditBlock();
+    
+    // Restore selection
+    selectLines(startBlock, endBlock);
+}
+
+void CodeEditor::unindentSelection()
+{
+    QTextCursor cursor = textCursor();
+    
+    // If no selection, work with current line
+    if (!cursor.hasSelection()) {
+        cursor.select(QTextCursor::LineUnderCursor);
+    }
+    
+    int startPos = cursor.selectionStart();
+    int endPos = cursor.selectionEnd();
+    
+    // Get start and end blocks
+    QTextCursor startCursor(document());
+    startCursor.setPosition(startPos);
+    QTextCursor endCursor(document());
+    endCursor.setPosition(endPos);
+    
+    int startBlock = startCursor.blockNumber();
+    int endBlock = endCursor.blockNumber();
+    
+    // If selection ends at the beginning of a line, don't include that line
+    if (endCursor.atBlockStart() && endPos > startPos) {
+        endBlock--;
+    }
+    
+    cursor.beginEditBlock();
+    
+    // Unindent each line
+    for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+        QTextBlock block = document()->findBlockByNumber(blockNum);
+        if (!block.isValid()) continue;
+        
+        QString line = block.text();
+        if (line.trimmed().isEmpty()) continue; // Skip empty lines
+        
+        QString unindentedLine = removeOneIndentLevel(line);
+        // Normalize the remaining indentation to match current settings
+        unindentedLine = normalizeIndentation(unindentedLine);
+        
+        QTextCursor lineCursor(block);
+        lineCursor.select(QTextCursor::LineUnderCursor);
+        lineCursor.insertText(unindentedLine);
+    }
+    
+    cursor.endEditBlock();
+    
+    // Restore selection
+    selectLines(startBlock, endBlock);
+}
+
+QString CodeEditor::normalizeIndentation(const QString& line) const
+{
+    QString indentation = getLineIndentation(line);
+    QString content = line.mid(indentation.length());
+    
+    if (_replaceTabsWithSpaces) {
+        // Convert tabs to spaces
+        QString normalizedIndent = indentation;
+        normalizedIndent.replace('\t', QString(_tabSpaceCount, ' '));
+        return normalizedIndent + content;
+    } else {
+        // Convert spaces to tabs (groups of _tabSpaceCount spaces become one tab)
+        QString normalizedIndent;
+        int spaceCount = 0;
+        for (QChar c : indentation) {
+            if (c == ' ') {
+                spaceCount++;
+                if (spaceCount == _tabSpaceCount) {
+                    normalizedIndent += '\t';
+                    spaceCount = 0;
+                }
+            } else if (c == '\t') {
+                // Add any remaining spaces first
+                normalizedIndent += QString(spaceCount, ' ');
+                spaceCount = 0;
+                normalizedIndent += '\t';
+            }
+        }
+        // Add any remaining spaces
+        normalizedIndent += QString(spaceCount, ' ');
+        return normalizedIndent + content;
+    }
+}
+
+QString CodeEditor::removeOneIndentLevel(const QString& line) const
+{
+    if (line.isEmpty()) return line;
+    
+    QString indentation = getLineIndentation(line);
+    QString content = line.mid(indentation.length());
+    
+    if (indentation.isEmpty()) return line;
+    
+    QString newIndentation;
+    
+    if (_replaceTabsWithSpaces) {
+        // Remove up to _tabSpaceCount spaces or one tab
+        if (indentation.startsWith('\t')) {
+            newIndentation = indentation.mid(1);
+        } else {
+            int spacesToRemove = qMin(_tabSpaceCount, indentation.length());
+            int removed = 0;
+            for (int i = 0; i < indentation.length() && removed < spacesToRemove; i++) {
+                if (indentation[i] == ' ') {
+                    removed++;
+                } else {
+                    newIndentation += indentation.mid(i);
+                    break;
+                }
+            }
+            if (removed == spacesToRemove && removed < indentation.length()) {
+                newIndentation += indentation.mid(removed);
+            }
+        }
+    } else {
+        // Remove one tab or up to _tabSpaceCount spaces
+        if (indentation.startsWith('\t')) {
+            newIndentation = indentation.mid(1);
+        } else {
+            int spacesToRemove = qMin(_tabSpaceCount, indentation.length());
+            int removed = 0;
+            for (int i = 0; i < indentation.length() && removed < spacesToRemove; i++) {
+                if (indentation[i] == ' ') {
+                    removed++;
+                } else {
+                    newIndentation += indentation.mid(i);
+                    break;
+                }
+            }
+            if (removed == spacesToRemove && removed < indentation.length()) {
+                newIndentation += indentation.mid(removed);
+            }
+        }
+    }
+    
+    return newIndentation + content;
 }
 
 } // namespace Widgets
