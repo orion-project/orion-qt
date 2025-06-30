@@ -156,6 +156,38 @@ QAction* action(const QString& title, const QString& tooltip, const Object recei
     return a;
 }
 
+template <typename Func1>
+QAction* checkableAction(const QString& title, bool checked, QObject* receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+    auto a = action(title, receiver, slot, icon, shortcut);
+    a->setCheckable(true);
+    a->setChecked(checked);
+    return a;
+}
+
+template <typename Object, typename Func1>
+QAction* checkableAction(const QString& title, bool checked, const Object receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+    auto a = action(title, receiver, slot, icon, shortcut);
+    a->setCheckable(true);
+    a->setChecked(checked);
+    return a;
+}
+
+template <typename Func1>
+QAction* checkableAction(const QString& title, const QString& tooltip, bool checked, QObject* receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+    auto a = action(title, tooltip, receiver, slot, icon, shortcut);
+    a->setCheckable(true);
+    a->setChecked(checked);
+    return a;
+}
+
+template <typename Object, typename Func1>
+QAction* checkableAction(const QString& title, const QString& tooltip, bool checked, const Object receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+    auto a = action(title, tooltip, receiver, slot, icon, shortcut);
+    a->setCheckable(true);
+    a->setChecked(checked);
+    return a;
+}
+
 QTreeWidget* twoColumnTree(const QString& title1, const QString& title2);
 
 void stretchColumn(QTableView *table, int col);

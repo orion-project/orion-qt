@@ -21,6 +21,24 @@ A simple wrapper around QPlainTextEdit providing several additional features con
 namespace Ori {
 namespace Widgets {
 
+class FoldedTextObject : public QObject, public QTextObjectInterface
+{
+    Q_OBJECT
+    Q_INTERFACES(QTextObjectInterface)
+
+public:
+    explicit FoldedTextObject(QObject *parent = 0);
+
+    static int type() { return QTextFormat::UserObject+2; }
+    static int prop() { return 2; }
+
+    QSizeF intrinsicSize(QTextDocument *doc, int posInDocument, const QTextFormat &format);
+    void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument, const QTextFormat &format);
+
+    void fold(QTextCursor c);
+    bool unfold(QTextCursor c);
+};
+
 class CodeEditor : public QPlainTextEdit
 {
     Q_OBJECT
@@ -91,6 +109,9 @@ public:
     Style style() const { return _style; }
     void setStyle(const Style &s) { _style = s; }
 
+    void fold();
+    void unfold();
+    
 protected:
     void resizeEvent(QResizeEvent *e) override;
     void keyPressEvent(QKeyEvent *e) override;
@@ -104,6 +125,7 @@ private:
     int _tabSpaceCount;
     QString _blockStartSymbol;
     bool _autoIndentEnabled;
+    FoldedTextObject *_textFolder;
     
     void updateLineNumberAreaWidth(int blockCount);
     void updateLineNumberArea(const QRect &rect, int dy);
@@ -124,6 +146,10 @@ private:
     bool handleAutoUnindentOnBackspace();
     bool isCursorInIndentation() const;
     bool handleSmartHome();
+    
+    // Folding helper methods for saving
+    bool hasFoldedBlocks() const;
+    QString getUnfoldedText() const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(CodeEditor::NormalizationOptions)

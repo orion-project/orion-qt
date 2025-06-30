@@ -6,6 +6,7 @@
 #include <QToolTip>
 #include <QKeyEvent>
 #include <QTextCursor>
+#include <QTextDocumentFragment>
 
 namespace {
 
@@ -47,8 +48,62 @@ private:
 
 } // namespace
 
+Q_DECLARE_METATYPE(QTextDocumentFragment)
+
 namespace Ori {
 namespace Widgets {
+
+//------------------------------------------------------------------------------
+//                               FoldedTextObject
+//------------------------------------------------------------------------------
+
+FoldedTextObject::FoldedTextObject(QObject *parent) : QObject(parent)
+{
+}
+
+QSizeF FoldedTextObject::intrinsicSize(QTextDocument *doc, int posInDocument, const QTextFormat &format)
+{
+    Q_UNUSED(doc)
+    Q_UNUSED(posInDocument)
+    Q_ASSERT(format.type() == format.CharFormat);
+    const QTextCharFormat &tf = reinterpret_cast<const QTextCharFormat&>(format);
+    return QFontMetrics(tf.font()).boundingRect(QStringLiteral("...")).size();
+}
+
+void FoldedTextObject::drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument, const QTextFormat &format)
+{
+    Q_UNUSED(doc)
+    Q_UNUSED(posInDocument)
+    Q_ASSERT(format.type() == format.CharFormat);
+    painter->drawText(rect, QStringLiteral("..."));
+    painter->drawRect(rect);
+}
+
+void FoldedTextObject::fold(QTextCursor c)
+{
+    QTextCharFormat f;
+    f.setObjectType(type());
+    f.setProperty(prop(), QVariant::fromValue(c.selection()));
+    c.insertText(QString(QChar::ObjectReplacementCharacter), f);
+}
+
+bool FoldedTextObject::unfold(QTextCursor c) {
+    if (!c.hasSelection()) {
+        QTextCharFormat f = c.charFormat();
+        if (f.objectType() == type()) {
+            c.movePosition(c.Left, c.KeepAnchor);
+            QVariant v = f.property(prop());
+            auto q = v.value<QTextDocumentFragment>();
+            c.insertFragment(q);
+            return true;
+        }
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+//                               CodeEditor
+//------------------------------------------------------------------------------
 
 CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
 {
@@ -72,6 +127,9 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
     _style.lineNumLeftPadding = 12;
     _style.lineNumMargin = 4;
     _style.lineNumFontSizeDec = 2;
+    
+    _textFolder = new FoldedTextObject(this);
+    document()->documentLayout()->registerHandler(_textFolder->type(), _textFolder); 
 
     connect(this, &CodeEditor::blockCountChanged, this, &CodeEditor::updateLineNumberAreaWidth);
     connect(this, &CodeEditor::updateRequest, this, &CodeEditor::updateLineNumberArea);
@@ -245,7 +303,16 @@ bool CodeEditor::saveCode(const QString &fileName)
         qWarning() << "Failed to open" << fileName << f.errorString();
         return false;
     }
-    f.write(toPlainText().toUtf8());
+    
+    // Check if there are folded blocks and get appropriate text
+    QString textToSave;
+    if (hasFoldedBlocks()) {
+        textToSave = getUnfoldedText();
+    } else {
+        textToSave = toPlainText();
+    }
+    
+    f.write(textToSave.toUtf8());
     return true;
 }
 
@@ -898,6 +965,85 @@ bool CodeEditor::handleSmartHome()
     cursor.setPosition(currentBlock.position() + indentationEnd);
     setTextCursor(cursor);
     return true;
+}
+
+void CodeEditor::fold()
+{
+    _textFolder->fold(textCursor());
+}
+
+void CodeEditor::unfold()
+{
+    _textFolder->unfold(textCursor());
+}
+
+bool CodeEditor::hasFoldedBlocks() const
+{
+    // Scan the document for any ObjectReplacementCharacter with folded text object type
+    QTextBlock block = document()->firstBlock();
+    while (block.isValid()) {
+        QString text = block.text();
+        for (int i = 0; i < text.length(); i++) {
+            if (text[i] == QChar::ObjectReplacementCharacter) {
+                // Check if this replacement character has our folded text object type
+                QTextCursor cursor(block);
+                cursor.setPosition(block.position() + i);
+                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+                QTextCharFormat format = cursor.charFormat();
+                if (format.objectType() == FoldedTextObject::type()) {
+                    return true;
+                }
+            }
+        }
+        block = block.next();
+    }
+    return false;
+}
+
+QString CodeEditor::getUnfoldedText() const
+{
+    // Build the unfolded text by scanning the document and replacing folded blocks
+    QString result;
+    QTextBlock block = document()->firstBlock();
+    
+    while (block.isValid()) {
+        QString blockText = block.text();
+        QString unfoldedBlockText;
+        
+        // Process each character in the block
+        for (int i = 0; i < blockText.length(); i++) {
+            if (blockText[i] == QChar::ObjectReplacementCharacter) {
+                // Check if this is a folded text object
+                QTextCursor cursor(block);
+                cursor.setPosition(block.position() + i);
+                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+                QTextCharFormat format = cursor.charFormat();
+                
+                if (format.objectType() == FoldedTextObject::type()) {
+                    // Extract the folded content
+                    QVariant v = format.property(FoldedTextObject::prop());
+                    auto fragment = v.value<QTextDocumentFragment>();
+                    unfoldedBlockText += fragment.toPlainText();
+                } else {
+                    unfoldedBlockText += blockText[i];
+                }
+            } else {
+                unfoldedBlockText += blockText[i];
+            }
+        }
+        
+        // Add the unfolded block text to result
+        result += unfoldedBlockText;
+        
+        // Add newline if not the last block
+        if (block.next().isValid()) {
+            result += "\n";
+        }
+        
+        block = block.next();
+    }
+    
+    return result;
 }
 
 } // namespace Widgets
