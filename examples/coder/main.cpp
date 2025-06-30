@@ -39,7 +39,8 @@ public:
                 editor->setShowWhitespaces(!editor->showWhitespaces());
             }),
             ________
-            A_("Fold", this, [this]{ editor->fold(); }),
+            A_("Fold Selection", this, [this]{ editor->fold(); }),
+            A_("Fold Block", this, [this]{ editor->foldBlock(); }),
             A_("Unfold", this, [this]{ editor->unfold(); }),
         });
         

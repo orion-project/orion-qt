@@ -111,6 +111,7 @@ public:
 
     void fold();
     void unfold();
+    void foldBlock();
     
 protected:
     void resizeEvent(QResizeEvent *e) override;
@@ -150,6 +151,10 @@ private:
     // Folding helper methods for saving
     bool hasFoldedBlocks() const;
     QString getUnfoldedText() const;
+    
+    // Block detection helper methods
+    QPair<int, int> detectPythonBlock(int lineNumber) const;
+    int getLineIndentationLevel(const QString& line) const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(CodeEditor::NormalizationOptions)

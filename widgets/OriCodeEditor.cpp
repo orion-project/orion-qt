@@ -977,6 +977,50 @@ void CodeEditor::unfold()
     _textFolder->unfold(textCursor());
 }
 
+void CodeEditor::foldBlock()
+{
+    QTextCursor cursor = textCursor();
+    int currentLineNumber = cursor.blockNumber();
+    
+    // Detect the Python block starting from the current line
+    QPair<int, int> blockRange = detectPythonBlock(currentLineNumber);
+    
+    if (blockRange.first == -1 || blockRange.second == -1 || blockRange.first >= blockRange.second) {
+        // No valid block found
+        return;
+    }
+    
+    // Get the current line to find the colon position
+    QTextBlock currentBlock = document()->findBlockByNumber(currentLineNumber);
+    QString currentLine = currentBlock.text();
+    int colonPos = currentLine.lastIndexOf(':');
+    
+    if (colonPos == -1) {
+        // No colon found, can't fold
+        return;
+    }
+    
+    // Create selection from after the colon to the end of the block
+    QTextCursor foldCursor(document());
+    
+    // Start position: after the colon on the current line
+    foldCursor.setPosition(currentBlock.position() + colonPos + 1);
+    
+    // End position: end of the last line in the block
+    QTextBlock endBlock = document()->findBlockByNumber(blockRange.second);
+    foldCursor.setPosition(endBlock.position() + endBlock.length() - 1, QTextCursor::KeepAnchor);
+    
+    // Only fold if there's actually content to fold
+    if (foldCursor.hasSelection() && !foldCursor.selectedText().trimmed().isEmpty()) {
+        _textFolder->fold(foldCursor);
+        
+        // Position the cursor after the folded block symbol
+        QTextCursor newCursor(document());
+        newCursor.setPosition(currentBlock.position() + colonPos + 2); // +2 to be after colon and replacement char
+        setTextCursor(newCursor);
+    }
+}
+
 bool CodeEditor::hasFoldedBlocks() const
 {
     // Scan the document for any ObjectReplacementCharacter with folded text object type
@@ -1044,6 +1088,85 @@ QString CodeEditor::getUnfoldedText() const
     }
     
     return result;
+}
+
+QPair<int, int> CodeEditor::detectPythonBlock(int lineNumber) const
+{
+    QTextBlock currentBlock = document()->findBlockByNumber(lineNumber);
+    if (!currentBlock.isValid()) {
+        return QPair<int, int>(-1, -1);
+    }
+    
+    QString currentLine = currentBlock.text();
+    
+    // Check if current line ends with colon (indicating start of a block)
+    if (!currentLine.trimmed().endsWith(':')) {
+        return QPair<int, int>(-1, -1);
+    }
+    
+    // Get the indentation level of the current line
+    int currentIndentLevel = getLineIndentationLevel(currentLine);
+    
+    // Find the range of lines that belong to this block
+    int startLine = lineNumber + 1; // Block starts from the next line
+    int endLine = -1;
+    int lastNonEmptyLine = -1; // Track the last line with actual content
+    
+    QTextBlock nextBlock = currentBlock.next();
+    int nextLineNumber = lineNumber + 1;
+    
+    // Scan forward to find the end of the block
+    while (nextBlock.isValid()) {
+        QString nextLine = nextBlock.text();
+        
+        // If line is empty, continue but don't update lastNonEmptyLine
+        if (nextLine.trimmed().isEmpty()) {
+            nextBlock = nextBlock.next();
+            nextLineNumber++;
+            continue;
+        }
+        
+        int nextIndentLevel = getLineIndentationLevel(nextLine);
+        
+        // If we find a line with same or less indentation, the block ends
+        if (nextIndentLevel <= currentIndentLevel) {
+            endLine = lastNonEmptyLine;
+            break;
+        }
+        
+        // This line belongs to the block
+        lastNonEmptyLine = nextLineNumber;
+        
+        nextBlock = nextBlock.next();
+        nextLineNumber++;
+    }
+    
+    // If we reached the end of document, the block extends to the last non-empty line
+    if (endLine == -1) {
+        endLine = lastNonEmptyLine != -1 ? lastNonEmptyLine : document()->blockCount() - 1;
+    }
+    
+    // Make sure we have at least one line to fold
+    if (startLine > endLine || endLine == -1) {
+        return QPair<int, int>(-1, -1);
+    }
+    
+    return QPair<int, int>(startLine, endLine);
+}
+
+int CodeEditor::getLineIndentationLevel(const QString& line) const
+{
+    int level = 0;
+    for (int i = 0; i < line.length(); i++) {
+        if (line[i] == ' ') {
+            level++;
+        } else if (line[i] == '\t') {
+            level += _tabSpaceCount; // Convert tab to equivalent spaces
+        } else {
+            break; // Found non-whitespace character
+        }
+    }
+    return level;
 }
 
 } // namespace Widgets
