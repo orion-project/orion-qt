@@ -38,17 +38,19 @@ bool isCursorInIndent(const QTextCursor &cursor)
     return cursor.positionInBlock() <= splitLine(cursor.block().text()).indent.length();
 }
 
+bool hasMultilineSelection(const QTextCursor &cursor)
+{
+    auto startBlock = cursor.document()->findBlock(cursor.selectionStart());
+    auto endBlock = cursor.document()->findBlock(cursor.selectionEnd());
+    return endBlock.blockNumber() > startBlock.blockNumber();
+}
+
 struct SelectedRange
 {
     SelectedRange(Ori::Widgets::CodeEditor *editor): editor(editor)
     {
         cursor = editor->textCursor();
 
-        // // If no selection, work with current line
-        // if (!cursor.hasSelection()) {
-        //     cursor.select(QTextCursor::LineUnderCursor);
-        // }
-        
         startPos = cursor.selectionStart();
         QTextCursor startCursor(editor->document());
         startCursor.setPosition(startPos);
@@ -62,7 +64,7 @@ struct SelectedRange
         if (startBlock == endBlock)
             cursor.select(QTextCursor::LineUnderCursor);
         // If selection ends at the beginning of a line, don't include that line
-        else if (endCursor.atBlockStart() && endPos > startPos)
+        else if (endCursor.atBlockStart())
             endBlock--;
     }
     
@@ -527,7 +529,7 @@ void CodeEditor::keyPressEvent(QKeyEvent *e)
             return;
         }
         auto cursor = textCursor();
-        if (!cursor.hasSelection() && isCursorInIndent(cursor)) {
+        if (hasMultilineSelection(cursor) || (isCursorInIndent(cursor) && !cursor.hasSelection())) {
             indentSelection();
             return;
         }
