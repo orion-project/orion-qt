@@ -39,8 +39,9 @@ public:
                 editor->setShowWhitespaces(!editor->showWhitespaces());
             }),
             ________
-            A_("Fold Selection", this, [this]{ editor->foldSelection(); }),
-            A_("Fold Block", this, [this]{ editor->foldCodeBlock(); }),
+            A_("Folding Type: None", this, [this]{ editor->setFoldingType(Ori::Widgets::CodeEditor::FOLD_NONE); }),
+            A_("Folding Type: Python", this, [this]{ editor->setFoldingType(Ori::Widgets::CodeEditor::FOLD_PYTHON); }),
+            A_("Fold", this, [this]{ editor->fold(); }),
             A_("Unfold", this, [this]{ editor->unfold(); }),
             A_("Unfold All", this, [this]{ editor->unfoldAll(); }),
         });

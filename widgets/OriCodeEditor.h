@@ -21,28 +21,17 @@ A wrapper around QPlainTextEdit providing several additional features convention
 namespace Ori {
 namespace Widgets {
 
-class CodeEditor;
 class EditorLineNums;
+class CodeFolder;
 
-class FoldedTextObject : public QObject, public QTextObjectInterface
+class FoldedTextView : public QObject, public QTextObjectInterface
 {
     Q_OBJECT
     Q_INTERFACES(QTextObjectInterface)
-
 public:
-    explicit FoldedTextObject(CodeEditor *editor);
-
+    explicit FoldedTextView(QObject *parent) : QObject(parent) {}
     QSizeF intrinsicSize(QTextDocument *doc, int posInDocument, const QTextFormat &format);
     void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument, const QTextFormat &format);
-    
-    QString toUnfoldedText() const;
-    bool hasFoldings() const;
-    void fold(QTextCursor cursor);
-    void foldCodeBlock(int tabWidth);
-    void unfold();
-    
-private:
-    CodeEditor *_editor;
 };
 
 class CodeEditor : public QPlainTextEdit
@@ -107,9 +96,11 @@ public:
     Style style() const { return _style; }
     void setStyle(const Style &s) { _style = s; }
 
-    void foldSelection() { _textFolder->fold(textCursor()); }
-    void foldCodeBlock() { _textFolder->foldCodeBlock(_tabWidth); }
-    void unfold() { _textFolder->unfold(); }
+    enum FoldingType { FOLD_NONE, FOLD_PYTHON };
+    FoldingType foldingType() const { return _foldingType; }
+    void setFoldingType(FoldingType f);
+    void fold();
+    void unfold();
     void unfoldAll();
     
 protected:
@@ -117,7 +108,7 @@ protected:
     void keyPressEvent(QKeyEvent *e) override;
 
 private:
-    EditorLineNums *_lineNums;
+    class EditorLineNums *_lineNums;
     QMap<int, QString> _lineHints;
     Style _style;
     bool _replaceTabs = true;
@@ -125,7 +116,8 @@ private:
     int _tabWidth = 4;
     QString _commentSymbol = "#";
     QString _blockStartSymbol = ":";
-    FoldedTextObject *_textFolder;
+    FoldingType _foldingType = FOLD_NONE;
+    std::shared_ptr<CodeFolder> _codeFolder;
     
     void onBlockCountChanged();
     void onDocUpdateRequest(const QRect &rect, int dy);

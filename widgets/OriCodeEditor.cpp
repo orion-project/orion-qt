@@ -10,8 +10,8 @@
 
 Q_DECLARE_METATYPE(QTextDocumentFragment)
 
-#define TEXT_FOLDER_TYPE (QTextFormat::UserObject+2)
-#define TEXT_FOLDER_PROP 2
+#define FOLDED_TEXT_TYPE (QTextFormat::UserObject+2)
+#define FOLDED_TEXT_PROP 2
 
 //------------------------------------------------------------------------------
 //                               Helpers
@@ -319,14 +319,10 @@ private:
 };
 
 //------------------------------------------------------------------------------
-//                               FoldedTextObject
+//                               FoldedTextView
 //------------------------------------------------------------------------------
 
-FoldedTextObject::FoldedTextObject(CodeEditor *editor) : QObject(editor), _editor(editor)
-{
-}
-
-QSizeF FoldedTextObject::intrinsicSize(QTextDocument *doc, int posInDocument, const QTextFormat &format)
+QSizeF FoldedTextView::intrinsicSize(QTextDocument *doc, int posInDocument, const QTextFormat &format)
 {
     Q_UNUSED(doc)
     Q_UNUSED(posInDocument)
@@ -335,7 +331,7 @@ QSizeF FoldedTextObject::intrinsicSize(QTextDocument *doc, int posInDocument, co
     return QFontMetrics(tf.font()).boundingRect(QStringLiteral("...")).size();
 }
 
-void FoldedTextObject::drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument, const QTextFormat &format)
+void FoldedTextView::drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument, const QTextFormat &format)
 {
     Q_UNUSED(doc)
     Q_UNUSED(posInDocument)
@@ -344,96 +340,110 @@ void FoldedTextObject::drawObject(QPainter *painter, const QRectF &rect, QTextDo
     painter->drawRect(rect);
 }
 
-void FoldedTextObject::fold(QTextCursor c)
-{
-    QTextCharFormat f;
-    f.setObjectType(TEXT_FOLDER_TYPE);
-    f.setProperty(TEXT_FOLDER_PROP, QVariant::fromValue(c.selection()));
-    c.insertText(QString(QChar::ObjectReplacementCharacter), f);
-}
+//------------------------------------------------------------------------------
+//                                CodeFolder
+//------------------------------------------------------------------------------
 
-void FoldedTextObject::foldCodeBlock(int tabWidth)
+class CodeFolder
 {
-    auto block = _editor->textCursor().block();
-    
-    // TODO: add support for more type of blocks when needed
-    auto codeBlock = findPythonCodeBlock(block, tabWidth);
-    if (!codeBlock.ok())
-        return;
-    
-    QTextCursor foldCursor(_editor->document());
-    foldCursor.setPosition(block.position() + codeBlock.mountPos);
-    QTextBlock endBlock = _editor->document()->findBlockByNumber(codeBlock.endLine);
-    foldCursor.setPosition(endBlock.position() + endBlock.length() - 1, QTextCursor::KeepAnchor);
-    
-    fold(foldCursor);
-    
-    // Position the cursor after the folded block symbol
-    QTextCursor newCursor(_editor->document());
-    newCursor.setPosition(block.position() + codeBlock.mountPos + 1);
-    _editor->setTextCursor(newCursor);
-}
+public:
+    CodeFolder(CodeEditor *editor): editor(editor) {}
 
-void FoldedTextObject::unfold()
-{
-    auto c = _editor->textCursor();
-    if (c.hasSelection())
-        return;
+    void foldCodeBlock(int tabWidth, CodeEditor::FoldingType foldMode)
+    {
+        Q_UNUSED(foldMode)
     
-    auto f = c.charFormat();
-    if (f.objectType() != TEXT_FOLDER_TYPE)
-        return;
-
-    c.movePosition(c.Left, c.KeepAnchor);
-    c.insertFragment(f.property(TEXT_FOLDER_PROP).value<QTextDocumentFragment>());
-}
-
-bool FoldedTextObject::hasFoldings() const
-{
-    auto block = _editor->document()->firstBlock();
-    while (block.isValid()) {
-        QString text = block.text();
-        for (int i = 0; i < text.length(); i++) {
-            if (text[i] == QChar::ObjectReplacementCharacter) {
-                QTextCursor cursor(block);
-                cursor.setPosition(block.position() + i);
-                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-                if (cursor.charFormat().objectType() == TEXT_FOLDER_TYPE)
-                    return true;
-            }
-        }
-        block = block.next();
+        auto block = editor->textCursor().block();
+        
+        // TODO: add support for more type of blocks when needed
+        auto codeBlock = findPythonCodeBlock(block, tabWidth);
+        if (!codeBlock.ok())
+            return;
+        
+        QTextCursor foldCursor(editor->document());
+        foldCursor.setPosition(block.position() + codeBlock.mountPos);
+        QTextBlock endBlock = editor->document()->findBlockByNumber(codeBlock.endLine);
+        foldCursor.setPosition(endBlock.position() + endBlock.length() - 1, QTextCursor::KeepAnchor);
+        
+        foldSelection(foldCursor);
+        
+        // Position the cursor after the folded block symbol
+        QTextCursor newCursor(editor->document());
+        newCursor.setPosition(block.position() + codeBlock.mountPos + 1);
+        editor->setTextCursor(newCursor);
     }
-    return false;
-}
-
-QString FoldedTextObject::toUnfoldedText() const
-{
-    QString result;
-    QTextStream out(&result);
-    QTextBlock block = _editor->document()->firstBlock();
-    while (block.isValid()) {
-        QString line = block.text();
-        for (int i = 0; i < line.length(); i++) {
-            if (line[i] == QChar::ObjectReplacementCharacter) {
-                QTextCursor cursor(block);
-                cursor.setPosition(block.position() + i);
-                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-                QTextCharFormat format = cursor.charFormat();
-                if (format.objectType() == TEXT_FOLDER_TYPE) {
-                    auto fragment = format.property(TEXT_FOLDER_PROP).value<QTextDocumentFragment>();
-                    out << fragment.toPlainText();
-                    continue;
+    
+    void foldSelection(QTextCursor c)
+    {
+        QTextCharFormat f;
+        f.setObjectType(FOLDED_TEXT_TYPE);
+        f.setProperty(FOLDED_TEXT_PROP, QVariant::fromValue(c.selection()));
+        c.insertText(QString(QChar::ObjectReplacementCharacter), f);
+    }
+    
+    void unfold()
+    {
+        auto c = editor->textCursor();
+        if (c.hasSelection())
+            return;
+        
+        auto f = c.charFormat();
+        if (f.objectType() != FOLDED_TEXT_TYPE)
+            return;
+    
+        c.movePosition(c.Left, c.KeepAnchor);
+        c.insertFragment(f.property(FOLDED_TEXT_PROP).value<QTextDocumentFragment>());
+    }
+    
+    bool hasFoldings() const
+    {
+        auto block = editor->document()->firstBlock();
+        while (block.isValid()) {
+            QString text = block.text();
+            for (int i = 0; i < text.length(); i++) {
+                if (text[i] == QChar::ObjectReplacementCharacter) {
+                    QTextCursor cursor(block);
+                    cursor.setPosition(block.position() + i);
+                    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+                    if (cursor.charFormat().objectType() == FOLDED_TEXT_TYPE)
+                        return true;
                 }
             }
-            out << line[i];
+            block = block.next();
         }
-        block = block.next();
-        if (block.isValid())
-            out << "\n";
+        return false;
     }
-    return result;
-}
+
+    QString toUnfoldedText() const
+    {
+        QString result;
+        QTextStream out(&result);
+        QTextBlock block = editor->document()->firstBlock();
+        while (block.isValid()) {
+            QString line = block.text();
+            for (int i = 0; i < line.length(); i++) {
+                if (line[i] == QChar::ObjectReplacementCharacter) {
+                    QTextCursor cursor(block);
+                    cursor.setPosition(block.position() + i);
+                    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+                    QTextCharFormat format = cursor.charFormat();
+                    if (format.objectType() == FOLDED_TEXT_TYPE) {
+                        auto fragment = format.property(FOLDED_TEXT_PROP).value<QTextDocumentFragment>();
+                        out << fragment.toPlainText();
+                        continue;
+                    }
+                }
+                out << line[i];
+            }
+            block = block.next();
+            if (block.isValid())
+                out << "\n";
+        }
+        return result;
+    }
+    
+    CodeEditor *editor;
+};
 
 //------------------------------------------------------------------------------
 //                               CodeEditor
@@ -457,8 +467,7 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
     _style.lineNumsMargin = 4;
     _style.lineNumsFontSizeDec = 2;
     
-    _textFolder = new FoldedTextObject(this);
-    document()->documentLayout()->registerHandler(TEXT_FOLDER_TYPE, _textFolder); 
+    document()->documentLayout()->registerHandler(FOLDED_TEXT_TYPE, new FoldedTextView(this)); 
 
     connect(this, &CodeEditor::blockCountChanged, this, &CodeEditor::onBlockCountChanged);
     connect(this, &CodeEditor::updateRequest, this, &CodeEditor::onDocUpdateRequest);
@@ -492,7 +501,9 @@ bool CodeEditor::saveCode(const QString &fileName)
 
 QString CodeEditor::code() const
 {
-    return _textFolder->hasFoldings() ? _textFolder->toUnfoldedText() : toPlainText();
+    if (_codeFolder && _codeFolder->hasFoldings())
+        return _codeFolder->toUnfoldedText();
+    return toPlainText();
 }
 
 void CodeEditor::resizeEvent(QResizeEvent *e)
@@ -739,10 +750,34 @@ void CodeEditor::normalize(NormalizationOptions options)
     setTextCursor(cursor);
 }
 
+void CodeEditor::setFoldingType(FoldingType ft)
+{
+    if (_foldingType == ft)
+        return;
+    unfoldAll();
+    _foldingType = ft;
+    if (ft == FOLD_NONE)
+        _codeFolder = {};
+    else if (!_codeFolder)
+        _codeFolder.reset(new CodeFolder(this));
+}
+
+void CodeEditor::fold()
+{
+    if (_codeFolder)
+        _codeFolder->foldCodeBlock(_tabWidth, _foldingType);
+}
+
+void CodeEditor::unfold()
+{
+    if (_codeFolder)
+        _codeFolder->unfold();
+}
+
 void CodeEditor::unfoldAll()
 {
-    if (_textFolder->hasFoldings())
-        setPlainText(_textFolder->toUnfoldedText());
+    if (_codeFolder && _codeFolder->hasFoldings())
+        setPlainText(_codeFolder->toUnfoldedText());
 }
 
 } // namespace Widgets
