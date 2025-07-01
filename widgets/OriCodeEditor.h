@@ -5,7 +5,7 @@
 
 /**
 
-A simple wrapper around QPlainTextEdit providing several additional features conventional for code editors
+A wrapper around QPlainTextEdit providing several additional features conventional for code editors
 
 - line numbering
 - current line highlighting
@@ -21,22 +21,28 @@ A simple wrapper around QPlainTextEdit providing several additional features con
 namespace Ori {
 namespace Widgets {
 
+class CodeEditor;
+class EditorLineNums;
+
 class FoldedTextObject : public QObject, public QTextObjectInterface
 {
     Q_OBJECT
     Q_INTERFACES(QTextObjectInterface)
 
 public:
-    explicit FoldedTextObject(QObject *parent = 0);
-
-    static int type() { return QTextFormat::UserObject+2; }
-    static int prop() { return 2; }
+    explicit FoldedTextObject(CodeEditor *editor);
 
     QSizeF intrinsicSize(QTextDocument *doc, int posInDocument, const QTextFormat &format);
     void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument, const QTextFormat &format);
-
-    void fold(QTextCursor c);
-    bool unfold(QTextCursor c);
+    
+    QString toUnfoldedText() const;
+    bool hasFoldings() const;
+    void fold(QTextCursor cursor);
+    void foldCodeBlock(int tabWidth);
+    void unfold();
+    
+private:
+    CodeEditor *_editor;
 };
 
 class CodeEditor : public QPlainTextEdit
@@ -46,72 +52,64 @@ class CodeEditor : public QPlainTextEdit
 public:
     explicit CodeEditor(QWidget *parent = nullptr);
 
-    int lineNumberAreaWidth() const;
-    void lineNumberAreaPaintEvent(QPaintEvent *event);
-
-    void setLineHints(const QMap<int, QString>& hints);
-    QString getLineHint(int y) const;
-    
-    void setShowWhitespaces(bool on);
-    bool showWhitespaces() const;
-    
     bool loadCode(const QString &fileName);
     bool saveCode(const QString &fileName);
+    void setCode(const QString &code) { setPlainText(code); }
+    QString code() const;
     
-    // Comment/uncomment functionality
-    void setCommentSymbol(const QString& s) { _commentSymbol = s; }
+    QMap<int, QString> lineHints() const { return _lineHints; }
+    void setLineHints(const QMap<int, QString>& hints) { _lineHints = hints; update(); }
+    
+    bool showWhitespaces() const;
+    void setShowWhitespaces(bool on);
+    
     QString commentSymbol() const { return _commentSymbol; }
+    void setCommentSymbol(const QString& s) { _commentSymbol = s; }
     void commentSelection();
     void uncommentSelection();
     void toggleCommentSelection();
     
-    // Tab replacement functionality
-    void setReplaceTabsWithSpaces(bool on) { _replaceTabsWithSpaces = on; }
-    bool replaceTabsWithSpaces() const { return _replaceTabsWithSpaces; }
-    void setTabSpaceCount(int count) { _tabSpaceCount = count; }
-    int tabSpaceCount() const { return _tabSpaceCount; }
+    bool replaceTabs() const { return _replaceTabs; }
+    void setReplaceTabs(bool on) { _replaceTabs = on; }
+    int tabWidth() const { return _tabWidth; }
+    void setTabWidth(int spaces) { _tabWidth = spaces; }
     
-    // Indentation functionality
+    bool autoIndent() const { return _autoIndent; }
+    void setAutoIndent(bool on) { _autoIndent = on; }
+    QString blockStartSymbol() const { return _blockStartSymbol; }
+    void setBlockStartSymbol(const QString& s) { _blockStartSymbol = s; }
     void indentSelection();
     void unindentSelection();
     
-    // Auto-indentation functionality
-    void setBlockStartSymbol(const QString& s) { _blockStartSymbol = s; }
-    QString blockStartSymbol() const { return _blockStartSymbol; }
-    void setAutoIndentEnabled(bool on) { _autoIndentEnabled = on; }
-    bool autoIndentEnabled() const { return _autoIndentEnabled; }
-    
-    // Document normalization options
     enum NormalizationOption {
-        NormalizeIndentation = 0x01,
-        NormalizeTrimTrailingSpaces = 0x02,
-        NormalizeEnsureNewlineAtEnd = 0x04,
-        NormalizeAll = NormalizeIndentation | NormalizeTrimTrailingSpaces | NormalizeEnsureNewlineAtEnd
+        NormIndentation = 0x01,
+        NormTrailingSpaces = 0x02,
+        NormFinalNewline = 0x04,
+        NormAll = NormIndentation | NormTrailingSpaces | NormFinalNewline
     };
     Q_DECLARE_FLAGS(NormalizationOptions, NormalizationOption)
     
-    // Document-wide normalization
-    void normalizeDocument(NormalizationOptions options = NormalizeAll);
+    void normalize(NormalizationOptions options = NormAll);
 
     struct Style
     {
         QColor currentLineColor;
-        QColor lineNumTextColor;
-        QColor lineNumTextColorErr;
-        QColor lineNumBorderColor;
-        QColor lineNumBackColor;
-        QColor lineNumBackColorErr;
-        int lineNumRightPadding;
-        int lineNumLeftPadding;
-        int lineNumMargin;
-        int lineNumFontSizeDec;
+        QColor lineNumsTextColor;
+        QColor lineNumsTextColorErr;
+        QColor lineNumsBorderColor;
+        QColor lineNumsBackColor;
+        QColor lineNumsBackColorErr;
+        int lineNumsRightPadding;
+        int lineNumsLeftPadding;
+        int lineNumsMargin;
+        int lineNumsFontSizeDec;
     };
     Style style() const { return _style; }
     void setStyle(const Style &s) { _style = s; }
 
-    void foldSelection();
-    void foldBlock();
-    void unfold();
+    void foldSelection() { _textFolder->fold(textCursor()); }
+    void foldCodeBlock() { _textFolder->foldCodeBlock(_tabWidth); }
+    void unfold() { _textFolder->unfold(); }
     void unfoldAll();
     
 protected:
@@ -119,43 +117,30 @@ protected:
     void keyPressEvent(QKeyEvent *e) override;
 
 private:
-    QWidget *_lineNumArea;
+    EditorLineNums *_lineNums;
     QMap<int, QString> _lineHints;
     Style _style;
-    QString _commentSymbol;
-    bool _replaceTabsWithSpaces;
-    int _tabSpaceCount;
-    QString _blockStartSymbol;
-    bool _autoIndentEnabled;
+    bool _replaceTabs = true;
+    bool _autoIndent = true;
+    int _tabWidth = 4;
+    QString _commentSymbol = "#";
+    QString _blockStartSymbol = ":";
     FoldedTextObject *_textFolder;
     
-    void updateLineNumberAreaWidth(int blockCount);
-    void updateLineNumberArea(const QRect &rect, int dy);
+    void onBlockCountChanged();
+    void onDocUpdateRequest(const QRect &rect, int dy);
+
     void highlightCurrentLine();
-    int findLineNumber(int y) const;
     
-    // Comment/uncomment helper methods
-    bool isLineCommented(const QString& line) const;
-    QString getLineIndentation(const QString& line) const;
-    void selectLines(int startLine, int endLine);
+    QString normalizeIndent(const QString& line) const;
+    QString removeOneIndent(const QString& line) const;
+    QString tabSpaces() const { return QString(_tabWidth, ' '); }
+    QString oneIndent() const { return _replaceTabs ? tabSpaces() : "\t"; }
     
-    // Indentation helper methods
-    QString normalizeIndentation(const QString& line) const;
-    QString removeOneIndentLevel(const QString& line) const;
+    void handleSmartEnter();
+    void handleSmartHome();
     
-    // Auto-indentation helper methods
-    void handleAutoIndentOnEnter();
-    bool handleAutoUnindentOnBackspace();
-    bool isCursorInIndentation() const;
-    bool handleSmartHome();
-    
-    // Folding helper methods for saving
-    bool hasFoldedBlocks() const;
-    QString getUnfoldedText() const;
-    
-    // Block detection helper methods
-    QPair<int, int> detectPythonBlock(int lineNumber) const;
-    int getLineIndentationLevel(const QString& line) const;
+    friend class EditorLineNums;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(CodeEditor::NormalizationOptions)

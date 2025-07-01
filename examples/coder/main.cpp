@@ -40,7 +40,7 @@ public:
             }),
             ________
             A_("Fold Selection", this, [this]{ editor->foldSelection(); }),
-            A_("Fold Block", this, [this]{ editor->foldBlock(); }),
+            A_("Fold Block", this, [this]{ editor->foldCodeBlock(); }),
             A_("Unfold", this, [this]{ editor->unfold(); }),
             A_("Unfold All", this, [this]{ editor->unfoldAll(); }),
         });
@@ -53,31 +53,31 @@ public:
             A_("Set Comment Symbol to //", this, [this]{ editor->setCommentSymbol("//"); }), 
             A_("Set Comment Symbol to #", this, [this]{ editor->setCommentSymbol("#"); }),
             ________
-            C_("Replace Tabs With Spaces", editor->replaceTabsWithSpaces(), this, [this]{
-              editor->setReplaceTabsWithSpaces(!editor->replaceTabsWithSpaces());
+            C_("Replace Tabs With Spaces", editor->replaceTabs(), this, [this]{
+              editor->setReplaceTabs(!editor->replaceTabs());
             }), 
-            A_("Set Tab Spaces to 2", this, [this]{ editor->setTabSpaceCount(2); }), 
-            A_("Set Tab Spaces to 4", this, [this]{ editor->setTabSpaceCount(4); }),
-            A_("Set Tab Spaces to 8", this, [this]{ editor->setTabSpaceCount(8); }),
+            A_("Set Tab Spaces to 2", this, [this]{ editor->setTabWidth(2); }), 
+            A_("Set Tab Spaces to 4", this, [this]{ editor->setTabWidth(4); }),
+            A_("Set Tab Spaces to 8", this, [this]{ editor->setTabWidth(8); }),
             ________
             A_("Indent Selection", this, [this]{ editor->indentSelection(); }),
             A_("Unindent Selection", this, [this]{ editor->unindentSelection(); }),
             ________
-            C_("Auto Indent", editor->autoIndentEnabled(), this, [this]{
-              editor->setAutoIndentEnabled(!editor->autoIndentEnabled());
+            C_("Auto Indent", editor->autoIndent(), this, [this]{
+              editor->setAutoIndent(!editor->autoIndent());
             }),
             A_("Set Block Symbol to :", this, [this]{ editor->setBlockStartSymbol(":"); }),
             A_("Set Block Symbol to {", this, [this]{ editor->setBlockStartSymbol("{"); }),
             ________
-            A_("Normalize Document (All)", this, [this]{ editor->normalizeDocument(); }),
+            A_("Normalize Document (All)", this, [this]{ editor->normalize(); }),
             A_("Normalize Document (Indentation)", this, [this]{
-              editor->normalizeDocument(Ori::Widgets::CodeEditor::NormalizeIndentation);
+              editor->normalize(Ori::Widgets::CodeEditor::NormIndentation);
             }),
             A_("Normalize Document (Trailing Spaces)", this, [this]{
-                editor->normalizeDocument(Ori::Widgets::CodeEditor::NormalizeTrimTrailingSpaces);
+                editor->normalize(Ori::Widgets::CodeEditor::NormTrailingSpaces);
             }),
             A_("Normalize Document (Newline at End)", this, [this]{
-                editor->normalizeDocument(Ori::Widgets::CodeEditor::NormalizeEnsureNewlineAtEnd);
+                editor->normalize(Ori::Widgets::CodeEditor::NormFinalNewline);
             }),
         });
      

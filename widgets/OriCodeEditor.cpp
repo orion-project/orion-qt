@@ -8,23 +8,273 @@
 #include <QTextCursor>
 #include <QTextDocumentFragment>
 
+Q_DECLARE_METATYPE(QTextDocumentFragment)
+
+#define TEXT_FOLDER_TYPE (QTextFormat::UserObject+2)
+#define TEXT_FOLDER_PROP 2
+
+//------------------------------------------------------------------------------
+//                               Helpers
+//------------------------------------------------------------------------------
+
 namespace {
 
-class LineNumberArea : public QWidget
+struct LineParts { QStringRef indent; QStringRef text; };
+
+LineParts splitLine(const QString &line)
+{
+    int i = 0;
+    while (i < line.length() && (line[i] == ' ' || line[i] == '\t')) i++;
+    return { line.leftRef(i), line.midRef(i) };
+}
+
+inline bool isEmpty(const QString &line)
+{
+    return QStringRef(&line).trimmed().isEmpty();
+}
+
+bool isCursorInIndent(const QTextCursor &cursor)
+{
+    return cursor.positionInBlock() <= splitLine(cursor.block().text()).indent.length();
+}
+
+struct SelectedRange
+{
+    SelectedRange(Ori::Widgets::CodeEditor *editor): editor(editor)
+    {
+        cursor = editor->textCursor();
+
+        // // If no selection, work with current line
+        // if (!cursor.hasSelection()) {
+        //     cursor.select(QTextCursor::LineUnderCursor);
+        // }
+        
+        startPos = cursor.selectionStart();
+        QTextCursor startCursor(editor->document());
+        startCursor.setPosition(startPos);
+        startBlock = startCursor.blockNumber();
+    
+        endPos = cursor.selectionEnd();
+        QTextCursor endCursor(editor->document());
+        endCursor.setPosition(endPos);
+        endBlock = endCursor.blockNumber();
+        
+        if (startBlock == endBlock)
+            cursor.select(QTextCursor::LineUnderCursor);
+        // If selection ends at the beginning of a line, don't include that line
+        else if (endCursor.atBlockStart() && endPos > startPos)
+            endBlock--;
+    }
+    
+    ~SelectedRange()
+    {
+        if (startBlock == endBlock) {
+            // Restore position in single line
+            QTextCursor cursor(editor->document());
+            cursor.setPosition(startPos + posDiff);
+            if (endPos > startPos)
+                cursor.setPosition(endPos + posDiff, QTextCursor::KeepAnchor);
+            editor->setTextCursor(cursor);
+        } else {
+            // Restore selected lines
+            QTextBlock start = editor->document()->findBlockByNumber(startBlock);
+            QTextBlock end = editor->document()->findBlockByNumber(endBlock);
+            if (!start.isValid() || !end.isValid()) return;
+            
+            QTextCursor cursor(start);
+            cursor.movePosition(QTextCursor::StartOfBlock);
+            cursor.setPosition(end.position() + end.length(), QTextCursor::KeepAnchor);
+            editor->setTextCursor(cursor);
+        }
+    }
+    
+    void modify(std::function<QString(const QString &line)> changeLine)
+    {
+        cursor.beginEditBlock();
+        for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+            QTextBlock block = editor->document()->findBlockByNumber(blockNum);
+            if (!block.isValid()) continue;
+            
+            QString line = block.text();
+            if (isEmpty(line)) continue;
+            
+            QString changedLine = changeLine(line);
+            if (changedLine == line) continue;
+            
+            // For restoring cursor position in single line
+            posDiff = changedLine.length() - line.length();
+
+            QTextCursor lineCursor(block);
+            lineCursor.select(QTextCursor::LineUnderCursor);
+            lineCursor.insertText(changedLine);
+        }
+        cursor.endEditBlock();
+    }
+    
+    Ori::Widgets::CodeEditor *editor;
+    QTextCursor cursor;
+    int startPos, endPos;
+    int startBlock, endBlock;
+    int posDiff = 0;
+};
+
+int getIndentLevel(const QString& line, int tabWidth)
+{
+    int level = 0;
+    for (int i = 0; i < line.length(); i++) {
+        if (line[i] == ' ') {
+            int spaceCount = 0;
+            while (i < line.length() && line[i] == ' ') {
+                spaceCount++;
+                i++;
+            }
+            i--;
+            level += spaceCount / tabWidth;
+        } else if (line[i] == '\t') {
+            level++;
+        } else {
+            break;
+        }
+    }
+    return level;
+}
+
+struct CodeBlock
+{
+    /// A position in startLine where the folding should be inserted
+    int mountPos = -1;
+    int startLine = -1;
+    int endLine = -1;
+    bool ok() const { return startLine >= 0 && endLine > startLine; }
+};
+
+CodeBlock findPythonCodeBlock(QTextBlock &startBlock, int tabWidth)
+{
+    if (!startBlock.isValid())
+        return {};
+    
+    int mountPos = -1;
+    QString line = startBlock.text();
+    for (int i = line.length()-1; i >= 0; i--) {
+        if (line[i] == ' ' || line[i] == '\t')
+            continue;
+        if (line[i] == ':') {
+            mountPos = i+1;
+            break;
+        }
+    }
+    if (mountPos < 0)
+        return {};
+
+    int startLevel = getIndentLevel(line, tabWidth);
+    int endLine = -1;
+    auto block = startBlock.next();
+    while (block.isValid()) {
+        QString line = block.text();
+        if (isEmpty(line)) {
+            block = block.next();
+            continue;
+        }
+        if (getIndentLevel(line, tabWidth) <= startLevel)
+            break;
+        endLine = block.blockNumber();
+        block = block.next();
+    }
+    return { mountPos, startBlock.blockNumber(), endLine };
+}
+
+} // namespace
+
+namespace Ori {
+namespace Widgets {
+
+//------------------------------------------------------------------------------
+//                               LineNumberArea
+//------------------------------------------------------------------------------
+
+class EditorLineNums : public QWidget
 {
 public:
-    LineNumberArea(Ori::Widgets::CodeEditor *editor) : QWidget(editor), _editor(editor)
+    EditorLineNums(Ori::Widgets::CodeEditor *editor) : QWidget(editor), _editor(editor)
     {}
 
-    QSize sizeHint() const override {
-        return QSize(_editor->lineNumberAreaWidth(), 0);
+    QSize sizeHint() const override
+    {
+        return QSize(calcWidth(), 0);
     }
 
+    void adjustGeometry(const QRect &editorContentRect)
+    {
+        QRect r = editorContentRect;
+        r.setWidth(calcWidth());
+        setGeometry(r);
+    }
+
+    int calcWidth() const
+    {
+        int digits = 1;
+        // in a plain text edit each line will consist of one QTextBlock
+        int max = qMax(1, _editor->blockCount());
+        while (max >= 10)
+        {
+            max /= 10;
+            digits++;
+        }
+        const CodeEditor::Style &style = _editor->_style;
+        return style.lineNumsLeftPadding + style.lineNumsRightPadding + style.lineNumsMargin +
+                fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
+    }
+    
 protected:
-    void paintEvent(QPaintEvent *event) override {
-        _editor->lineNumberAreaPaintEvent(event);
+    void paintEvent(QPaintEvent *event) override
+    {
+        auto r = event->rect();
+        int lineNumW = r.width();
+        const CodeEditor::Style &style = _editor->_style;
+        int borderPos = lineNumW - style.lineNumsMargin;
+    
+        QPainter painter(this);
+        if (style.lineNumsMargin > 0)
+            painter.fillRect(r, Qt::white);
+        r.setWidth(r.width() - style.lineNumsMargin);
+        painter.fillRect(r, style.lineNumsBackColor);
+    
+        painter.setPen(style.lineNumsBorderColor);
+        painter.drawLine(borderPos, r.top(), borderPos, r.bottom());
+    
+        if (style.lineNumsFontSizeDec > 0) {
+            auto f = painter.font();
+            f.setPointSize(f.pointSize() - style.lineNumsFontSizeDec);
+            painter.setFont(f);
+        }
+    
+        QTextBlock block = _editor->firstVisibleBlock();
+        int lineNum = block.blockNumber() + 1;
+        int lineTop = qRound(_editor->blockBoundingGeometry(block).translated(_editor->contentOffset()).top());
+        int lineH = qRound(_editor->blockBoundingRect(block).height());
+        int lineBot = lineTop + lineH;
+        while (block.isValid() && lineTop <= r.bottom())
+        {
+            if (block.isVisible() && lineBot >= r.top())
+            {
+                if (_editor->_lineHints.contains(lineNum))
+                {
+                    painter.setPen(style.lineNumsTextColorErr);
+                    painter.fillRect(0, lineTop, lineNumW - style.lineNumsMargin, lineH, style.lineNumsBackColorErr);
+                }
+                else
+                    painter.setPen(style.lineNumsTextColor);
+                painter.drawText(0, lineTop, lineNumW - style.lineNumsRightPadding - style.lineNumsMargin, lineH,
+                    Qt::AlignRight|Qt::AlignVCenter, QString::number(lineNum-1));
+            }
+            block = block.next();
+            lineTop = lineBot;
+            lineH = qRound(_editor->blockBoundingRect(block).height());
+            lineBot = lineTop + lineH;
+            lineNum++;
+        }
     }
-
+    
     bool event(QEvent *event) override
     {
         if (event->type() != QEvent::ToolTip)
@@ -33,7 +283,8 @@ protected:
         auto helpEvent = dynamic_cast<QHelpEvent*>(event);
         if (!helpEvent) return false;
 
-        auto hint = _editor->getLineHint(helpEvent->pos().y());
+        auto hint = _editor->_lineHints.isEmpty() ? QString() :
+            _editor->_lineHints.value(findLineNumber(helpEvent->pos().y()));
         if (hint.isEmpty())
             QToolTip::hideText();
         else
@@ -41,23 +292,35 @@ protected:
         event->accept();
         return true;
     }
-
+    
 private:
     Ori::Widgets::CodeEditor *_editor;
+
+    int findLineNumber(int y) const
+    {
+        QTextBlock block = _editor->firstVisibleBlock();
+        int lineNum = block.blockNumber() + 1;
+        int lineTop = qRound(_editor->blockBoundingGeometry(block).translated(_editor->contentOffset()).top());
+        int lineBot = lineTop + qRound(_editor->blockBoundingRect(block).height());
+        while (block.isValid())
+        {
+            if (y >= lineTop && y < lineBot) {
+                return lineNum;
+            }
+            block = block.next();
+            lineTop = lineBot;
+            lineBot = lineTop + qRound(_editor->blockBoundingRect(block).height());
+            lineNum++;
+        }
+        return 0;
+    }
 };
-
-} // namespace
-
-Q_DECLARE_METATYPE(QTextDocumentFragment)
-
-namespace Ori {
-namespace Widgets {
 
 //------------------------------------------------------------------------------
 //                               FoldedTextObject
 //------------------------------------------------------------------------------
 
-FoldedTextObject::FoldedTextObject(QObject *parent) : QObject(parent)
+FoldedTextObject::FoldedTextObject(CodeEditor *editor) : QObject(editor), _editor(editor)
 {
 }
 
@@ -65,7 +328,7 @@ QSizeF FoldedTextObject::intrinsicSize(QTextDocument *doc, int posInDocument, co
 {
     Q_UNUSED(doc)
     Q_UNUSED(posInDocument)
-    Q_ASSERT(format.type() == format.CharFormat);
+    if (format.type() != format.CharFormat) return {};
     const QTextCharFormat &tf = reinterpret_cast<const QTextCharFormat&>(format);
     return QFontMetrics(tf.font()).boundingRect(QStringLiteral("...")).size();
 }
@@ -74,7 +337,7 @@ void FoldedTextObject::drawObject(QPainter *painter, const QRectF &rect, QTextDo
 {
     Q_UNUSED(doc)
     Q_UNUSED(posInDocument)
-    Q_ASSERT(format.type() == format.CharFormat);
+    if (format.type() != format.CharFormat) return;
     painter->drawText(rect, QStringLiteral("..."));
     painter->drawRect(rect);
 }
@@ -82,23 +345,92 @@ void FoldedTextObject::drawObject(QPainter *painter, const QRectF &rect, QTextDo
 void FoldedTextObject::fold(QTextCursor c)
 {
     QTextCharFormat f;
-    f.setObjectType(type());
-    f.setProperty(prop(), QVariant::fromValue(c.selection()));
+    f.setObjectType(TEXT_FOLDER_TYPE);
+    f.setProperty(TEXT_FOLDER_PROP, QVariant::fromValue(c.selection()));
     c.insertText(QString(QChar::ObjectReplacementCharacter), f);
 }
 
-bool FoldedTextObject::unfold(QTextCursor c) {
-    if (!c.hasSelection()) {
-        QTextCharFormat f = c.charFormat();
-        if (f.objectType() == type()) {
-            c.movePosition(c.Left, c.KeepAnchor);
-            QVariant v = f.property(prop());
-            auto q = v.value<QTextDocumentFragment>();
-            c.insertFragment(q);
-            return true;
+void FoldedTextObject::foldCodeBlock(int tabWidth)
+{
+    auto block = _editor->textCursor().block();
+    
+    // TODO: add support for more type of blocks when needed
+    auto codeBlock = findPythonCodeBlock(block, tabWidth);
+    if (!codeBlock.ok())
+        return;
+    
+    QTextCursor foldCursor(_editor->document());
+    foldCursor.setPosition(block.position() + codeBlock.mountPos);
+    QTextBlock endBlock = _editor->document()->findBlockByNumber(codeBlock.endLine);
+    foldCursor.setPosition(endBlock.position() + endBlock.length() - 1, QTextCursor::KeepAnchor);
+    
+    fold(foldCursor);
+    
+    // Position the cursor after the folded block symbol
+    QTextCursor newCursor(_editor->document());
+    newCursor.setPosition(block.position() + codeBlock.mountPos + 1);
+    _editor->setTextCursor(newCursor);
+}
+
+void FoldedTextObject::unfold()
+{
+    auto c = _editor->textCursor();
+    if (c.hasSelection())
+        return;
+    
+    auto f = c.charFormat();
+    if (f.objectType() != TEXT_FOLDER_TYPE)
+        return;
+
+    c.movePosition(c.Left, c.KeepAnchor);
+    c.insertFragment(f.property(TEXT_FOLDER_PROP).value<QTextDocumentFragment>());
+}
+
+bool FoldedTextObject::hasFoldings() const
+{
+    auto block = _editor->document()->firstBlock();
+    while (block.isValid()) {
+        QString text = block.text();
+        for (int i = 0; i < text.length(); i++) {
+            if (text[i] == QChar::ObjectReplacementCharacter) {
+                QTextCursor cursor(block);
+                cursor.setPosition(block.position() + i);
+                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+                if (cursor.charFormat().objectType() == TEXT_FOLDER_TYPE)
+                    return true;
+            }
         }
+        block = block.next();
     }
     return false;
+}
+
+QString FoldedTextObject::toUnfoldedText() const
+{
+    QString result;
+    QTextStream out(&result);
+    QTextBlock block = _editor->document()->firstBlock();
+    while (block.isValid()) {
+        QString line = block.text();
+        for (int i = 0; i < line.length(); i++) {
+            if (line[i] == QChar::ObjectReplacementCharacter) {
+                QTextCursor cursor(block);
+                cursor.setPosition(block.position() + i);
+                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+                QTextCharFormat format = cursor.charFormat();
+                if (format.objectType() == TEXT_FOLDER_TYPE) {
+                    auto fragment = format.property(TEXT_FOLDER_PROP).value<QTextDocumentFragment>();
+                    out << fragment.toPlainText();
+                    continue;
+                }
+            }
+            out << line[i];
+        }
+        block = block.next();
+        if (block.isValid())
+            out << "\n";
+    }
+    return result;
 }
 
 //------------------------------------------------------------------------------
@@ -108,76 +440,115 @@ bool FoldedTextObject::unfold(QTextCursor c) {
 CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
 {
     setWordWrapMode(QTextOption::NoWrap);
+    setTabStopDistance(40); // twice less that the default
 
-    _lineNumArea = new LineNumberArea(this);
-    _commentSymbol = "#"; // default comment symbol for Python
-    _replaceTabsWithSpaces = true; // enabled by default
-    _tabSpaceCount = 4; // 4 spaces by default
-    _blockStartSymbol = ":"; // default block start symbol for Python
-    _autoIndentEnabled = true; // enabled by default
+    _lineNums = new EditorLineNums(this);
 
-    // default style
     _style.currentLineColor = QColor("steelBlue").lighter(220);
-    _style.lineNumTextColor = Qt::gray;
-    _style.lineNumTextColorErr = Qt::white;
-    _style.lineNumBorderColor = QColor(0xfff0f0f0);
-    _style.lineNumBackColor = QColor(0xfffafafa);
-    _style.lineNumBackColorErr = QColor(Qt::red).lighter(130);
-    _style.lineNumRightPadding = 8;
-    _style.lineNumLeftPadding = 12;
-    _style.lineNumMargin = 4;
-    _style.lineNumFontSizeDec = 2;
+    _style.lineNumsTextColor = Qt::gray;
+    _style.lineNumsTextColorErr = Qt::white;
+    _style.lineNumsBorderColor = QColor(0xfff0f0f0);
+    _style.lineNumsBackColor = QColor(0xfffafafa);
+    _style.lineNumsBackColorErr = QColor(Qt::red).lighter(130);
+    _style.lineNumsRightPadding = 8;
+    _style.lineNumsLeftPadding = 12;
+    _style.lineNumsMargin = 4;
+    _style.lineNumsFontSizeDec = 2;
     
     _textFolder = new FoldedTextObject(this);
-    document()->documentLayout()->registerHandler(_textFolder->type(), _textFolder); 
+    document()->documentLayout()->registerHandler(TEXT_FOLDER_TYPE, _textFolder); 
 
-    connect(this, &CodeEditor::blockCountChanged, this, &CodeEditor::updateLineNumberAreaWidth);
-    connect(this, &CodeEditor::updateRequest, this, &CodeEditor::updateLineNumberArea);
+    connect(this, &CodeEditor::blockCountChanged, this, &CodeEditor::onBlockCountChanged);
+    connect(this, &CodeEditor::updateRequest, this, &CodeEditor::onDocUpdateRequest);
     connect(this, &CodeEditor::cursorPositionChanged, this, &CodeEditor::highlightCurrentLine);
 
-    updateLineNumberAreaWidth(0);
+    onBlockCountChanged();
     highlightCurrentLine();
-    
-    setTabStopDistance(40); // twice less that the default
+}
+
+bool CodeEditor::loadCode(const QString &fileName)
+{
+    QFile f(fileName);
+    if (!f.open(QIODevice::ReadOnly|QIODevice::Text)) {
+        qWarning() << "Failed to open" << fileName << f.errorString();
+        return false;
+    }
+    setCode(QString::fromUtf8(f.readAll()));
+    return true;
+}
+
+bool CodeEditor::saveCode(const QString &fileName)
+{
+    QFile f(fileName);
+    if (!f.open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Truncate)){
+        qWarning() << "Failed to open" << fileName << f.errorString();
+        return false;
+    }
+    f.write(code().toUtf8());
+    return true;
+}
+
+QString CodeEditor::code() const
+{
+    return _textFolder->hasFoldings() ? _textFolder->toUnfoldedText() : toPlainText();
 }
 
 void CodeEditor::resizeEvent(QResizeEvent *e)
 {
     QPlainTextEdit::resizeEvent(e);
-
-    QRect cr = contentsRect();
-    _lineNumArea->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
+    _lineNums->adjustGeometry(contentsRect());
 }
 
-int CodeEditor::lineNumberAreaWidth() const
+void CodeEditor::keyPressEvent(QKeyEvent *e)
 {
-    int digits = 1;
-    // in a plain text edit each line will consist of one QTextBlock
-    int max = qMax(1, blockCount());
-    while (max >= 10)
-    {
-        max /= 10;
-        digits++;
+    auto key = e->key();
+    if (key == Qt::Key_Slash && e->modifiers() == Qt::ControlModifier) {
+        toggleCommentSelection();
+        return;
     }
-    return _style.lineNumLeftPadding + _style.lineNumRightPadding + _style.lineNumMargin +
-            fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
+    if (_autoIndent && (key == Qt::Key_Return || key == Qt::Key_Enter)) {
+        handleSmartEnter();
+        return;
+    }
+    if (_autoIndent && key == Qt::Key_Backspace) {
+        auto cursor = textCursor();
+        if (!cursor.hasSelection() && isCursorInIndent(cursor) && !cursor.atBlockStart()) {
+            unindentSelection();
+            return;
+        }
+    }
+    if (key == Qt::Key_Home && e->modifiers() == Qt::NoModifier) {
+        handleSmartHome();
+        return;
+    }
+    if (key == Qt::Key_Tab || key == Qt::Key_Backtab) {
+        if (key == Qt::Key_Backtab || e->modifiers() == Qt::ShiftModifier) {
+            unindentSelection();
+            return;
+        }
+        auto cursor = textCursor();
+        if (!cursor.hasSelection() && isCursorInIndent(cursor)) {
+            indentSelection();
+            return;
+        }
+    }
+    QPlainTextEdit::keyPressEvent(e);
 }
 
-void CodeEditor::updateLineNumberAreaWidth(int blockCount)
+void CodeEditor::onBlockCountChanged()
 {
-    Q_UNUSED(blockCount)
-    setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
+    setViewportMargins(_lineNums->calcWidth(), 0, 0, 0);
 }
 
-void CodeEditor::updateLineNumberArea(const QRect &rect, int dy)
+void CodeEditor::onDocUpdateRequest(const QRect &rect, int dy)
 {
     if (dy)
-        _lineNumArea->scroll(0, dy);
+        _lineNums->scroll(0, dy);
     else
-        _lineNumArea->update(0, rect.y(), _lineNumArea->width(), rect.height());
+        _lineNums->update(0, rect.y(), _lineNums->width(), rect.height());
 
     if (rect.contains(viewport()->rect()))
-        updateLineNumberAreaWidth(0);
+        setViewportMargins(_lineNums->calcWidth(), 0, 0, 0);
 }
 
 void CodeEditor::highlightCurrentLine()
@@ -188,84 +559,6 @@ void CodeEditor::highlightCurrentLine()
     selection.cursor = textCursor();
     selection.cursor.clearSelection();
     setExtraSelections({selection});
-}
-
-void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
-{
-    auto r = event->rect();
-    int lineNumW = r.width();
-    int borderPos = lineNumW - _style.lineNumMargin;
-
-    QPainter painter(_lineNumArea);
-    if (_style.lineNumMargin > 0)
-        painter.fillRect(r, Qt::white);
-    r.setWidth(r.width() - _style.lineNumMargin);
-    painter.fillRect(r, _style.lineNumBackColor);
-
-    painter.setPen(_style.lineNumBorderColor);
-    painter.drawLine(borderPos, r.top(), borderPos, r.bottom());
-
-    if (_style.lineNumFontSizeDec > 0) {
-        auto f = painter.font();
-        f.setPointSize(f.pointSize()-_style.lineNumFontSizeDec);
-        painter.setFont(f);
-    }
-
-    QTextBlock block = firstVisibleBlock();
-    int lineNum = block.blockNumber() + 1;
-    int lineTop = qRound(blockBoundingGeometry(block).translated(contentOffset()).top());
-    int lineH = qRound(blockBoundingRect(block).height());
-    int lineBot = lineTop + lineH;
-    while (block.isValid() && lineTop <= r.bottom())
-    {
-        if (block.isVisible() && lineBot >= r.top())
-        {
-            if (_lineHints.contains(lineNum))
-            {
-                painter.setPen(_style.lineNumTextColorErr);
-                painter.fillRect(0, lineTop, lineNumW - _style.lineNumMargin, lineH, _style.lineNumBackColorErr);
-            }
-            else
-                painter.setPen(_style.lineNumTextColor);
-            painter.drawText(0, lineTop, lineNumW - _style.lineNumRightPadding - _style.lineNumMargin, lineH,
-                Qt::AlignRight|Qt::AlignVCenter, QString::number(lineNum));
-        }
-        block = block.next();
-        lineTop = lineBot;
-        lineH = qRound(blockBoundingRect(block).height());
-        lineBot = lineTop + lineH;
-        lineNum++;
-    }
-}
-
-void CodeEditor::setLineHints(const QMap<int, QString>& hints)
-{
-    _lineHints = hints;
-    update();
-}
-
-int CodeEditor::findLineNumber(int y) const
-{
-    QTextBlock block = firstVisibleBlock();
-    int lineNum = block.blockNumber() + 1;
-    int lineTop = qRound(blockBoundingGeometry(block).translated(contentOffset()).top());
-    int lineBot = lineTop + qRound(blockBoundingRect(block).height());
-    while (block.isValid())
-    {
-        if (y >= lineTop && y < lineBot) {
-            return lineNum;
-        }
-        block = block.next();
-        lineTop = lineBot;
-        lineBot = lineTop + qRound(blockBoundingRect(block).height());
-        lineNum++;
-    }
-    return 0;
-}
-
-QString CodeEditor::getLineHint(int y) const
-{
-    return _lineHints.isEmpty() ? QString() : _lineHints.value(findLineNumber(y));
 }
 
 void CodeEditor::setShowWhitespaces(bool on)
@@ -282,851 +575,172 @@ bool CodeEditor::showWhitespaces() const
     return document()->defaultTextOption().flags().testFlag(QTextOption::ShowTabsAndSpaces);
 }
 
-bool CodeEditor::loadCode(const QString &fileName)
-{
-    QFile f(fileName);
-    if (!f.open(QIODevice::ReadOnly|QIODevice::Text)) {
-        qWarning() << "Failed to open" << fileName << f.errorString();
-        return false;
-    }
-    setPlainText(QString::fromUtf8(f.readAll()));
-    return true;
-}
-
-bool CodeEditor::saveCode(const QString &fileName)
-{
-    QFile f(fileName);
-    if (!f.open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Truncate)){
-        qWarning() << "Failed to open" << fileName << f.errorString();
-        return false;
-    }
-    
-    // Check if there are folded blocks and get appropriate text
-    QString textToSave;
-    if (hasFoldedBlocks()) {
-        textToSave = getUnfoldedText();
-    } else {
-        textToSave = toPlainText();
-    }
-    
-    f.write(textToSave.toUtf8());
-    return true;
-}
-
-void CodeEditor::keyPressEvent(QKeyEvent *e)
-{
-    // Handle Ctrl+/ for toggle comment
-    if (e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_Slash) {
-        toggleCommentSelection();
-        return;
-    }
-    
-    // Handle auto-indentation on Enter
-    if (e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) {
-        if (_autoIndentEnabled) {
-            handleAutoIndentOnEnter();
-            return;
-        }
-    }
-    
-    // Handle auto-unindent on Backspace
-    if (e->key() == Qt::Key_Backspace) {
-        if (_autoIndentEnabled && handleAutoUnindentOnBackspace()) {
-            return;
-        }
-    }
-    
-    // Handle smart Home key
-    if (e->key() == Qt::Key_Home && e->modifiers() == Qt::NoModifier) {
-        if (handleSmartHome()) {
-            return;
-        }
-    }
-    
-    // Handle Tab and Shift+Tab for indentation when text is selected
-    if (e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
-        QTextCursor cursor = textCursor();
-        if (cursor.hasSelection()) {
-            if (e->key() == Qt::Key_Backtab || e->modifiers() == Qt::ShiftModifier) {
-                unindentSelection();
-            } else {
-                indentSelection();
-            }
-            return;
-        } else if (e->key() == Qt::Key_Tab && _replaceTabsWithSpaces) {
-            // Handle Tab replacement with spaces for single cursor
-            QString spaces(static_cast<int>(_tabSpaceCount), ' ');
-            insertPlainText(spaces);
-            return;
-        }
-    }
-    
-    QPlainTextEdit::keyPressEvent(e);
-}
-
 void CodeEditor::commentSelection()
 {
-    QTextCursor cursor = textCursor();
-    
-    // If no selection, work with current line
-    if (!cursor.hasSelection()) {
-        cursor.select(QTextCursor::LineUnderCursor);
-    }
-    
-    int startPos = cursor.selectionStart();
-    int endPos = cursor.selectionEnd();
-    
-    // Get start and end blocks
-    QTextCursor startCursor(document());
-    startCursor.setPosition(startPos);
-    QTextCursor endCursor(document());
-    endCursor.setPosition(endPos);
-    
-    int startBlock = startCursor.blockNumber();
-    int endBlock = endCursor.blockNumber();
-    
-    // If selection ends at the beginning of a line, don't include that line
-    if (endCursor.atBlockStart() && endPos > startPos) {
-        endBlock--;
-    }
-    
-    cursor.beginEditBlock();
-    
-    // Comment each line
-    for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
-        QTextBlock block = document()->findBlockByNumber(blockNum);
-        if (!block.isValid()) continue;
-        
-        QString line = block.text();
-        if (line.trimmed().isEmpty()) continue; // Skip empty lines
-        
-        QString indentation = getLineIndentation(line);
-        QString commentedLine = indentation + _commentSymbol + " " + line.mid(indentation.length());
-        
-        QTextCursor lineCursor(block);
-        lineCursor.select(QTextCursor::LineUnderCursor);
-        lineCursor.insertText(commentedLine);
-    }
-    
-    cursor.endEditBlock();
-    
-    // Restore selection
-    selectLines(startBlock, endBlock);
+    SelectedRange(this).modify([this](const QString &line)->QString{
+        auto p = splitLine(line);
+        return p.indent + _commentSymbol + ' ' + p.text;
+    });
 }
 
 void CodeEditor::uncommentSelection()
 {
-    QTextCursor cursor = textCursor();
-    
-    // If no selection, work with current line
-    if (!cursor.hasSelection()) {
-        cursor.select(QTextCursor::LineUnderCursor);
-    }
-    
-    int startPos = cursor.selectionStart();
-    int endPos = cursor.selectionEnd();
-    
-    // Get start and end blocks
-    QTextCursor startCursor(document());
-    startCursor.setPosition(startPos);
-    QTextCursor endCursor(document());
-    endCursor.setPosition(endPos);
-    
-    int startBlock = startCursor.blockNumber();
-    int endBlock = endCursor.blockNumber();
-    
-    // If selection ends at the beginning of a line, don't include that line
-    if (endCursor.atBlockStart() && endPos > startPos) {
-        endBlock--;
-    }
-    
-    cursor.beginEditBlock();
-    
-    // Uncomment each line
-    for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
-        QTextBlock block = document()->findBlockByNumber(blockNum);
-        if (!block.isValid()) continue;
-        
-        QString line = block.text();
-        if (!isLineCommented(line)) continue; // Skip non-commented lines
-        
-        QString indentation = getLineIndentation(line);
-        QString trimmedLine = line.mid(indentation.length());
-        
-        // Remove comment symbol and optional following space
-        if (trimmedLine.startsWith(_commentSymbol)) {
-            trimmedLine = trimmedLine.mid(_commentSymbol.length());
-            if (trimmedLine.startsWith(" ")) {
-                trimmedLine = trimmedLine.mid(1);
+    SelectedRange(this).modify([this](const QString &line)->QString{
+        auto p = splitLine(line);
+        if (p.text.startsWith(_commentSymbol)) {
+            p.text = p.text.mid(_commentSymbol.length());
+            if (p.text.startsWith(' ')) {
+                p.text = p.text.mid(1);
             }
         }
-        
-        QString uncommentedLine = indentation + trimmedLine;
-        
-        QTextCursor lineCursor(block);
-        lineCursor.select(QTextCursor::LineUnderCursor);
-        lineCursor.insertText(uncommentedLine);
-    }
-    
-    cursor.endEditBlock();
-    
-    // Restore selection
-    selectLines(startBlock, endBlock);
+        return p.indent + p.text;
+    });
 }
 
 void CodeEditor::toggleCommentSelection()
 {
-    QTextCursor cursor = textCursor();
-    
-    // If no selection, work with current line
-    if (!cursor.hasSelection()) {
-        cursor.select(QTextCursor::LineUnderCursor);
-    }
-    
-    int startPos = cursor.selectionStart();
-    int endPos = cursor.selectionEnd();
-    
-    // Get start and end blocks
-    QTextCursor startCursor(document());
-    startCursor.setPosition(startPos);
-    QTextCursor endCursor(document());
-    endCursor.setPosition(endPos);
-    
-    int startBlock = startCursor.blockNumber();
-    int endBlock = endCursor.blockNumber();
-    
-    // If selection ends at the beginning of a line, don't include that line
-    if (endCursor.atBlockStart() && endPos > startPos) {
-        endBlock--;
-    }
-    
-    // Check if majority of lines are commented
-    int commentedLines = 0;
-    int totalLines = 0;
-    
-    for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
-        QTextBlock block = document()->findBlockByNumber(blockNum);
-        if (!block.isValid()) continue;
-        
-        QString line = block.text();
-        if (line.trimmed().isEmpty()) continue; // Skip empty lines
-        
+    int commentLines = 0, totalLines = 0;
+    SelectedRange(this).modify([this, &commentLines, &totalLines](const QString &line)->QString{
         totalLines++;
-        if (isLineCommented(line)) {
-            commentedLines++;
-        }
-    }
-    
-    // If majority are commented, uncomment; otherwise comment
-    if (commentedLines > totalLines / 2) {
+        if (splitLine(line).text.startsWith(_commentSymbol))
+            commentLines++;
+        return line;
+    });
+    if (commentLines > totalLines / 2)
         uncommentSelection();
-    } else {
-        commentSelection();
-    }
-}
-
-bool CodeEditor::isLineCommented(const QString& line) const
-{
-    QString trimmedLine = line.trimmed();
-    return trimmedLine.startsWith(_commentSymbol);
-}
-
-QString CodeEditor::getLineIndentation(const QString& line) const
-{
-    int i = 0;
-    while (i < line.length() && (line[i] == ' ' || line[i] == '\t')) {
-        i++;
-    }
-    return line.left(i);
-}
-
-void CodeEditor::selectLines(int startLine, int endLine)
-{
-    QTextBlock startBlock = document()->findBlockByNumber(startLine);
-    QTextBlock endBlock = document()->findBlockByNumber(endLine);
-    
-    if (!startBlock.isValid() || !endBlock.isValid()) return;
-    
-    QTextCursor cursor(startBlock);
-    cursor.movePosition(QTextCursor::StartOfBlock);
-    
-    // Set the anchor at the start of the first line
-    int startPos = cursor.position();
-    
-    // Move to the end of the last line
-    cursor.setPosition(endBlock.position() + endBlock.length() - 1);
-    
-    // Create selection from start to end
-    cursor.setPosition(startPos, QTextCursor::KeepAnchor);
-    
-    setTextCursor(cursor);
+    else commentSelection();
 }
 
 void CodeEditor::indentSelection()
 {
-    QTextCursor cursor = textCursor();
-    
-    // If no selection, work with current line
-    if (!cursor.hasSelection()) {
-        cursor.select(QTextCursor::LineUnderCursor);
-    }
-    
-    int startPos = cursor.selectionStart();
-    int endPos = cursor.selectionEnd();
-    
-    // Get start and end blocks
-    QTextCursor startCursor(document());
-    startCursor.setPosition(startPos);
-    QTextCursor endCursor(document());
-    endCursor.setPosition(endPos);
-    
-    int startBlock = startCursor.blockNumber();
-    int endBlock = endCursor.blockNumber();
-    
-    // If selection ends at the beginning of a line, don't include that line
-    if (endCursor.atBlockStart() && endPos > startPos) {
-        endBlock--;
-    }
-    
-    cursor.beginEditBlock();
-    
-    // Determine indentation string based on settings
-    QString indentString = _replaceTabsWithSpaces ? QString(_tabSpaceCount, ' ') : "\t";
-    
-    // Indent each line
-    for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
-        QTextBlock block = document()->findBlockByNumber(blockNum);
-        if (!block.isValid()) continue;
-        
-        QString line = block.text();
-        if (line.trimmed().isEmpty()) continue; // Skip empty lines
-        
-        // Normalize existing indentation if needed
-        QString normalizedLine = normalizeIndentation(line);
-        QString indentedLine = indentString + normalizedLine;
-        
-        QTextCursor lineCursor(block);
-        lineCursor.select(QTextCursor::LineUnderCursor);
-        lineCursor.insertText(indentedLine);
-    }
-    
-    cursor.endEditBlock();
-    
-    // Restore selection
-    selectLines(startBlock, endBlock);
+    SelectedRange(this).modify([this](const QString &line)->QString{
+        return oneIndent() + normalizeIndent(line);
+    });
 }
 
 void CodeEditor::unindentSelection()
 {
-    QTextCursor cursor = textCursor();
-    
-    // If no selection, work with current line
-    if (!cursor.hasSelection()) {
-        cursor.select(QTextCursor::LineUnderCursor);
-    }
-    
-    int startPos = cursor.selectionStart();
-    int endPos = cursor.selectionEnd();
-    
-    // Get start and end blocks
-    QTextCursor startCursor(document());
-    startCursor.setPosition(startPos);
-    QTextCursor endCursor(document());
-    endCursor.setPosition(endPos);
-    
-    int startBlock = startCursor.blockNumber();
-    int endBlock = endCursor.blockNumber();
-    
-    // If selection ends at the beginning of a line, don't include that line
-    if (endCursor.atBlockStart() && endPos > startPos) {
-        endBlock--;
-    }
-    
-    cursor.beginEditBlock();
-    
-    // Unindent each line
-    for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
-        QTextBlock block = document()->findBlockByNumber(blockNum);
-        if (!block.isValid()) continue;
-        
-        QString line = block.text();
-        if (line.trimmed().isEmpty()) continue; // Skip empty lines
-        
-        QString unindentedLine = removeOneIndentLevel(line);
-        // Normalize the remaining indentation to match current settings
-        unindentedLine = normalizeIndentation(unindentedLine);
-        
-        QTextCursor lineCursor(block);
-        lineCursor.select(QTextCursor::LineUnderCursor);
-        lineCursor.insertText(unindentedLine);
-    }
-    
-    cursor.endEditBlock();
-    
-    // Restore selection
-    selectLines(startBlock, endBlock);
+    SelectedRange(this).modify([this](const QString &line)->QString{
+        return removeOneIndent(normalizeIndent(line));
+    });
 }
 
-QString CodeEditor::normalizeIndentation(const QString& line) const
+QString CodeEditor::normalizeIndent(const QString& line) const
 {
-    QString indentation = getLineIndentation(line);
-    QString content = line.mid(indentation.length());
-    
-    if (_replaceTabsWithSpaces) {
-        // Convert tabs to spaces
-        QString normalizedIndent = indentation;
-        normalizedIndent.replace('\t', QString(_tabSpaceCount, ' '));
-        return normalizedIndent + content;
+    auto p = splitLine(line);
+    QString indent;
+    if (_replaceTabs) {
+        indent = p.indent.toString();
+        indent.replace('\t', tabSpaces());
     } else {
-        // Convert spaces to tabs (groups of _tabSpaceCount spaces become one tab)
-        QString normalizedIndent;
         int spaceCount = 0;
-        for (QChar c : std::as_const(indentation)) {
+        for (QChar c : std::as_const(p.indent)) {
             if (c == ' ') {
                 spaceCount++;
-                if (spaceCount == _tabSpaceCount) {
-                    normalizedIndent += '\t';
+                if (spaceCount == _tabWidth) {
+                    indent += '\t';
                     spaceCount = 0;
                 }
             } else if (c == '\t') {
                 // Add any remaining spaces first
-                normalizedIndent += QString(spaceCount, ' ');
+                indent += QString(spaceCount, ' ');
                 spaceCount = 0;
-                normalizedIndent += '\t';
+                indent += '\t';
             }
         }
         // Add any remaining spaces
-        normalizedIndent += QString(spaceCount, ' ');
-        return normalizedIndent + content;
+        indent += QString(spaceCount, ' ');
     }
+    return indent + p.text;
 }
 
-QString CodeEditor::removeOneIndentLevel(const QString& line) const
+QString CodeEditor::removeOneIndent(const QString& line) const
 {
-    if (line.isEmpty()) return line;
-    
-    QString indentation = getLineIndentation(line);
-    QString content = line.mid(indentation.length());
-    
-    if (indentation.isEmpty()) return line;
-    
-    QString newIndentation;
-    
-    if (_replaceTabsWithSpaces) {
-        // Remove up to _tabSpaceCount spaces or one tab
-        if (indentation.startsWith('\t')) {
-            newIndentation = indentation.mid(1);
-        } else {
-            int spacesToRemove = qMin(_tabSpaceCount, indentation.length());
-            int removed = 0;
-            for (int i = 0; i < indentation.length() && removed < spacesToRemove; i++) {
-                if (indentation[i] == ' ') {
-                    removed++;
-                } else {
-                    newIndentation += indentation.midRef(i);
-                    break;
-                }
-            }
-            if (removed == spacesToRemove && removed < indentation.length()) {
-                newIndentation += indentation.midRef(removed);
-            }
+    auto p = splitLine(line);
+    QStringRef indent;
+    if (p.indent.startsWith(' ')) {
+        int spaceCount = qMin(_tabWidth, p.indent.length());
+        for (int i = 0; i < p.indent.length() && i < spaceCount; i++) {
+            indent = p.indent.mid(i+1);
         }
     } else {
-        // Remove one tab or up to _tabSpaceCount spaces
-        if (indentation.startsWith('\t')) {
-            newIndentation = indentation.mid(1);
-        } else {
-            int spacesToRemove = qMin(_tabSpaceCount, indentation.length());
-            int removed = 0;
-            for (int i = 0; i < indentation.length() && removed < spacesToRemove; i++) {
-                if (indentation[i] == ' ') {
-                    removed++;
-                } else {
-                    newIndentation += indentation.midRef(i);
-                    break;
-                }
-            }
-            if (removed == spacesToRemove && removed < indentation.length()) {
-                newIndentation += indentation.midRef(removed);
-            }
-        }
+        indent = p.indent.mid(1);
     }
-    
-    return newIndentation + content;
+    return indent + p.text;
 }
 
-void CodeEditor::handleAutoIndentOnEnter()
+void CodeEditor::handleSmartEnter()
 {
-    QTextCursor cursor = textCursor();
-    QTextBlock currentBlock = cursor.block();
-    QString currentLine = currentBlock.text();
-    
-    // Get indentation of current line
-    QString indentation = getLineIndentation(currentLine);
+    auto cursor = textCursor();
+    auto line = cursor.block().text();
+    auto p = splitLine(line);
     
     // Check if text before cursor ends with block start symbol
-    int cursorPosInLine = cursor.positionInBlock();
-    QString textBeforeCursor = currentLine.left(cursorPosInLine);
-    QString trimmedTextBeforeCursor = textBeforeCursor.trimmed();
-    bool shouldIndentMore = trimmedTextBeforeCursor.endsWith(_blockStartSymbol);
+    QStringRef textBeforeCursor = line.leftRef(cursor.positionInBlock());
+    bool isNewBlock = textBeforeCursor.trimmed().endsWith(_blockStartSymbol);
     
-    // Insert new line
-    cursor.insertText("\n");
-    
-    // Add base indentation
-    cursor.insertText(indentation);
-    
-    // Add extra indentation if needed
-    if (shouldIndentMore) {
-        QString extraIndent = _replaceTabsWithSpaces ? QString(_tabSpaceCount, ' ') : "\t";
-        cursor.insertText(extraIndent);
-    }
-}
-
-bool CodeEditor::handleAutoUnindentOnBackspace()
-{
-    QTextCursor cursor = textCursor();
-    
-    // Only handle if cursor is in indentation area
-    if (!isCursorInIndentation()) {
-        return false; // Let default backspace handle it
-    }
-    
-    QTextBlock currentBlock = cursor.block();
-    QString currentLine = currentBlock.text();
-    QString indentation = getLineIndentation(currentLine);
-    
-    if (indentation.isEmpty()) {
-        return false; // No indentation to remove
-    }
-    
-    // Remove one indentation level
-    QString newIndentation = removeOneIndentLevel(currentLine);
-    newIndentation = normalizeIndentation(newIndentation);
-    
-    // Replace the entire line
-    QTextCursor lineCursor(currentBlock);
-    lineCursor.select(QTextCursor::LineUnderCursor);
-    lineCursor.insertText(newIndentation);
-    
-    // Position cursor at end of new indentation
-    cursor.setPosition(currentBlock.position() + getLineIndentation(newIndentation).length());
-    setTextCursor(cursor);
-    
-    return true; // We handled the backspace
-}
-
-bool CodeEditor::isCursorInIndentation() const
-{
-    QTextCursor cursor = textCursor();
-    QTextBlock currentBlock = cursor.block();
-    QString currentLine = currentBlock.text();
-    
-    int cursorPosInLine = cursor.positionInBlock();
-    QString indentation = getLineIndentation(currentLine);
-    
-    return cursorPosInLine <= indentation.length();
-}
-
-void CodeEditor::normalizeDocument(NormalizationOptions options)
-{
-    QTextCursor cursor = textCursor();
     cursor.beginEditBlock();
-    
-    // Save current cursor position
-    int originalPosition = cursor.position();
-    
-    // Process each block in the document
-    QTextBlock block = document()->firstBlock();
+    cursor.insertText("\n");
+    cursor.insertText(p.indent.toString());
+    if (isNewBlock)
+        cursor.insertText(oneIndent());
+    cursor.endEditBlock();
+}
+
+void CodeEditor::handleSmartHome()
+{
+    auto cursor = textCursor();
+    auto block = cursor.block();
+    auto p = splitLine(block.text());
+    if (cursor.positionInBlock() == p.indent.length())
+        cursor.movePosition(QTextCursor::StartOfBlock);
+    else cursor.setPosition(block.position() + p.indent.length());
+    setTextCursor(cursor);
+}
+
+void CodeEditor::normalize(NormalizationOptions options)
+{
+    auto cursor = textCursor();
+    auto backupPos = cursor.position();
+    cursor.beginEditBlock();
+    auto block = document()->firstBlock();
     while (block.isValid()) {
-        QString line = block.text();
-        QString normalizedLine = line;
-        
-        // Apply normalization steps based on options
-        if (options & NormalizeTrimTrailingSpaces) {
-            // Remove trailing spaces and tabs
-            while (!normalizedLine.isEmpty() && 
-                   (normalizedLine.right(1) == " " || normalizedLine.right(1) == "\t")) {
-                normalizedLine.chop(1);
+        QString origLine = block.text();
+        QString normLine = origLine;
+        if (options & NormTrailingSpaces) {
+            while (!normLine.isEmpty() && 
+                   (normLine.right(1) == " " || normLine.right(1) == "\t")) {
+                normLine.chop(1);
             }
         }
-        
-        if (options & NormalizeIndentation) {
-            // Skip empty lines for indentation normalization
-            if (!normalizedLine.trimmed().isEmpty()) {
-                normalizedLine = normalizeIndentation(normalizedLine);
-            }
+        if (options & NormIndentation) {
+            if (!isEmpty(normLine))
+                normLine = normalizeIndent(normLine);
         }
-        
-        // Only update if the line actually changed
-        if (normalizedLine != line) {
-            QTextCursor blockCursor(block);
-            blockCursor.select(QTextCursor::LineUnderCursor);
-            blockCursor.insertText(normalizedLine);
+        if (normLine != origLine) {
+            QTextCursor lineCursor(block);
+            lineCursor.select(QTextCursor::LineUnderCursor);
+            lineCursor.insertText(normLine);
         }
-        
         block = block.next();
     }
-    
-    // Ensure newline at end of document if requested
-    if (options & NormalizeEnsureNewlineAtEnd) {
-        QTextBlock lastBlock = document()->lastBlock();
+    if (options & NormFinalNewline) {
+        auto lastBlock = document()->lastBlock();
         if (lastBlock.isValid() && !lastBlock.text().isEmpty()) {
-            // Document doesn't end with an empty line, add newline
             QTextCursor endCursor(document());
             endCursor.movePosition(QTextCursor::End);
             endCursor.insertText("\n");
         }
     }
-    
     cursor.endEditBlock();
-    
-    // Restore cursor position (adjust if text length changed)
-    cursor.setPosition(qMin(originalPosition, document()->characterCount() - 1));
+    cursor.setPosition(qMin(backupPos, document()->characterCount() - 1));
     setTextCursor(cursor);
-}
-
-bool CodeEditor::handleSmartHome()
-{
-    QTextCursor cursor = textCursor();
-    QTextBlock currentBlock = cursor.block();
-    QString currentLine = currentBlock.text();
-    
-    int cursorPosInLine = cursor.positionInBlock();
-    QString indentation = getLineIndentation(currentLine);
-    int indentationEnd = indentation.length();
-    
-    // If cursor is already at the beginning of text content, move to line start
-    if (cursorPosInLine == indentationEnd) {
-        cursor.movePosition(QTextCursor::StartOfBlock);
-        setTextCursor(cursor);
-        return true;
-    }
-    
-    // If cursor is in indentation area, use default Home behavior
-    if (cursorPosInLine <= indentationEnd) {
-        return false; // Let default Home handle it
-    }
-    
-    // If cursor is in text content, move to beginning of text (end of indentation)
-    cursor.setPosition(currentBlock.position() + indentationEnd);
-    setTextCursor(cursor);
-    return true;
-}
-
-void CodeEditor::unfold()
-{
-    _textFolder->unfold(textCursor());
 }
 
 void CodeEditor::unfoldAll()
 {
-    if (hasFoldedBlocks())
-        setPlainText(getUnfoldedText());
-}
-
-void CodeEditor::foldSelection()
-{
-    _textFolder->fold(textCursor());
-}
-
-void CodeEditor::foldBlock()
-{
-    QTextCursor cursor = textCursor();
-    int currentLineNumber = cursor.blockNumber();
-    
-    // Detect the Python block starting from the current line
-    QPair<int, int> blockRange = detectPythonBlock(currentLineNumber);
-    
-    if (blockRange.first == -1 || blockRange.second == -1 || blockRange.first >= blockRange.second) {
-        // No valid block found
-        return;
-    }
-    
-    // Get the current line to find the colon position
-    QTextBlock currentBlock = document()->findBlockByNumber(currentLineNumber);
-    QString currentLine = currentBlock.text();
-    int colonPos = currentLine.lastIndexOf(':');
-    
-    if (colonPos == -1) {
-        // No colon found, can't fold
-        return;
-    }
-    
-    // Create selection from after the colon to the end of the block
-    QTextCursor foldCursor(document());
-    
-    // Start position: after the colon on the current line
-    foldCursor.setPosition(currentBlock.position() + colonPos + 1);
-    
-    // End position: end of the last line in the block
-    QTextBlock endBlock = document()->findBlockByNumber(blockRange.second);
-    foldCursor.setPosition(endBlock.position() + endBlock.length() - 1, QTextCursor::KeepAnchor);
-    
-    // Only fold if there's actually content to fold
-    if (foldCursor.hasSelection() && !foldCursor.selectedText().trimmed().isEmpty()) {
-        _textFolder->fold(foldCursor);
-        
-        // Position the cursor after the folded block symbol
-        QTextCursor newCursor(document());
-        newCursor.setPosition(currentBlock.position() + colonPos + 2); // +2 to be after colon and replacement char
-        setTextCursor(newCursor);
-    }
-}
-
-bool CodeEditor::hasFoldedBlocks() const
-{
-    // Scan the document for any ObjectReplacementCharacter with folded text object type
-    QTextBlock block = document()->firstBlock();
-    while (block.isValid()) {
-        QString text = block.text();
-        for (int i = 0; i < text.length(); i++) {
-            if (text[i] == QChar::ObjectReplacementCharacter) {
-                // Check if this replacement character has our folded text object type
-                QTextCursor cursor(block);
-                cursor.setPosition(block.position() + i);
-                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-                QTextCharFormat format = cursor.charFormat();
-                if (format.objectType() == FoldedTextObject::type()) {
-                    return true;
-                }
-            }
-        }
-        block = block.next();
-    }
-    return false;
-}
-
-QString CodeEditor::getUnfoldedText() const
-{
-    // Build the unfolded text by scanning the document and replacing folded blocks
-    QString result;
-    QTextBlock block = document()->firstBlock();
-    
-    while (block.isValid()) {
-        QString blockText = block.text();
-        QString unfoldedBlockText;
-        
-        // Process each character in the block
-        for (int i = 0; i < blockText.length(); i++) {
-            if (blockText[i] == QChar::ObjectReplacementCharacter) {
-                // Check if this is a folded text object
-                QTextCursor cursor(block);
-                cursor.setPosition(block.position() + i);
-                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-                QTextCharFormat format = cursor.charFormat();
-                
-                if (format.objectType() == FoldedTextObject::type()) {
-                    // Extract the folded content
-                    QVariant v = format.property(FoldedTextObject::prop());
-                    auto fragment = v.value<QTextDocumentFragment>();
-                    unfoldedBlockText += fragment.toPlainText();
-                } else {
-                    unfoldedBlockText += blockText[i];
-                }
-            } else {
-                unfoldedBlockText += blockText[i];
-            }
-        }
-        
-        // Add the unfolded block text to result
-        result += unfoldedBlockText;
-        
-        // Add newline if not the last block
-        if (block.next().isValid()) {
-            result += "\n";
-        }
-        
-        block = block.next();
-    }
-    
-    return result;
-}
-
-QPair<int, int> CodeEditor::detectPythonBlock(int lineNumber) const
-{
-    QTextBlock currentBlock = document()->findBlockByNumber(lineNumber);
-    if (!currentBlock.isValid()) {
-        return QPair<int, int>(-1, -1);
-    }
-    
-    QString currentLine = currentBlock.text();
-    
-    // Check if current line ends with colon (indicating start of a block)
-    if (!currentLine.trimmed().endsWith(':')) {
-        return QPair<int, int>(-1, -1);
-    }
-    
-    // Get the indentation level of the current line
-    int currentIndentLevel = getLineIndentationLevel(currentLine);
-    
-    // Find the range of lines that belong to this block
-    int startLine = lineNumber + 1; // Block starts from the next line
-    int endLine = -1;
-    int lastNonEmptyLine = -1; // Track the last line with actual content
-    
-    QTextBlock nextBlock = currentBlock.next();
-    int nextLineNumber = lineNumber + 1;
-    
-    // Scan forward to find the end of the block
-    while (nextBlock.isValid()) {
-        QString nextLine = nextBlock.text();
-        
-        // If line is empty, continue but don't update lastNonEmptyLine
-        if (nextLine.trimmed().isEmpty()) {
-            nextBlock = nextBlock.next();
-            nextLineNumber++;
-            continue;
-        }
-        
-        int nextIndentLevel = getLineIndentationLevel(nextLine);
-        
-        // If we find a line with same or less indentation, the block ends
-        if (nextIndentLevel <= currentIndentLevel) {
-            endLine = lastNonEmptyLine;
-            break;
-        }
-        
-        // This line belongs to the block
-        lastNonEmptyLine = nextLineNumber;
-        
-        nextBlock = nextBlock.next();
-        nextLineNumber++;
-    }
-    
-    // If we reached the end of document, the block extends to the last non-empty line
-    if (endLine == -1) {
-        endLine = lastNonEmptyLine != -1 ? lastNonEmptyLine : document()->blockCount() - 1;
-    }
-    
-    // Make sure we have at least one line to fold
-    if (startLine > endLine || endLine == -1) {
-        return QPair<int, int>(-1, -1);
-    }
-    
-    return QPair<int, int>(startLine, endLine);
-}
-
-int CodeEditor::getLineIndentationLevel(const QString& line) const
-{
-    int level = 0;
-    for (int i = 0; i < line.length(); i++) {
-        if (line[i] == '\t') {
-            level++; // Each tab counts as one indentation level
-        } else if (line[i] == ' ') {
-            // Count spaces, but only increment level when we have enough spaces for one indent
-            int spaceCount = 0;
-            while (i < line.length() && line[i] == ' ') {
-                spaceCount++;
-                i++;
-            }
-            i--; // Adjust because the for loop will increment i
-            level += spaceCount / _tabSpaceCount; // Convert spaces to indentation levels
-        } else {
-            break; // Found non-whitespace character
-        }
-    }
-    return level;
+    if (_textFolder->hasFoldings())
+        setPlainText(_textFolder->toUnfoldedText());
 }
 
 } // namespace Widgets
