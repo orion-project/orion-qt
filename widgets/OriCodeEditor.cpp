@@ -98,7 +98,7 @@ struct SelectedRange
             if (!block.isValid()) continue;
             
             QString line = block.text();
-            if (isEmpty(line)) continue;
+            if (_skipEmptyLines && isEmpty(line)) continue;
             
             QString changedLine = changeLine(line);
             if (changedLine == line) continue;
@@ -113,11 +113,14 @@ struct SelectedRange
         cursor.endEditBlock();
     }
     
+    SelectedRange& skipEmptyLines() { _skipEmptyLines = true; return *this; }
+    
     Ori::Widgets::CodeEditor *editor;
     QTextCursor cursor;
     int startPos, endPos;
     int startBlock, endBlock;
     int posDiff = 0;
+    bool _skipEmptyLines = false;
 };
 
 int getIndentLevel(const QString& line, int tabWidth)
@@ -530,8 +533,8 @@ void CodeEditor::keyPressEvent(QKeyEvent *e)
             return;
         }
     }
-    if (key == Qt::Key_Home && e->modifiers() == Qt::NoModifier) {
-        handleSmartHome();
+    if (key == Qt::Key_Home) {
+        handleSmartHome(e->modifiers() == Qt::ShiftModifier);
         return;
     }
     if (key == Qt::Key_Tab || key == Qt::Key_Backtab) {
@@ -590,7 +593,7 @@ bool CodeEditor::showWhitespaces() const
 
 void CodeEditor::commentSelection()
 {
-    SelectedRange(this).modify([this](const QString &line)->QString{
+    SelectedRange(this).skipEmptyLines().modify([this](const QString &line)->QString{
         auto p = splitLine(line);
         return p.indent + _commentSymbol + ' ' + p.text;
     });
@@ -598,7 +601,7 @@ void CodeEditor::commentSelection()
 
 void CodeEditor::uncommentSelection()
 {
-    SelectedRange(this).modify([this](const QString &line)->QString{
+    SelectedRange(this).skipEmptyLines().modify([this](const QString &line)->QString{
         auto p = splitLine(line);
         if (p.text.startsWith(_commentSymbol)) {
             p.text = p.text.mid(_commentSymbol.length());
@@ -613,7 +616,7 @@ void CodeEditor::uncommentSelection()
 void CodeEditor::toggleCommentSelection()
 {
     int commentLines = 0, totalLines = 0;
-    SelectedRange(this).modify([this, &commentLines, &totalLines](const QString &line)->QString{
+    SelectedRange(this).skipEmptyLines().modify([this, &commentLines, &totalLines](const QString &line)->QString{
         totalLines++;
         if (splitLine(line).text.startsWith(_commentSymbol))
             commentLines++;
@@ -700,14 +703,15 @@ void CodeEditor::handleSmartEnter()
     cursor.endEditBlock();
 }
 
-void CodeEditor::handleSmartHome()
+void CodeEditor::handleSmartHome(bool select)
 {
     auto cursor = textCursor();
     auto block = cursor.block();
     auto p = splitLine(block.text());
+    auto moveMode = select ? QTextCursor::KeepAnchor : QTextCursor::MoveAnchor;
     if (cursor.positionInBlock() == p.indent.length())
-        cursor.movePosition(QTextCursor::StartOfBlock);
-    else cursor.setPosition(block.position() + p.indent.length());
+        cursor.movePosition(QTextCursor::StartOfBlock, moveMode);
+    else cursor.setPosition(block.position() + p.indent.length(), moveMode);
     setTextCursor(cursor);
 }
 

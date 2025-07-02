@@ -130,7 +130,7 @@ private:
     QString oneIndent() const { return _replaceTabs ? tabSpaces() : "\t"; }
     
     void handleSmartEnter();
-    void handleSmartHome();
+    void handleSmartHome(bool select);
     
     friend class EditorLineNums;
 };
