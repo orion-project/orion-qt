@@ -2,7 +2,7 @@ name: highlighter
 title: Highlighter spec
 
 rule: Key
-expr: ^\s*(name|title|rule|expr|color|style|group|terms|opts):
+expr: ^\s*(name|title|rule|expr|color|style|group|terms|opts|skip):
 color: blue
 group: 1
 
@@ -28,3 +28,4 @@ expr: \s*#.*$
 color: darkGray
 style: bold,italic
 group: 1
+skip: Other rule

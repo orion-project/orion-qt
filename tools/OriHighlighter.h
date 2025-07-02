@@ -42,6 +42,10 @@ struct Rule
     QVector<QRegularExpression> exprs;
     QTextCharFormat format;
     QStringList terms;
+    /// List of other rule names.
+    /// If they are matched, then the current rule formatting will not be applied
+    QStringList skips;
+    QVector<int> skipIndexes;
     int group = 0;
     bool hyperlink = false;
     bool multiline = false;

@@ -110,6 +110,20 @@ private:
         }
         for (auto& expr : rule.exprs)
             expr.setPatternOptions(opts);
+        for (const auto &skipName : std::as_const(rule.skips))
+        {
+            int skipIndex = -1;
+            for (int i = 0; i < spec->rules.size(); i++)
+                if (spec->rules.at(i).name == skipName)
+                {
+                    skipIndex = i;
+                    break;
+                }
+            if (skipIndex < 0)
+                warning(QStringLiteral("Skip rule \"%1\" not found in previously defined rules").arg(skipName), ruleStarts[rule.name]);
+            else
+                rule.skipIndexes << skipIndex;
+        }
         spec->rules << rule;
     }
 
@@ -283,6 +297,13 @@ public:
                 }
                 else warning(QStringLiteral("Can't have \"expr\" and \"terms\" in the same rule"));
             }
+            else if (key == QStringLiteral("skip"))
+            {
+                if (rule.skips.contains(val)) 
+                    warning(QStringLiteral("Skip rule \"%1\" mentioned several times").arg(val));
+                else
+                    rule.skips << val;
+            }
             else warning(QStringLiteral("Unknown key"));
         }
         finalizeRule(rule, spec, opts);
@@ -450,8 +471,13 @@ Highlighter::Highlighter(QPlainTextEdit *parent, const QSharedPointer<Spec>& spe
 void Highlighter::highlightBlock(const QString &text)
 {
     bool hasMultilines = false;
-    foreach (const auto& rule, _spec->rules)
+
+    QVector<QVector<QPair<int, int>>> matchedRules(_spec->rules.size());
+
+    for (int i = 0; i < _spec->rules.size(); i++)
     {
+        const auto &rule = _spec->rules.at(i);
+
         if (rule.multiline && rule.exprs.size() >= 1)
         {
             hasMultilines = true;
@@ -464,24 +490,45 @@ void Highlighter::highlightBlock(const QString &text)
             {
                 int pos = m.capturedStart(rule.group);
                 int length = m.capturedLength(rule.group);
-
-                // Font style is applied correctly but highlighter can't make anchors and apply tooltips.
-                // We do it manually overriding event handlers in MemoEditor.
-                // There is the bug but seems nobody cares: https://bugreports.qt.io/browse/QTBUG-21553
-                if (rule.hyperlink)
+                
+                matchedRules[i] << qMakePair(pos, length);
+                
+                bool skip = false;
+                for (const auto &skipIndex : std::as_const(rule.skipIndexes))
                 {
-                    QTextCharFormat format(rule.format);
-                    format.setAnchorHref(m.captured(rule.group));
-                    setFormat(pos, length, format);
+                    const auto &skipMatches = matchedRules.at(skipIndex);
+                    if (!skipMatches.isEmpty())
+                    {
+                        for (const auto &m : skipMatches)
+                        {
+                            if (pos >= m.first && length <= m.second)
+                            {
+                                skip = true;
+                                break;
+                            }
+                        }
+                    }
                 }
-                else if (rule.fontSizeDelta != 0)
+                if (!skip)
                 {
-                    QTextCharFormat format(rule.format);
-                    format.setFontPointSize(_document->defaultFont().pointSize() + rule.fontSizeDelta);
-                    setFormat(pos, length, format);
+                    // Font style is applied correctly but highlighter can't make anchors and apply tooltips.
+                    // We do it manually overriding event handlers in MemoEditor.
+                    // There is the bug but seems nobody cares: https://bugreports.qt.io/browse/QTBUG-21553
+                    if (rule.hyperlink)
+                    {
+                        QTextCharFormat format(rule.format);
+                        format.setAnchorHref(m.captured(rule.group));
+                        setFormat(pos, length, format);
+                    }
+                    else if (rule.fontSizeDelta != 0)
+                    {
+                        QTextCharFormat format(rule.format);
+                        format.setFontPointSize(_document->defaultFont().pointSize() + rule.fontSizeDelta);
+                        setFormat(pos, length, format);
+                    }
+                    else
+                        setFormat(pos, length, rule.format);
                 }
-                else
-                    setFormat(pos, length, rule.format);
                 m = expr.match(text, pos + length);
             }
         }

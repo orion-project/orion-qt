@@ -34,16 +34,17 @@ expr: \b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b
 expr: \b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b
 color: #098658
 
-rule: Comment
-expr: #[^\n]*
-color: green
-
 rule: String
 # Single-quoted string, possibly containing escaped quote \'
 expr: '[^\\']*(\\.[^\\']*)*'
 # Double-quoted string, possibly containing escaped quote \"
 expr: "[^\\"]*(\\.[^\\"]*)*"
 color: #a31515
+
+rule: Comment
+skip: String
+expr: #[^\n]*
+color: green
 
 rule: Triple-quoted string (single)
 opts: multiline
@@ -106,7 +107,7 @@ Numbers in multi-line string 1 2.3
 """
 if __name__ == '__main__':
     folder = '/bin'
-    # use variant 2 for enumeration (+1)
+    # use 'variant' 2 for "enumeration" (+1)
     files = enumerate_files_variant_2(folder)
     for i, file in enumerate(files):
         print(f'file: #{i} \'{file}\' ("{file}")\n')
