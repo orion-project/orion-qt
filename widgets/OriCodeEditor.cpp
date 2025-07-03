@@ -70,6 +70,8 @@ struct SelectedRange
     
     ~SelectedRange()
     {
+        if (!_restoreSelection)
+            return;
         if (startBlock == endBlock) {
             // Restore position in single line
             QTextCursor cursor(editor->document());
@@ -83,9 +85,14 @@ struct SelectedRange
             QTextBlock end = editor->document()->findBlockByNumber(endBlock);
             if (!start.isValid() || !end.isValid()) return;
             
+            // When we selected till the end of document
+            int endPos = end.position() + end.length();
+            while (endPos >= editor->document()->characterCount())
+                endPos--;
+
             QTextCursor cursor(start);
             cursor.movePosition(QTextCursor::StartOfBlock);
-            cursor.setPosition(end.position() + end.length(), QTextCursor::KeepAnchor);
+            cursor.setPosition(endPos, QTextCursor::KeepAnchor);
             editor->setTextCursor(cursor);
         }
     }
@@ -109,11 +116,13 @@ struct SelectedRange
             QTextCursor lineCursor(block);
             lineCursor.select(QTextCursor::LineUnderCursor);
             lineCursor.insertText(changedLine);
+
+            _restoreSelection = true;
         }
         cursor.endEditBlock();
     }
     
-    void iter(std::function<void(const QString &line)> iterLine)
+    SelectedRange& iter(std::function<void(const QString &line)> iterLine)
     {
         for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
             QTextBlock block = editor->document()->findBlockByNumber(blockNum);
@@ -124,6 +133,7 @@ struct SelectedRange
             
             iterLine(line);
         }
+        return *this;
     }
     
     SelectedRange& skipEmptyLines() { _skipEmptyLines = true; return *this; }
@@ -134,6 +144,7 @@ struct SelectedRange
     int startBlock, endBlock;
     int posDiff = 0;
     bool _skipEmptyLines = false;
+    bool _restoreSelection = false;
 };
 
 int getIndentLevel(const QString& line, int tabWidth)
@@ -607,14 +618,15 @@ bool CodeEditor::showWhitespaces() const
 void CodeEditor::commentSelection()
 {
     int commentPos = -1;
-    SelectedRange(this).skipEmptyLines().iter([&commentPos](const QString &line){
-        auto p = splitLine(line);
-        if (commentPos < 0 || p.indent.length() < commentPos)
-            commentPos = p.indent.length();
-    });
-    SelectedRange(this).skipEmptyLines().modify([this, commentPos](const QString &line)->QString{
-        return line.leftRef(commentPos) + _commentSymbol + ' ' + line.midRef(commentPos);
-    });
+    SelectedRange(this).skipEmptyLines()
+        .iter([&commentPos](const QString &line){
+            auto p = splitLine(line);
+            if (commentPos < 0 || p.indent.length() < commentPos)
+                commentPos = p.indent.length();
+        })
+        .modify([this, commentPos](const QString &line)->QString{
+            return line.leftRef(commentPos) + _commentSymbol + ' ' + line.midRef(commentPos);
+        });
 }
 
 void CodeEditor::uncommentSelection()
