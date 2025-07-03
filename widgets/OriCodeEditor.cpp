@@ -113,6 +113,19 @@ struct SelectedRange
         cursor.endEditBlock();
     }
     
+    void iter(std::function<void(const QString &line)> iterLine)
+    {
+        for (int blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+            QTextBlock block = editor->document()->findBlockByNumber(blockNum);
+            if (!block.isValid()) continue;
+            
+            QString line = block.text();
+            if (_skipEmptyLines && isEmpty(line)) continue;
+            
+            iterLine(line);
+        }
+    }
+    
     SelectedRange& skipEmptyLines() { _skipEmptyLines = true; return *this; }
     
     Ori::Widgets::CodeEditor *editor;
@@ -593,9 +606,14 @@ bool CodeEditor::showWhitespaces() const
 
 void CodeEditor::commentSelection()
 {
-    SelectedRange(this).skipEmptyLines().modify([this](const QString &line)->QString{
+    int commentPos = -1;
+    SelectedRange(this).skipEmptyLines().iter([&commentPos](const QString &line){
         auto p = splitLine(line);
-        return p.indent + _commentSymbol + ' ' + p.text;
+        if (commentPos < 0 || p.indent.length() < commentPos)
+            commentPos = p.indent.length();
+    });
+    SelectedRange(this).skipEmptyLines().modify([this, commentPos](const QString &line)->QString{
+        return line.leftRef(commentPos) + _commentSymbol + ' ' + line.midRef(commentPos);
     });
 }
 
@@ -616,11 +634,10 @@ void CodeEditor::uncommentSelection()
 void CodeEditor::toggleCommentSelection()
 {
     int commentLines = 0, totalLines = 0;
-    SelectedRange(this).skipEmptyLines().modify([this, &commentLines, &totalLines](const QString &line)->QString{
+    SelectedRange(this).skipEmptyLines().iter([this, &commentLines, &totalLines](const QString &line){
         totalLines++;
         if (splitLine(line).text.startsWith(_commentSymbol))
             commentLines++;
-        return line;
     });
     if (commentLines > totalLines / 2)
         uncommentSelection();
