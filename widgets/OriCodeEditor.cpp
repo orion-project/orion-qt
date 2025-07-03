@@ -294,7 +294,7 @@ protected:
                 else
                     painter.setPen(style.lineNumsTextColor);
                 painter.drawText(0, lineTop, lineNumW - style.lineNumsRightPadding - style.lineNumsMargin, lineH,
-                    Qt::AlignRight|Qt::AlignVCenter, QString::number(lineNum-1));
+                    Qt::AlignRight|Qt::AlignVCenter, QString::number(lineNum));
             }
             block = block.next();
             lineTop = lineBot;
