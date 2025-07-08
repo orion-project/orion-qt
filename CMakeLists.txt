@@ -1,15 +1,8 @@
 set(ORI_NAME orion)
 
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-if(MSVC)
-    set(CMAKE_CXX_STANDARD 20)
-else()
-    set(CMAKE_CXX_STANDARD 17)
-endif()
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+option(ORI_WITH_SVG "Include SVG widgets" OFF)
 option(ORI_WITH_TESTS "Include testing framework and internal tests" OFF)
+option(ORI_WITH_STYLESHEETS "Use style-sheets rather than palette for colorizing selected state of widgets" OFF)
 
 set(ORI_SOURCES
     core/OriArg.h
@@ -75,6 +68,12 @@ if(ORI_WITH_TESTS)
     )
 endif()
 
+if(ORI_WITH_SVG)
+    list(APPEND ORI_SOURCES
+        widgets/OriSvgView.h widgets/OriSvgView.cpp
+    )
+endif()
+
 add_library(${ORI_NAME} STATIC
     ${ORI_SOURCES}
 )
@@ -83,9 +82,19 @@ target_link_libraries(${ORI_NAME} PRIVATE
     Qt::Widgets
 )
 
+if(ORI_WITH_SVG)
+    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Svg)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Svg)
+    target_link_libraries(${ORI_NAME} PRIVATE Qt::Svg)
+endif()
+
 target_compile_definitions(${ORI_NAME} PRIVATE
     QT_USE_QSTRINGBUILDER
 )
+
+if(ORI_WITH_STYLESHEETS)
+    target_compile_definitions(${ORI_NAME} PRIVATE ORI_USE_STYLE_SHEETS)
+endif()
 
 target_include_directories(${ORI_NAME} INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}

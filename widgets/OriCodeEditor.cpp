@@ -1,12 +1,13 @@
 #include "OriCodeEditor.h"
 
 #include <QDebug>
+#include <QFile>
+#include <QKeyEvent>
 #include <QPainter>
 #include <QTextBlock>
-#include <QToolTip>
-#include <QKeyEvent>
 #include <QTextCursor>
 #include <QTextDocumentFragment>
+#include <QToolTip>
 
 Q_DECLARE_METATYPE(QTextDocumentFragment)
 
@@ -19,18 +20,18 @@ Q_DECLARE_METATYPE(QTextDocumentFragment)
 
 namespace {
 
-struct LineParts { QStringRef indent; QStringRef text; };
+struct LineParts { QStringView indent; QStringView text; };
 
 LineParts splitLine(const QString &line)
 {
     int i = 0;
     while (i < line.length() && (line[i] == ' ' || line[i] == '\t')) i++;
-    return { line.leftRef(i), line.midRef(i) };
+    return { QStringView(line).left(i), QStringView(line).mid(i) };
 }
 
 inline bool isEmpty(const QString &line)
 {
-    return QStringRef(&line).trimmed().isEmpty();
+    return QStringView(line).trimmed().isEmpty();
 }
 
 bool isCursorInIndent(const QTextCursor &cursor)
@@ -625,7 +626,8 @@ void CodeEditor::commentSelection()
                 commentPos = p.indent.length();
         })
         .modify([this, commentPos](const QString &line)->QString{
-            return line.leftRef(commentPos) + _commentSymbol + ' ' + line.midRef(commentPos);
+            QStringView ln(line);
+            return ln.left(commentPos) + _commentSymbol + ' ' + ln.mid(commentPos);
         });
 }
 
@@ -702,7 +704,7 @@ QString CodeEditor::normalizeIndent(const QString& line) const
 QString CodeEditor::removeOneIndent(const QString& line) const
 {
     auto p = splitLine(line);
-    QStringRef indent;
+    QStringView indent;
     if (p.indent.startsWith(' ')) {
         int spaceCount = qMin(_tabWidth, p.indent.length());
         for (int i = 0; i < p.indent.length() && i < spaceCount; i++) {
@@ -721,7 +723,7 @@ void CodeEditor::handleSmartEnter()
     auto p = splitLine(line);
     
     // Check if text before cursor ends with block start symbol
-    QStringRef textBeforeCursor = line.leftRef(cursor.positionInBlock());
+    QStringView textBeforeCursor = QStringView(line).left(cursor.positionInBlock());
     bool isNewBlock = textBeforeCursor.trimmed().endsWith(_blockStartSymbol);
     
     cursor.beginEditBlock();
