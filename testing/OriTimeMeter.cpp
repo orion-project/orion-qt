@@ -22,7 +22,7 @@ QString formatDuration(int64_t duration_ns)
         unit = QStringLiteral(" ns");
     } else if (d/1e6 < 1) {
         time = QString::number(d/1e3, 'f', 3);
-        unit = QStringLiteral(" µs");
+        unit = QString(" µs"); // msvc doesn't like non-ascii
     } else if (d/1e9 < 1) {
         time = QString::number(d/1e6, 'f', 3);
         unit = QStringLiteral(" ms");
