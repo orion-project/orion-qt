@@ -32,8 +32,8 @@ ValueEdit::ValueEdit(QWidget *parent) : QLineEdit(parent)
     setSizePolicy(QSizePolicy::Preferred, sizePolicy().verticalPolicy());
     setValidator(new ValueValidator(this));
 
-    connect(this, SIGNAL(textChanged(QString)), this, SLOT(textChanged(QString)));
-    connect(this, SIGNAL(textEdited(QString)), this, SLOT(textEdited(QString)));
+    connect(this, &QLineEdit::textChanged, this, &ValueEdit::onTextChanged);
+    connect(this, &QLineEdit::textEdited, this, &ValueEdit::onTextEdited);
 }
 
 ValueEdit::ValueEdit(const double &value, QWidget *parent) : ValueEdit(parent)
@@ -68,7 +68,7 @@ void ValueEdit::keyPressEvent(QKeyEvent *e)
     emit keyPressed(e->key());
 }
 
-void ValueEdit::textChanged(const QString& text)
+void ValueEdit::onTextChanged(const QString& text)
 {
     processInput(text);
 
@@ -76,7 +76,7 @@ void ValueEdit::textChanged(const QString& text)
         emit valueChanged(_value);
 }
 
-void ValueEdit::textEdited(const QString& text)
+void ValueEdit::onTextEdited(const QString& text)
 {
     processInput(text);
 

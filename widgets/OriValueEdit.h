@@ -32,26 +32,27 @@ signals:
     void valueChanged(double value);
 
 protected:
+    double _value = 0;
+    bool _ok;
+
     void focusInEvent(QFocusEvent *e) override;
     void focusOutEvent(QFocusEvent *e) override;
     void keyPressEvent(QKeyEvent *e) override;
 
+    virtual void processInput(const QString& text);
+    virtual void indicateValidation(bool ok);
+
 private:
     QLocale _locale;
-    double _value = 0;
-    bool _ok;
     int _numberPrecision = 6;
     int _preferredWidth = 128;
 
     QString toString(const double& value) const;
 
-    void processInput(const QString& text);
-    void indicateValidation(bool ok);
     QColor invalidColor(const QColor& base);
 
-private slots:
-    void textChanged(const QString& text);
-    void textEdited(const QString& text);
+    void onTextChanged(const QString& text);
+    void onTextEdited(const QString& text);
 };
 
 } // namespace Widgets
