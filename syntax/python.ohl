@@ -4,7 +4,7 @@ title: Python code
 rule: Keywords
 terms: and,as,assert,break,continue,del,elif,else,except,exec,finally
 terms: for,from,global,if,import,in,is,lambda,not,or,pass,print,raise,return
-terms: try,while,yield,None,True,False
+terms: try,while,with,yield,None,True,False
 color: #af00db
 
 rule: Function and class def
