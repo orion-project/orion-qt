@@ -19,6 +19,10 @@
 #include <QToolBar>
 #include <QToolButton>
 
+#ifdef ORI_USE_ZIP_HELP
+#include <zip.h>
+#endif
+
 namespace {
 
 Ori::HelpWindow* __instance = nullptr;
@@ -40,6 +44,24 @@ public:
         if (!f.open(QIODevice::ReadOnly))
             qWarning() << "Unable to open resource file" << f.fileName() << f.errorString();
         document()->setDefaultStyleSheet(QString::fromUtf8(f.readAll()));
+
+    #ifdef ORI_USE_ZIP_HELP
+        int errCode;
+        auto helpFile = HelpWindow::getHelpDir().toStdString();
+        _helpZip = zip_open(helpFile.c_str(), ZIP_RDONLY, &errCode);
+        if (!_helpZip) {
+            zip_error_t error;
+            zip_error_init_with_code(&error, errCode);
+            setPlainText(QString("Failed to open help file: %1").arg(zip_error_strerror(&error)));
+            zip_error_fini(&error);
+        }
+    #endif
+    }
+    
+    ~HelpBrowser()
+    {
+        if (_helpZip)
+            zip_discard(_helpZip);
     }
 
     QString addExt(const QString &name)
@@ -96,7 +118,68 @@ public:
         QTextBrowser::reload();
         updateHtml();
     }
+    
+#ifdef ORI_USE_ZIP_HELP
+    struct ZipFile
+    {
+        ZipFile(zip *z, const QString &name)
+        {
+            struct zip_stat fi;
+            zip_stat_init(&fi);
+            auto fn = name.toStdString();
+            if (zip_stat(z, fn.c_str(), ZIP_FL_UNCHANGED, &fi) < 0) {
+                error = QString("Failed to get info for %1: %2").arg(name).arg(zip_error_strerror(zip_get_error(z)));
+                return;
+            }
+            if (!(fi.valid & ZIP_STAT_SIZE)) {
+                error = QString("Unable to get size of %1").arg(name);
+            }
+            zf = zip_fopen(z, fn.c_str(), ZIP_FL_UNCHANGED);
+            if (!zf) {
+                error = QString("Failed to open %1: %2").arg(name).arg(zip_error_strerror(zip_get_error(z)));
+                return;
+            }
+            data = QByteArray(fi.size, 0);
+            auto bytesRead = zip_fread(zf, data.data(), fi.size);
+            if (bytesRead < 0) {
+                error = QString("Failed to read %1: %2").arg(name).arg(zip_error_strerror(zip_file_get_error(zf)));
+                return;
+            }
+            if (bytesRead != fi.size) {
+                error = QString("Failed to read %1: expected %2 bytes but read %3 bytes").arg(name).arg(fi.size).arg(bytesRead);
+                return;
+            }
+        }
+    
+        ~ZipFile()
+        {
+            if (zf)
+                zip_fclose(zf);
+        }
+        
+        QString error;
+        QByteArray data;
+        zip_file *zf = nullptr;
+    };
 
+    QVariant loadResource(int type, const QUrl &name) override
+    {
+        if (type == QTextDocument::MarkdownResource || type == QTextDocument::ImageResource) {
+            QString fileName = name.path();
+            if (fileName.startsWith(QStringLiteral("./")))
+                fileName = fileName.mid(2);
+            ZipFile zf(_helpZip, fileName);
+            if (zf.error.isEmpty())
+                return zf.data;
+            qWarning() << zf.error;
+            if (type == QTextDocument::MarkdownResource)
+                return zf.error;
+            return QVariant();
+        }
+        return QTextBrowser::loadResource(type, name);
+    }
+#endif
+    
 private:
     void updateHtml()
     {
@@ -114,6 +197,10 @@ private:
             text.replace(p.first, p.second);
         setHtml(text);
     }
+    
+#ifdef ORI_USE_ZIP_HELP
+    zip *_helpZip = nullptr;
+#endif
 };
 
 //------------------------------------------------------------------------------
@@ -127,7 +214,11 @@ std::function<QString()> HelpWindow::getCssSrc = []{
 };
 
 std::function<QString()> HelpWindow::getHelpDir = []{
+#ifdef ORI_USE_ZIP_HELP
+    return QString(qApp->applicationDirPath() + "/help.zip");
+#else
     return QString(qApp->applicationDirPath() + "/help");
+#endif
 };
 
 void HelpWindow::showContent()
@@ -165,7 +256,9 @@ HelpWindow::HelpWindow() : QWidget()
     auto statusBar = new QStatusBar;
 
     _browser = new HelpBrowser;
+#ifndef ORI_USE_ZIP_HELP
     _browser->setSearchPaths({ getHelpDir() });
+#endif
     _browser->setOpenExternalLinks(false);
     _browser->setOpenLinks(false);
     connect(_browser, QOverload<const QUrl&>::of(&QTextBrowser::highlighted), this, [statusBar](const QUrl& url){
