@@ -10,6 +10,9 @@ namespace Ori {
 class IMessageBusListener
 {
 public:
+    IMessageBusListener();
+    ~IMessageBusListener();
+
     virtual void messageBusEvent(int event, const QMap<QString, QVariant>& params) = 0;
 };
 
