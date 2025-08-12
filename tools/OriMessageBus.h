@@ -51,15 +51,23 @@ void AnotherWindow::doSomething() {
 ```
 
 */
-class MessageBus :
-    public Singleton<MessageBus>,
-    public Notifier<IMessageBusListener>
+class MessageBus : public Singleton<MessageBus>
 {
 public:
     static void send(int event, const QMap<QString, QVariant>& params = {});
 
+    void registerListener(IMessageBusListener *listener);
+    void unregisterListener(IMessageBusListener *listener);
+
 private:
     MessageBus() {}
+    
+    QList<IMessageBusListener*> _listeners;
+    QList<IMessageBusListener*> _pendingRegistrations;
+    QList<IMessageBusListener*> _pendingUnregistrations;
+    bool _isSending = false;
+    
+    void sendEvent(int event, const QMap<QString, QVariant>& params);
 
     friend class Singleton<MessageBus>;
 };
