@@ -60,8 +60,10 @@ public:
     
     ~HelpBrowser()
     {
+    #ifdef ORI_USE_ZIP_HELP
         if (_helpZip)
             zip_discard(_helpZip);
+    #endif
     }
 
     QString addExt(const QString &name)
