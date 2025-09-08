@@ -492,7 +492,11 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             w->mainLayout()->addWidget(it->value);
         if (auto it = dynamic_cast<ConfigItemSpace*>(item); it)
             w->mainLayout()->addSpacing(it->value);
-        else if (auto it = dynamic_cast<ConfigItemBool*>(item); it) {
+        if (auto it = dynamic_cast<ConfigItemInfo*>(item); it) {
+            auto label = new QLabel(it->title);
+            label->setWordWrap(true);
+            w->mainLayout()->addWidget(label);
+        } else if (auto it = dynamic_cast<ConfigItemBool*>(item); it) {
             auto boolEditor = new ConfigItemEditorBool(it);
             if (!it->radioGroupId.isEmpty()) {
                 for (auto other = _editors.constBegin(); other != _editors.constEnd(); other++) {

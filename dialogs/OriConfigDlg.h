@@ -90,6 +90,14 @@ public:
 
 //------------------------------------------------------------------------------
 
+class ConfigItemInfo : public ConfigItem
+{
+public:
+    ConfigItemInfo(int pageId, const QString& title) : ConfigItem(pageId, title) {}
+};
+
+//------------------------------------------------------------------------------
+
 class ConfigItemBool : public ConfigItem
 {
 public:
