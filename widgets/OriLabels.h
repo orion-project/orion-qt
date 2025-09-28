@@ -81,6 +81,13 @@ private:
     QLabel *_icon, *_text;
 };
 
+//------------------------------------------------------------------------------
+//                                 iconLabel
+//------------------------------------------------------------------------------
+
+QLabel* iconLabel(const QString &iconPath, int size);
+QLabel* iconLabel(const QString &iconPath, const QSize &size);
+
 } // namespace Widgets
 } // namespace Ori
 

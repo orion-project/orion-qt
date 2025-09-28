@@ -153,5 +153,24 @@ void ImagedLabel::clear()
     _text->clear();
 }
 
+//------------------------------------------------------------------------------
+//                                 iconLabel
+//------------------------------------------------------------------------------
+
+QLabel* iconLabel(const QString &iconPath, int size)
+{
+    return iconLabel(iconPath, {size, size});
+}
+
+QLabel* iconLabel(const QString &iconPath, const QSize &size)
+{
+    auto label = new QLabel;
+    QIcon icon(iconPath);
+    label->setPixmap(icon.pixmap(size));
+    label->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+    return label;
+}
+
+
 } // namespace Widgets
 } // namespace Ori
