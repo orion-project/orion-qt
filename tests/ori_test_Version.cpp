@@ -43,9 +43,17 @@ TEST_METHOD(constructor_str)
     Version v4("8.9.2.3");
     TEST_LOG(v4.str())
     ASSERT_IS_TRUE(v4.match(8, 9, 2))
+    
+    Version v5("2.0.1-beta2");
+    TEST_LOG(v5.str())
+    ASSERT_IS_TRUE(v5.match(2, 0, 1))
+
+    Version v6("2.0.1-beta-2");
+    TEST_LOG(v6.str())
+    ASSERT_IS_TRUE(v6.match(2, 0, 1))
 }
 
-TEST_METHOD(constructor_str_invaid)
+TEST_METHOD(constructor_str_invalid)
 {
     Version v0("this not a version");
     ASSERT_IS_TRUE(v0.match(0))
@@ -57,6 +65,9 @@ TEST_METHOD(constructor_str_invaid)
     ASSERT_IS_TRUE(v2.match(0))
 
     Version v3("1.2.this not a version");
+    ASSERT_IS_TRUE(v3.match(0))
+
+    Version v4("1.2.3beta");
     ASSERT_IS_TRUE(v3.match(0))
 }
 
@@ -118,7 +129,7 @@ TEST_METHOD(str)
 TEST_GROUP("Version",
     ADD_TEST(constructor_int),
     ADD_TEST(constructor_str),
-    ADD_TEST(constructor_str_invaid),
+    ADD_TEST(constructor_str_invalid),
     ADD_TEST(more_and_less),
     ADD_TEST(operators),
     ADD_TEST(isValid),

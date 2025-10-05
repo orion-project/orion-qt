@@ -24,6 +24,14 @@ public:
             _major = parts.at(0).toInt(&majorOk);
             _minor = parts.at(1).toInt(&minorOk);
             _patch = parts.at(2).toInt(&patchOk);
+            // Handle codename
+            // 2.0.1-beta2 is a valid version
+            if (!patchOk)
+            {
+                parts = parts.at(2).split('-');
+                if (parts.size() >= 2)
+                    _patch = parts.at(0).toInt(&patchOk);
+            }
         }
         else if (parts.size() == 2)
         {

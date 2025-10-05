@@ -31,6 +31,7 @@ set(ORI_SOURCES
     tools/OriSettings.h tools/OriSettings.cpp
     tools/OriStyler.h tools/OriStyler.cpp
     tools/OriTranslator.h tools/OriTranslator.cpp
+    tools/OriUpdater.h tools/OriUpdater.cpp
     widgets/OriActions.h widgets/OriActions.cpp
     widgets/OriBackWidget.h widgets/OriBackWidget.cpp
     widgets/OriCharMap.h widgets/OriCharMap.cpp
@@ -79,8 +80,13 @@ add_library(${ORI_NAME} STATIC
     ${ORI_SOURCES}
 )
 
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Network Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Network Widgets)
+
+
 target_link_libraries(${ORI_NAME} PRIVATE
     Qt::Widgets
+    Qt::Network
 )
 
 if(ORI_WITH_SVG)
