@@ -61,6 +61,7 @@ void UpdateChecker::versionReceived(QByteArray data)
 {
     auto serverVersion = Ori::Version(QString::fromLatin1(data));
     if (_config.currentVersion >= serverVersion) {
+        _config.statusStore->saveChecked();
         qDebug() << "No update available, version on server" << serverVersion.str(3);
         if (!_silent)
             Ori::Dlg::info(tr("You are using the most recent version"));
