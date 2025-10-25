@@ -36,6 +36,12 @@ LayoutItem::LayoutItem(const QString& label)
     _widget = new QLabel(label);
 }
 
+LayoutItem::LayoutItem(const char* label)
+{
+    _mode = LayoutItemMode::Widget;
+    _widget = new QLabel(label);
+}
+
 //------------------------------------------------------------------------------
 //                                    LayoutBox
 //------------------------------------------------------------------------------

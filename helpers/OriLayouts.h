@@ -19,6 +19,7 @@ public:
     LayoutItem(QWidget* widget) { _mode = LayoutItemMode::Widget; _widget = widget; }
     LayoutItem(QLayout* layout) { _mode = LayoutItemMode::Layout; _layout = layout; }
     LayoutItem(const QString& label);
+    LayoutItem(const char* label);
 
     void addTo(QBoxLayout* layout) const
     {

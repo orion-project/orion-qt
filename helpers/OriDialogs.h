@@ -132,6 +132,7 @@ public:
     Dialog& withVerification(VerificationFunc verify) { _verify = verify; return *this; }
 
     Dialog& withInitialSize(const QSize& size) { _initialSize = size; return *this; }
+    Dialog& withSizeSaver(std::function<void(QSize)> saver) { _sizeSaver = saver; return *this; }
 
     Dialog& withActiveWidget(QWidget* w) { _activeWidget = w; return *this; }
 
@@ -185,6 +186,7 @@ private:
     HandlerFunc _onDlgShown;
     HandlerFunc _onHelpRequested;
     HandlerFunc _applyHandler;
+    std::function<void(QSize)> _sizeSaver;
     QString _persistenceId;
     bool _skipContentMargins = false;
     bool _windowModal = false;

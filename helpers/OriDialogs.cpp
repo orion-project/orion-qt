@@ -351,6 +351,8 @@ Dialog::Dialog(QWidget* content, bool ownContent): _content(content), _ownConten
 
 Dialog::~Dialog()
 {
+    if (_sizeSaver)
+        _sizeSaver(_dialog->size());
     if (_dialog) delete _dialog;
 }
 
