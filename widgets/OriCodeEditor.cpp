@@ -723,14 +723,26 @@ void CodeEditor::handleSmartEnter()
     auto p = splitLine(line);
     
     // Check if text before cursor ends with block start symbol
-    QStringView textBeforeCursor = QStringView(line).left(cursor.positionInBlock());
+    int cursorPos = cursor.positionInBlock();
+    QStringView textBeforeCursor = QStringView(line).left(cursorPos);
     bool isNewBlock = textBeforeCursor.trimmed().endsWith(_blockStartSymbol);
-    
+  
     cursor.beginEditBlock();
-    cursor.insertText("\n");
-    cursor.insertText(p.indent.toString());
-    if (isNewBlock)
-        cursor.insertText(oneIndent());
+    if (cursorPos < p.indent.length())
+    {
+        // When pressing Enter inside the indentaton
+        // we insert an empty line with the same indentation level
+        cursor.insertText(p.indent.right(cursorPos).toString());
+        cursor.insertText("\n");
+        cursor.insertText(p.indent.left(cursorPos).toString());
+    }
+    else
+    {
+        cursor.insertText("\n");
+        cursor.insertText(p.indent.toString());
+        if (isNewBlock)
+            cursor.insertText(oneIndent());
+    }
     cursor.endEditBlock();
 }
 
