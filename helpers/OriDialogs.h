@@ -6,6 +6,7 @@
 //#include <QVector>
 
 #include <functional>
+#include <optional>
 
 QT_BEGIN_NAMESPACE
 class QAbstractButton;
@@ -27,6 +28,7 @@ bool yes(const QString& msg);
 bool ok(const QString& msg);
 int yesNoCancel(const QString& msg);
 int yesNoCancel(QString& msg);
+std::optional<bool> yesNo(const QString& msg);
 
 
 namespace Mock {

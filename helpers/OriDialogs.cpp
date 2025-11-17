@@ -112,6 +112,17 @@ int yesNoCancel(QString& msg)
         QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
 }
 
+std::optional<bool> yesNo(const QString& msg)
+{
+    int res = QMessageBox::question(qApp->activeWindow(), qApp->applicationName(), msg,
+        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
+    if (res == QMessageBox::Yes)
+        return true;
+    if (res == QMessageBox::No)
+        return false;
+    return {};
+}
+
 //------------------------------------------------------------------------------
 //                         Ori::Dlg::InputTextEditor
 //------------------------------------------------------------------------------

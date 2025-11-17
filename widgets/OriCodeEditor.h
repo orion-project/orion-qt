@@ -82,6 +82,9 @@ public:
 
     struct Style
     {
+        // TODO: change back color when readOnly prop changed
+        QColor backColor;
+        QColor readonlyBackColor;
         QColor currentLineColor;
         QColor lineNumsTextColor;
         QColor lineNumsTextColorErr;

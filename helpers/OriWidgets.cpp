@@ -72,7 +72,7 @@ void setFontMonospace(QWidget *w, int sizePt)
 
 //--------------------------------------------------------------------------------------------------
 
-QSplitter* splitter(Qt::Orientation orientation, QWidget *w1, QWidget *w2, QList<int> sizes)
+static QSplitter* splitter(Qt::Orientation orientation, QWidget *w1, QWidget *w2, QList<int> sizes)
 {
     auto splitter = new QSplitter(orientation);
     splitter->addWidget(w1);
@@ -100,6 +100,22 @@ QSplitter* splitterH(QWidget *w1, QWidget *w2, int size1, int size2)
 QSplitter* splitterV(QWidget *w1, QWidget *w2, int size1, int size2)
 {
     return splitter(Qt::Vertical, w1, w2, {size1, size2});
+}
+
+QSplitter* splitterH(QWidget *w1, int stretch1, QWidget *w2, int stretch2)
+{
+    auto s = splitter(Qt::Horizontal, w1, w2, {});
+    s->setStretchFactor(0, stretch1);
+    s->setStretchFactor(1, stretch2);
+    return s;
+}
+
+QSplitter* splitterV(QWidget *w1, int stretch1, QWidget *w2, int stretch2)
+{
+    auto s = splitter(Qt::Vertical, w1, w2, {});
+    s->setStretchFactor(0, stretch1);
+    s->setStretchFactor(1, stretch2);
+    return s;
 }
 
 //--------------------------------------------------------------------------------------------------

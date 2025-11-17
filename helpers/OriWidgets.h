@@ -35,6 +35,8 @@ QSplitter* splitterH(QWidget*, QWidget*);
 QSplitter* splitterV(QWidget*, QWidget*);
 QSplitter* splitterH(QWidget*, QWidget*, int size1, int size2);
 QSplitter* splitterV(QWidget*, QWidget*, int size1, int size2);
+QSplitter* splitterH(QWidget*, int stretch1, QWidget*, int stretch2);
+QSplitter* splitterV(QWidget*, int stretch1, QWidget*, int stretch2);
 
 QToolButton* textToolButton(QAction* action);
 QToolButton* menuToolButton(QMenu* menu, QAction* action = nullptr);

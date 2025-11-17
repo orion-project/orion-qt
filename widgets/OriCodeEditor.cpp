@@ -265,7 +265,7 @@ protected:
     
         QPainter painter(this);
         if (style.lineNumsMargin > 0)
-            painter.fillRect(r, Qt::white);
+            painter.fillRect(r, _editor->isReadOnly() ? style.readonlyBackColor : style.backColor);
         r.setWidth(r.width() - style.lineNumsMargin);
         painter.fillRect(r, style.lineNumsBackColor);
     
@@ -484,6 +484,8 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
 
     _lineNums = new EditorLineNums(this);
 
+    _style.backColor = Qt::white;
+    _style.readonlyBackColor = QColor(0xfffafafa);
     _style.currentLineColor = QColor("steelBlue").lighter(220);
     _style.lineNumsTextColor = Qt::gray;
     _style.lineNumsTextColorErr = Qt::white;
@@ -542,6 +544,8 @@ void CodeEditor::resizeEvent(QResizeEvent *e)
 
 void CodeEditor::keyPressEvent(QKeyEvent *e)
 {
+    if (isReadOnly())
+        return;
     auto key = e->key();
     if (key == Qt::Key_Slash && e->modifiers() == Qt::ControlModifier) {
         toggleCommentSelection();
