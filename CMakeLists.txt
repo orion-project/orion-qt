@@ -4,6 +4,7 @@ option(ORI_WITH_SVG "Include SVG widgets" OFF)
 option(ORI_WITH_TESTS "Include testing framework and internal tests" OFF)
 option(ORI_WITH_STYLESHEETS "Use style-sheets rather than palette for colorizing selected state of widgets" OFF)
 option(ORI_WITH_ZIP_HELP "Use packed format of help files for HelpWindow" OFF)
+option(ORI_WITH_SPELLCHECK "Include spell checker module" OFF)
 
 set(ORI_SOURCES
     core/OriArg.h
@@ -74,6 +75,40 @@ if(ORI_WITH_SVG)
     list(APPEND ORI_SOURCES
         widgets/OriSvgView.h widgets/OriSvgView.cpp
     )
+endif()
+
+if(ORI_WITH_SPELLCHECK)
+    list(APPEND ORI_SOURCES
+        tools/OriSpellcheck.h tools/OriSpellcheck.cpp
+        tools/OriSpellcheckEngine.h tools/OriSpellcheckEngine.cpp
+        hunspell/src/hunspell/affentry.hxx
+        hunspell/src/hunspell/affixmgr.hxx
+        hunspell/src/hunspell/atypes.hxx
+        hunspell/src/hunspell/baseaffix.hxx
+        hunspell/src/hunspell/csutil.hxx
+        hunspell/src/hunspell/filemgr.hxx
+        hunspell/src/hunspell/hashmgr.hxx
+        hunspell/src/hunspell/htypes.hxx
+        hunspell/src/hunspell/hunspell.hxx
+        hunspell/src/hunspell/hunzip.hxx
+        hunspell/src/hunspell/langnum.hxx
+        hunspell/src/hunspell/phonet.hxx
+        hunspell/src/hunspell/replist.hxx
+        hunspell/src/hunspell/suggestmgr.hxx
+        hunspell/src/hunspell/utf_info.hxx
+        hunspell/src/hunspell/w_char.hxx
+        hunspell/src/hunspell/affentry.cxx
+        hunspell/src/hunspell/affixmgr.cxx
+        hunspell/src/hunspell/csutil.cxx
+        hunspell/src/hunspell/filemgr.cxx
+        hunspell/src/hunspell/hashmgr.cxx
+        hunspell/src/hunspell/hunspell.cxx
+        hunspell/src/hunspell/hunzip.cxx
+        hunspell/src/hunspell/phonet.cxx
+        hunspell/src/hunspell/replist.cxx
+        hunspell/src/hunspell/suggestmgr.cxx
+    )
+    target_compile_definitions(${ORI_NAME} PRIVATE HUNSPELL_STATIC)
 endif()
 
 add_library(${ORI_NAME} STATIC

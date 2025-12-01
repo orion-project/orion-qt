@@ -5,9 +5,8 @@
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
-
-    // It is used as settings storage location.
-    app.setOrganizationName("orion_examples");
+    a.setOrganizationName("orion-project.org");
+    a.setStyle("fusion");
 
     MainWindow w;
     w.show();

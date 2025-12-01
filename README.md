@@ -37,14 +37,36 @@ add_executable(${PROJECT_NAME}
 
 ```
 
+### Optional components
+
+Some modules require additional dependencies and are not needed for every application. Such optional parts are disabled by default and should be enabled explicitly in particular project files that are going to use them. For example the [spell checker](./tools/OriSpellcheck.md) module requires downloading of the Hunspell code and dictionaries. To use the module, include its code in the target `.pro` file explicitly:
+
+```cmake
+include($$ORION/orion.pri)
+include($$ORION/orion_spellcheck.pri)
+```
+
+or in `CMakeLists.txt`:
+
+```cmake
+set(ORI_WITH_SPELLCHECK ON)
+add_subdirectory(libs/orion)
+```
+
+
 ## Components
 
 Some useful things are
 
-- [Widgets](./widgets/README.md)
+- Widgets
+    - [CodeEditor](./widgets/OriCodeEditor.md)
+    - [PopupMessage](./widgets/OriPopupMessage.md)
+- Tools
+    - [HelpWindow](./tools/OriHelpWindow.md)
+    - [Highlighter](./tools/OriHighlighter.md)
+    - [Spellcheck](./tools/OriSpellcheck.md)
 - [Testing](./testing/README.md)
-- [Tools](./tools/README.md)
 
 *TODO:* describe more components and add links here
 
-![](./promo.png)
+<img src="promo.png" width="800px">

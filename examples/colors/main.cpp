@@ -88,8 +88,7 @@ public:
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    // It is used as settings storage location.
-    a.setOrganizationName("orion_examples");
+    a.setOrganizationName("orion-project.org");
     a.setStyle("Fusion");
 
     MainWindow w;

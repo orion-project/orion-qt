@@ -1,5 +1,5 @@
 # Code Editor
 
-An example for testing the functionality of [Ori::Widgets::CodeEditor](../../widgets/README.md#oriwidgetscodeeditor).
+An example for testing the functionality of [Ori::Widgets::CodeEditor](../../widgets/OriCodeEditor.md).
 
 ![](./coder.png)

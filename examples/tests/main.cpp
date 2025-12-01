@@ -28,9 +28,8 @@ namespace AnotherTestSuite {
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
-
-    // It is used as settings storage location.
-    app.setOrganizationName("orion_examples");
+    a.setOrganizationName("orion-project.org");
+    a.setStyle("fusion");
 
     // You can check if application has been started with 'test' command-line argument.
     // QApplication must be initialized before, to command-line arguments be processed.

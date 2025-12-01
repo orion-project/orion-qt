@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS += \
+    spellcheck \
     coder \
     colors \
     config \

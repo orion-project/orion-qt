@@ -29,6 +29,7 @@ object_script.*
 # QtCreator
 
 *.autosave
+**/.qtcreator
 
 # QtCtreator Qml
 *.qmlproject.user
@@ -41,3 +42,4 @@ bin
 **/build
 **/debug
 **/release
+hunspell
