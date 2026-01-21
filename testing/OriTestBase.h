@@ -241,37 +241,28 @@ inline QString formatPtr(const void* ptr)
     } \
 }
 
-#define ASSERT_EQ_LIST(expr_value, expr_expected) { \
-    auto __test_var_value__ = expr_value; \
-    auto __test_var_expected__ = expr_expected; \
-    if (__test_var_value__.size() != __test_var_expected__.size()) \
-    { \
-        test->setResult(false); \
-        test->setMessage("List sizes are not equal"); \
-        test->logAssertion("ARE LISTS EQUAL", \
-                           QString("%1 == %2").arg(#expr_value, #expr_expected), \
-                           QString::number(__test_var_expected__.size()), \
-                           QString::number(__test_var_value__.size()), \
-                           __FILE__, __LINE__); \
-        return; \
-    }\
-    for (int i = 0; i < __test_var_expected__.size(); i++) \
-    { \
-        const auto &__test_item_value__ = __test_var_value__.at(i); \
-        const auto &__test_item__expected__ = __test_var_expected__.at(i); \
-        if (__test_item_value__ != __test_item__expected__) \
-        { \
-            test->setResult(false); \
-            test->setMessage(QString("List items at index %1 are not equal").arg(i)); \
-            test->logAssertion("ARE LISTS EQUAL", \
-                               QString("%1 == %2").arg(#expr_value, #expr_expected), \
-                               QString("%1").arg(__test_item__expected__), \
-                               QString("%1").arg(__test_item_value__), \
-                               __FILE__, __LINE__); \
-            return; \
-        } \
-    } \
-}
+namespace TestValuePrint
+{
+    template <typename T, typename = void>
+    struct HasStrMethod : std::false_type {};
+    
+    template <typename T>
+    struct HasStrMethod<T, std::void_t<decltype(std::declval<T>().str())>> : std::true_type {};
+    
+    template <typename T>
+    QString str(const T &v)
+    {
+        if constexpr (HasStrMethod<T>::value)
+            return v.str();
+        else
+            return QString("%1").arg(v);
+    }
+};
+
+#define ITEM_DEFAULT_COMPARATOR(a,b) ((a) == (b))
+
+#define ASSERT_EQ_LIST(expr_value, expr_expected) \
+    ASSERT_EQ_LIST_EX(expr_value, expr_expected, ITEM_DEFAULT_COMPARATOR)
 
 #define ASSERT_EQ_LIST_EX(expr_value, expr_expected, item_comparator) { \
     auto __test_var_value__ = expr_value; \
@@ -297,8 +288,8 @@ inline QString formatPtr(const void* ptr)
             test->setMessage(QString("List items at index %1 are not equal").arg(i)); \
             test->logAssertion("ARE LISTS EQUAL", \
                                QString("%1 == %2").arg(#expr_value, #expr_expected), \
-                               QString("%1").arg(__test_item__expected__), \
-                               QString("%1").arg(__test_item_value__), \
+                               TestValuePrint::str(__test_item__expected__), \
+                               TestValuePrint::str(__test_item_value__), \
                                __FILE__, __LINE__); \
             return; \
         } \
