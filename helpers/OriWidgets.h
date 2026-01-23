@@ -100,13 +100,17 @@ QAction* toggledAction(const QString& title, const QString& tooltip, QObject* re
 
 QAction* separatorAction(QObject *parent);
 
-struct Shortchut
+struct Shortcut
 {
-    Shortchut() {}
-    Shortchut(const QKeySequence& shortcut): shortcut(shortcut) {}
-    Shortchut(const QString& shortcut):  shortcut(shortcut) {}
-    Shortchut(const char* shortcut):  shortcut(shortcut) {}
-    Shortchut(int shortcut):  shortcut(shortcut) {}
+    Shortcut() {}
+    Shortcut(QKeySequence::StandardKey shortcut): shortcut(shortcut) {}
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+    Shortcut(QKeyCombination shortcut): shortcut(shortcut) {}
+#endif
+    Shortcut(const QKeySequence& shortcut): shortcut(shortcut) {}
+    Shortcut(const QString& shortcut):  shortcut(shortcut) {}
+    Shortcut(const char* shortcut):  shortcut(shortcut) {}
+    Shortcut(int shortcut):  shortcut(shortcut) {}
     
     QKeySequence shortcut;
     
@@ -122,7 +126,7 @@ struct Shortchut
 };
 
 template <typename Func1>
-QAction* action(const QString& title, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
+QAction* action(const QString& title, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortcut& shortcut = Shortcut()) {
     auto a = new QAction(title, receiver);
     if (icon)
         a->setIcon(QIcon(QString(icon)));
@@ -132,7 +136,7 @@ QAction* action(const QString& title, QObject* receiver, Func1 slot, const char*
 }
 
 template <typename Object, typename Func1>
-QAction* action(const QString& title, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
+QAction* action(const QString& title, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortcut& shortcut = Shortcut()) {
     auto a = new QAction(title, receiver);
     if (icon)
         a->setIcon(QIcon(QString(icon)));
@@ -142,7 +146,7 @@ QAction* action(const QString& title, const Object receiver, Func1 slot, const c
 }
 
 template <typename Func1>
-QAction* action(const QString& title, const QString& tooltip, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
+QAction* action(const QString& title, const QString& tooltip, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortcut& shortcut = Shortcut()) {
     auto a = new QAction(title, receiver);
     if (icon)
         a->setIcon(QIcon(QString(icon)));
@@ -153,7 +157,7 @@ QAction* action(const QString& title, const QString& tooltip, QObject* receiver,
 }
 
 template <typename Object, typename Func1>
-QAction* action(const QString& title, const QString& tooltip, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
+QAction* action(const QString& title, const QString& tooltip, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortcut& shortcut = Shortcut()) {
     auto a = new QAction(title, receiver);
     if (icon)
         a->setIcon(QIcon(QString(icon)));
@@ -164,7 +168,7 @@ QAction* action(const QString& title, const QString& tooltip, const Object recei
 }
 
 template <typename Func1>
-QAction* checkableAction(const QString& title, bool checked, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
+QAction* checkableAction(const QString& title, bool checked, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortcut& shortcut = Shortcut()) {
     auto a = action(title, receiver, slot, icon, shortcut);
     a->setCheckable(true);
     a->setChecked(checked);
@@ -172,7 +176,7 @@ QAction* checkableAction(const QString& title, bool checked, QObject* receiver, 
 }
 
 template <typename Object, typename Func1>
-QAction* checkableAction(const QString& title, bool checked, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
+QAction* checkableAction(const QString& title, bool checked, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortcut& shortcut = Shortcut()) {
     auto a = action(title, receiver, slot, icon, shortcut);
     a->setCheckable(true);
     a->setChecked(checked);
@@ -180,7 +184,7 @@ QAction* checkableAction(const QString& title, bool checked, const Object receiv
 }
 
 template <typename Func1>
-QAction* checkableAction(const QString& title, const QString& tooltip, bool checked, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
+QAction* checkableAction(const QString& title, const QString& tooltip, bool checked, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortcut& shortcut = Shortcut()) {
     auto a = action(title, tooltip, receiver, slot, icon, shortcut);
     a->setCheckable(true);
     a->setChecked(checked);
@@ -188,7 +192,7 @@ QAction* checkableAction(const QString& title, const QString& tooltip, bool chec
 }
 
 template <typename Object, typename Func1>
-QAction* checkableAction(const QString& title, const QString& tooltip, bool checked, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
+QAction* checkableAction(const QString& title, const QString& tooltip, bool checked, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortcut& shortcut = Shortcut()) {
     auto a = action(title, tooltip, receiver, slot, icon, shortcut);
     a->setCheckable(true);
     a->setChecked(checked);
