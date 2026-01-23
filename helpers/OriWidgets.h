@@ -100,66 +100,71 @@ QAction* toggledAction(const QString& title, const QString& tooltip, QObject* re
 
 QAction* separatorAction(QObject *parent);
 
+struct Shortchut
+{
+    Shortchut() {}
+    Shortchut(const QKeySequence& shortcut): shortcut(shortcut) {}
+    Shortchut(const QString& shortcut):  shortcut(shortcut) {}
+    Shortchut(const char* shortcut):  shortcut(shortcut) {}
+    Shortchut(int shortcut):  shortcut(shortcut) {}
+    
+    QKeySequence shortcut;
+    
+    void apply(QAction *action) const
+    {
+    #ifdef QT_NO_SHORTCUT
+        Q_UNUSED(shortcut)
+    #else
+        if (!shortcut.isEmpty())
+            action->setShortcut(shortcut);
+    #endif
+    }
+};
+
 template <typename Func1>
-QAction* action(const QString& title, QObject* receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+QAction* action(const QString& title, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
     auto a = new QAction(title, receiver);
     if (icon)
         a->setIcon(QIcon(QString(icon)));
-#ifdef QT_NO_SHORTCUT
-    Q_UNUSED(shortcut)
-#else
-    a->setShortcut(shortcut);
-#endif
     a->connect(a, &QAction::triggered, receiver, slot);
+    shortcut.apply(a);
     return a;
 }
 
 template <typename Object, typename Func1>
-QAction* action(const QString& title, const Object receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+QAction* action(const QString& title, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
     auto a = new QAction(title, receiver);
     if (icon)
         a->setIcon(QIcon(QString(icon)));
-#ifdef QT_NO_SHORTCUT
-    Q_UNUSED(shortcut)
-#else
-    a->setShortcut(shortcut);
-#endif
     a->connect(a, &QAction::triggered, receiver, slot);
+    shortcut.apply(a);
     return a;
 }
 
 template <typename Func1>
-QAction* action(const QString& title, const QString& tooltip, QObject* receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+QAction* action(const QString& title, const QString& tooltip, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
     auto a = new QAction(title, receiver);
     if (icon)
         a->setIcon(QIcon(QString(icon)));
     a->setToolTip(tooltip);
-#ifdef QT_NO_SHORTCUT
-    Q_UNUSED(shortcut)
-#else
-    a->setShortcut(shortcut);
-#endif
     a->connect(a, &QAction::triggered, receiver, slot);
+    shortcut.apply(a);
     return a;
 }
 
 template <typename Object, typename Func1>
-QAction* action(const QString& title, const QString& tooltip, const Object receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+QAction* action(const QString& title, const QString& tooltip, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
     auto a = new QAction(title, receiver);
     if (icon)
         a->setIcon(QIcon(QString(icon)));
     a->setToolTip(tooltip);
-#ifdef QT_NO_SHORTCUT
-    Q_UNUSED(shortcut)
-#else
-    a->setShortcut(shortcut);
-#endif
     a->connect(a, &QAction::triggered, receiver, slot);
+    shortcut.apply(a);
     return a;
 }
 
 template <typename Func1>
-QAction* checkableAction(const QString& title, bool checked, QObject* receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+QAction* checkableAction(const QString& title, bool checked, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
     auto a = action(title, receiver, slot, icon, shortcut);
     a->setCheckable(true);
     a->setChecked(checked);
@@ -167,7 +172,7 @@ QAction* checkableAction(const QString& title, bool checked, QObject* receiver, 
 }
 
 template <typename Object, typename Func1>
-QAction* checkableAction(const QString& title, bool checked, const Object receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+QAction* checkableAction(const QString& title, bool checked, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
     auto a = action(title, receiver, slot, icon, shortcut);
     a->setCheckable(true);
     a->setChecked(checked);
@@ -175,7 +180,7 @@ QAction* checkableAction(const QString& title, bool checked, const Object receiv
 }
 
 template <typename Func1>
-QAction* checkableAction(const QString& title, const QString& tooltip, bool checked, QObject* receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+QAction* checkableAction(const QString& title, const QString& tooltip, bool checked, QObject* receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
     auto a = action(title, tooltip, receiver, slot, icon, shortcut);
     a->setCheckable(true);
     a->setChecked(checked);
@@ -183,7 +188,7 @@ QAction* checkableAction(const QString& title, const QString& tooltip, bool chec
 }
 
 template <typename Object, typename Func1>
-QAction* checkableAction(const QString& title, const QString& tooltip, bool checked, const Object receiver, Func1 slot, const char* icon = nullptr, const QKeySequence& shortcut = QKeySequence()) {
+QAction* checkableAction(const QString& title, const QString& tooltip, bool checked, const Object receiver, Func1 slot, const char* icon = nullptr, const Shortchut& shortcut = Shortchut()) {
     auto a = action(title, tooltip, receiver, slot, icon, shortcut);
     a->setCheckable(true);
     a->setChecked(checked);
