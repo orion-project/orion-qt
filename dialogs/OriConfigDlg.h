@@ -199,6 +199,16 @@ public:
 
 //------------------------------------------------------------------------------
 
+class ConfigItemButton : public ConfigItem
+{
+public:
+    ConfigItemButton(int pageId, const QString& title, std::function<void()> handler): ConfigItem(pageId, title), handler(handler) {}
+    
+    std::function<void()> handler;
+};
+
+//------------------------------------------------------------------------------
+
 class ConfigItemSection : public ConfigItem
 {
 public:
@@ -322,7 +332,6 @@ private:
 
     QWidget* makePage(const ConfigPage& page, const ConfigDlgOpts& opts);
     int getItemIndent(ConfigItem *item, const ConfigDlgOpts &opts, int indent) const;
-    void enableChildItems(ConfigItem *item, const ConfigDlgOpts& opts, bool on);
     void enableChildEditors(ConfigItem *item, bool on);
 };
 

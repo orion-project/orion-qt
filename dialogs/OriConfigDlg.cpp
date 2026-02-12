@@ -304,6 +304,29 @@ public:
 };
 
 //------------------------------------------------------------------------------
+//                            ConfigItemEditorButton
+//------------------------------------------------------------------------------
+
+class ConfigItemEditorButton : public ConfigItemEditor
+{
+public:
+    ConfigItemEditorButton(ConfigItemButton* item): ConfigItemEditor(), item(item)
+    {
+        button = new QPushButton(item->title);
+        button->connect(button, &QPushButton::pressed, this, item->handler);
+        LayoutV({button, hintLabel(item)}).setMargin(0).setSpacing(3).useFor(this);
+    }
+
+    void setEnabled(bool on) override
+    {
+        button->setEnabled(on);
+    }
+
+    ConfigItemButton* item;
+    QPushButton *button;
+};
+
+//------------------------------------------------------------------------------
 //                            ConfigItemEditorSection
 //------------------------------------------------------------------------------
 
@@ -521,7 +544,7 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
                 });
             #else
                 connect(boolEditor->checkBox, &QCheckBox::stateChanged, this, [this, item, &opts](int state){
-                    enableChildItems(item, opts, state == Qt::Checked);
+                    enableChildEditors(item, state == Qt::Checked);
                 });
             #endif
             }
@@ -539,6 +562,8 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             editor = new ConfigItemEditorDir(it);
         else if (auto it = dynamic_cast<ConfigItemFile*>(item); it)
             editor = new ConfigItemEditorFile(it);
+        else if (auto it = dynamic_cast<ConfigItemButton*>(item); it)
+            editor = new ConfigItemEditorButton(it);
         else if (auto it = dynamic_cast<ConfigItemSection*>(item); it)
             editor = new ConfigItemEditorSection(it);
         else if (auto it = dynamic_cast<ConfigItemCustom*>(item); it)
@@ -573,22 +598,10 @@ int ConfigDlg::getItemIndent(ConfigItem *item, const ConfigDlgOpts& opts, int in
     if (item->parent)
         for (auto it : opts.items)
         {   
-            if (it != item && it->pageId == item->pageId && it->valuePtr() == item->parent)
+            if (it != item && it->pageId == item->pageId && it->valuePtr() && it->valuePtr() == item->parent)
                 return indent + 16 + getItemIndent(it, opts, indent);
         }
     return indent;
-}
-
-void ConfigDlg::enableChildItems(ConfigItem *item, const ConfigDlgOpts &opts, bool on)
-{
-    for (auto it : opts.items)
-        if (it != item && it->pageId == item->pageId && it->parent == item->valuePtr()) {
-            auto editor = _editors.value(it);
-            if (editor) {
-                editor->setEnabled(on);
-                enableChildItems(it, opts, on);
-            }
-        }
 }
 
 void ConfigDlg::enableChildEditors(ConfigItem *item, bool on)
@@ -596,7 +609,7 @@ void ConfigDlg::enableChildEditors(ConfigItem *item, bool on)
     for (auto itr = _editors.constBegin(); itr != _editors.constEnd(); itr++) {
         auto it = itr.key();
         auto editor = itr.value();
-        if (it != item && it->pageId == item->pageId && it->parent == item->valuePtr()) {
+        if (it != item && it->pageId == item->pageId && item->valuePtr() && it->parent == item->valuePtr()) {
             editor->setEnabled(on);
 
             bool enabled = on;

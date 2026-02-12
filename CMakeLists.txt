@@ -21,7 +21,7 @@ set(ORI_SOURCES
     helpers/OriTools.h helpers/OriTools.cpp
     helpers/OriWidgets.h helpers/OriWidgets.cpp
     helpers/OriWindows.h helpers/OriWindows.cpp
-    tools/OriDebug.h
+    tools/OriDebug.h tools/OriDebug.cpp
     tools/OriHelpWindow.h tools/OriHelpWindow.cpp
     tools/OriHighlighter.h tools/OriHighlighter.cpp
     tools/OriLog.h tools/OriLog.cpp
