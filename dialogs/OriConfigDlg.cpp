@@ -540,7 +540,7 @@ QWidget* ConfigDlg::makePage(const ConfigPage& page, const ConfigDlgOpts& opts)
             if (boolEditor->checkBox) {
             #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
                 connect(boolEditor->checkBox, &QCheckBox::checkStateChanged, this, [this, item, &opts](Qt::CheckState state){
-                    enableChildItems(item, opts, state == Qt::Checked);
+                    enableChildEditors(item, state == Qt::Checked);
                 });
             #else
                 connect(boolEditor->checkBox, &QCheckBox::stateChanged, this, [this, item, &opts](int state){
