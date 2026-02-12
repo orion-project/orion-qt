@@ -4,8 +4,10 @@
 #include <QDateTime>
 #include <QEvent>
 #include <QFileInfo>
+#include <QMenu>
 #include <QTextEdit>
 #include <QThread>
+#include <QTimer>
 #include <QPointer>
 #include <QVBoxLayout>
 
@@ -23,22 +25,33 @@ public:
 //                             ConsoleWindow
 //------------------------------------------------------------------------------
 
-ConsoleWindow* consoleWindow()
+static bool __firstTime = true;
+static QPointer<ConsoleWindow> __console;
+Q_GLOBAL_STATIC(QStringList, __logMessages);
+
+ConsoleWindow* consoleWindow(bool show)
 {
-    static QPointer<ConsoleWindow> console;
-    if (!console)
+    if (!__console)
     {
-        console = new ConsoleWindow;
-        console->resize(800, 300);
+        __console = new ConsoleWindow;
+        __console->resize(800, 300);
+        
+        for (const auto &msg : *__logMessages)
+            __console->append(msg);
+        __console->scrollToEnd();
     }
-    console->show();
-    return console;
+    if (show)
+    {
+        __console->show();
+        __console->activateWindow();
+    }
+    return __console;
 }
 
 ConsoleWindow::ConsoleWindow() : QWidget()
 {
-    setWindowFlag(Qt::Tool, true);
-    setWindowFlag(Qt::WindowStaysOnTopHint, true);
+    // setWindowFlag(Qt::Tool, true);
+    // setWindowFlag(Qt::WindowStaysOnTopHint, true);
     setAttribute(Qt::WA_DeleteOnClose, true);
     setWindowTitle(qApp->applicationName() + " Log");
 
@@ -49,6 +62,11 @@ ConsoleWindow::ConsoleWindow() : QWidget()
 #else
     _log->setFont(QFont("Monospace", 10));
 #endif
+    _log->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(_log, &QTextEdit::customContextMenuRequested, this, &ConsoleWindow::showContextMenu);
+    
+    _actnClearLog = new QAction(tr("Clear Log"), this);
+    connect(_actnClearLog, &QAction::triggered, this, &ConsoleWindow::clearLog);
 
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(3, 3, 3, 3);
@@ -67,6 +85,29 @@ bool ConsoleWindow::event(QEvent *event)
         return true;
     }
     return QWidget::event(event);
+}
+
+void ConsoleWindow::scrollToEnd()
+{
+    auto cursor = _log->textCursor();
+    cursor.movePosition(QTextCursor::End);
+    _log->setTextCursor(cursor);
+    _log->ensureCursorVisible(); 
+}
+
+void ConsoleWindow::showContextMenu(const QPoint &pos)
+{
+    auto menu = _log->createStandardContextMenu(pos);
+    menu->addSeparator(); 
+    menu->addAction(_actnClearLog);
+    menu->exec(_log->viewport()->mapToGlobal(pos));
+    delete menu; 
+}
+
+void ConsoleWindow::clearLog()
+{
+    _log->clear();
+    __logMessages->clear();
 }
 
 //------------------------------------------------------------------------------
@@ -162,15 +203,39 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
         msg += QString("<br><font color=gray>(%1:%2, %3</font>")
             .arg(context.file).arg(context.line).arg(context.function);
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-    if (!qApp->instance()->thread()->isCurrentThread()) {
-#else
-    if (qApp->instance()->thread() != QThread::currentThread()) {
-#endif
-        QMetaObject::invokeMethod(qApp, [msg]{
-            consoleWindow()->append(msg);
+    __logMessages->append(msg);
+    if (__console)
+    {
+        __console->append(msg);
+    }
+    else if (__firstTime)
+    {
+        __firstTime = false;
+
+        // Show console window on first message after application starts
+        // to make it clear that it's enabled.
+        // Then, if user closed the window,
+        // it will non popup again automaticallly
+        // because it's quite annoying
+
+    #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+        if (!qApp->instance()->thread()->isCurrentThread())
+    #else
+        if (qApp->instance()->thread() != QThread::currentThread())
+    #endif
+        {
+            // UI objects must be created only in the main thread
+            QMetaObject::invokeMethod(qApp, []{ consoleWindow(false); });
+        }
+        else consoleWindow(false);
+        
+        // First time the window often could be shown together with (and hiddden by) the main window
+        // Wait small time to be sure that all other windows are activated and show console on the top
+        QTimer::singleShot(200, __console, []{
+            __console->show();
+            __console->activateWindow();
         });
-    } else consoleWindow()->append(msg);
+    }
 }
 #else
 void messageHandler(QtMsgType type, const char* msg)

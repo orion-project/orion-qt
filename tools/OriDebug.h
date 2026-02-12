@@ -17,13 +17,17 @@ class ConsoleWindow : public QWidget
 public:
     ConsoleWindow();
     void append(const QString& msg);
+    void scrollToEnd();
 protected:
     bool event(QEvent *event) override;
 private:
     QTextEdit *_log;
+    QAction *_actnClearLog;
+    void showContextMenu(const QPoint &pos);
+    void clearLog();
 };
 
-ConsoleWindow* consoleWindow();
+ConsoleWindow* consoleWindow(bool show = true);
 
 void installMessageHandler(bool saveLogs = false);
 
