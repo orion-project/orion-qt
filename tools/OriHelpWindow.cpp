@@ -38,6 +38,10 @@ namespace Ori {
 class HelpBrowser : public QTextBrowser
 {
 public:
+#ifdef ORI_USE_ZIP_HELP
+    bool useZipFile = true;
+#endif
+
     HelpBrowser() : QTextBrowser()
     {
         QFile f(":/style/help");
@@ -46,14 +50,17 @@ public:
         document()->setDefaultStyleSheet(QString::fromUtf8(f.readAll()));
 
     #ifdef ORI_USE_ZIP_HELP
-        int errCode;
-        auto helpFile = HelpWindow::getHelpDir().toStdString();
-        _helpZip = zip_open(helpFile.c_str(), ZIP_RDONLY, &errCode);
-        if (!_helpZip) {
-            zip_error_t error;
-            zip_error_init_with_code(&error, errCode);
-            setPlainText(QString("Failed to open help file: %1").arg(zip_error_strerror(&error)));
-            zip_error_fini(&error);
+        if (useZipFile)
+        {
+            int errCode;
+            auto helpFile = HelpWindow::getHelpDir().toStdString();
+            _helpZip = zip_open(helpFile.c_str(), ZIP_RDONLY, &errCode);
+            if (!_helpZip) {
+                zip_error_t error;
+                zip_error_init_with_code(&error, errCode);
+                setPlainText(QString("Failed to open help file: %1").arg(zip_error_strerror(&error)));
+                zip_error_fini(&error);
+            }
         }
     #endif
     }
@@ -166,10 +173,12 @@ public:
 
     QVariant loadResource(int type, const QUrl &name) override
     {
-        if (type == QTextDocument::MarkdownResource || type == QTextDocument::ImageResource) {
+        if (useZipFile && (type == QTextDocument::MarkdownResource || type == QTextDocument::ImageResource)) {
             QString fileName = name.path();
             if (fileName.startsWith(QStringLiteral("./")))
                 fileName = fileName.mid(2);
+            if (!_helpZip)
+                return QString("Help file not found: %1").arg(HelpWindow::getHelpDir());
             ZipFile zf(_helpZip, fileName);
             if (zf.error.isEmpty())
                 return zf.data;
@@ -258,9 +267,18 @@ HelpWindow::HelpWindow() : QWidget()
     auto statusBar = new QStatusBar;
 
     _browser = new HelpBrowser;
-#ifndef ORI_USE_ZIP_HELP
+    
+#ifdef ORI_USE_ZIP_HELP
+    if (QString helpDir = getHelpDir(); !helpDir.endsWith(".zip", Qt::CaseInsensitive))
+    {
+        qWarning() << "Given help path is not a zip-file, treating as directory" << helpDir;
+        _browser->setSearchPaths({ helpDir });
+        _browser->useZipFile = false;
+    }
+#else
     _browser->setSearchPaths({ getHelpDir() });
 #endif
+
     _browser->setOpenExternalLinks(false);
     _browser->setOpenLinks(false);
     connect(_browser, QOverload<const QUrl&>::of(&QTextBrowser::highlighted), this, [statusBar](const QUrl& url){

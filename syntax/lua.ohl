@@ -1,0 +1,190 @@
+name: lua
+title: Lua code
+
+rule: Keywords
+terms: and,break,do,else,elseif,end,for,function,goto,if,in
+terms: local,not,or,repeat,return,then,until,while
+terms: false,nil,true
+color: blue
+
+rule: Function name
+expr: function\s+([\w.:]+)\s*\(
+expr: local\s+function\s+([\w.:]+)\s*\(
+color: #795e26
+group: 1
+
+rule: Special names
+terms: self,_G,_VERSION
+color: #001080
+
+rule: Builtin funcs
+terms: assert,collectgarbage,dofile,error,getmetatable,setmetatable
+terms: ipairs,pairs,next,load,loadfile
+terms: pcall,xpcall,rawget,rawset,rawequal,rawlen
+terms: print,select,tonumber,tostring,type
+terms: require,module,package
+color: teal
+
+rule: Standard library
+terms: math.abs,math.acos,math.asin,math.atan,math.ceil,math.cos
+terms: math.deg,math.exp,math.floor,math.fmod,math.huge,math.log
+terms: math.max,math.min,math.pi,math.pow,math.rad,math.sin,math.sqrt,math.tan
+terms: math.random
+terms: string.byte,string.char,string.find,string.format,string.gmatch
+terms: string.gsub,string.len,string.lower,string.match,string.rep
+terms: string.reverse,string.sub,string.upper
+terms: table.concat,table.insert,table.remove,table.sort,table.pack,table.unpack
+terms: io.open,io.close,io.read,io.write,io.input,io.output,io.popen
+terms: os.clock,os.date,os.time,os.execute,os.exit,os.getenv
+color: teal
+
+rule: Numbers
+expr: \b[+-]?0[xX][0-9A-Fa-f]+\b
+expr: \b[+-]?[0-9]+\.[0-9]*(?:[eE][+-]?[0-9]+)?\b
+expr: \b[+-]?\.[0-9]+(?:[eE][+-]?[0-9]+)?\b
+expr: \b[+-]?[0-9]+[eE][+-]?[0-9]+\b
+expr: \b[+-]?[0-9]+\b
+color: #098658
+
+rule: String single-quoted
+expr: '[^\\']*(\\.[^\\']*)*'
+color: #a31515
+
+rule: String double-quoted
+expr: "[^\\"]*(\\.[^\\"]*)*"
+color: #a31515
+
+rule: Multi-line comment
+opts: multiline
+expr: --\[\[
+expr: \]\]
+color: green
+
+rule: Long string (brackets)
+opts: multiline
+expr: \[\[
+expr: \]\]
+color: #a31515
+
+#rule: Long string (brackets with level)
+#opts: multiline
+#expr: \[=+\[
+#color: #a31515
+
+rule: Comment
+skip: String single-quoted
+skip: String double-quoted
+expr: --[^\n]*
+color: green
+
+#rule: Multi-line comment (with level)
+#opts: multiline
+#expr: --\[=+\[
+#color: green
+
+rule: Spaces
+expr: \s+
+color: #dddddd
+
+---
+--[[
+Enumerate files in folder example
+Multi-line comment with numbers 123 and "strings"
+]]
+
+local os = require("os")
+local io = require("io")
+
+-- Global configuration
+local CONFIG = {
+	debug = true,
+	version = "1.0.0"
+}
+
+local Enumerator = {}
+Enumerator.__index = Enumerator
+
+function Enumerator:new(dir)
+	local obj = {
+		dir = dir,
+		num_int = 123,
+		num_neg = -456,
+		num_hex = 0xFF45,
+		num_flt = 3.14159,
+		num_exp = 1.23e-10,
+		num_exp2 = -4.56E+20
+	}
+	setmetatable(obj, self)
+	return obj
+end
+
+function Enumerator:enumerate_files()
+	-- Returns all files in specific folder
+	local files = {}
+	local handle = io.popen('dir "' .. self.dir .. '" /b')
+	if handle then
+		for file in handle:lines() do
+			table.insert(files, file)
+		end
+		handle:close()
+	end
+	return files
+end
+
+local function enumerate_files_variant_2(folder)
+	--[[ 
+	Returns all files in specific folder
+	Alternative implementation
+	]]
+	local res = {}
+	local count = 0
+	
+	for file in io.popen('dir "' .. folder .. '" /b'):lines() do
+		table.insert(res, file)
+		print(string.format("File: \"%s\" ('%s')", file, file))
+		count = count + 1
+	end
+	
+	return res, count
+end
+
+-- Test string literals
+print('Single quoted string with numbers 1 2.3')
+print("Double quoted string with numbers 1 2.3")
+print([[Multi-line string
+with numbers 123 and "quotes"]])
+
+-- Main functionality
+local function main()
+	local folder = "/bin"
+	local enum = Enumerator:new(folder)
+	local files = enum:enumerate_files()
+	
+	-- Iterate through files
+	for i, file in ipairs(files) do
+		local size = math.random(1, 1000)
+		local formatted = string.format("#%d: '%s' (size: %d)", i, file, size)
+		print(formatted)
+	end
+	
+	-- Use variant 2
+	local files2, count = enumerate_files_variant_2(folder)
+	print(string.format("Total files: %d", count))
+	
+	-- Mathematics
+	local value = math.sqrt(math.pow(2, 10))
+	local result = math.max(math.min(value, 100), 0)
+	print("Result: " .. tostring(result))
+	
+	-- Table operations
+	local numbers = {1, 2, 3, 4, 5}
+	table.insert(numbers, 6)
+	table.sort(numbers, function(a, b) return a > b end)
+	print("Sorted: " .. table.concat(numbers, ", "))
+end
+
+-- Entry point
+if _VERSION then
+	print("Lua version: " .. _VERSION)
+	main()
+end
