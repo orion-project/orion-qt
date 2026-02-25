@@ -3,6 +3,7 @@
 
 #include <QAction>
 #include <QKeySequence>
+#include <QPushButton>
 #include <QString>
 
 QT_BEGIN_NAMESPACE
@@ -86,6 +87,22 @@ QWidget* widgetH(const std::initializer_list<QObject*>& items);
 
 QPushButton* button(const QString& title, QObject* receiver, const char* slot);
 QPushButton* iconButton(const QString& tooltip, const QString& iconPath, QObject* receiver, const char* slot, bool flat = false);
+
+template <typename Func1>
+QPushButton* button(const QString& title, Func1 slot)
+{
+    auto button = new QPushButton(title);
+    button->connect(button, &QPushButton::clicked, slot);
+    return button;
+}
+
+template <typename Object, typename Func1>
+QPushButton* button(const QString& title, const Object receiver, Func1 slot)
+{
+    auto button = new QPushButton(title);
+    button->connect(button, &QPushButton::clicked, receiver, slot);
+    return button;
+}
 
 void setSelectedId(QComboBox *combo, int id);
 int getSelectedId(const QComboBox *combo, int def = -1);

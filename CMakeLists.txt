@@ -4,6 +4,7 @@ option(ORI_WITH_SVG "Include SVG widgets" OFF)
 option(ORI_WITH_TESTS "Include testing framework and internal tests" OFF)
 option(ORI_WITH_STYLESHEETS "Use style-sheets rather than palette for colorizing selected state of widgets" OFF)
 option(ORI_WITH_ZIP_HELP "Use packed format of help files for HelpWindow" OFF)
+option(ORI_WITH_MD4C_HELP "Use md4c library for convertation markdown documentation to html" OFF)
 option(ORI_WITH_SPELLCHECK "Include spell checker module" OFF)
 
 set(ORI_SOURCES
@@ -142,6 +143,12 @@ if(ORI_WITH_ZIP_HELP)
     find_package(libzip CONFIG REQUIRED)
     target_link_libraries(${ORI_NAME} PRIVATE libzip::zip)
     target_compile_definitions(${ORI_NAME} PRIVATE ORI_USE_ZIP_HELP)
+endif()
+
+if(ORI_WITH_MD4C_HELP)
+    find_package(md4c CONFIG REQUIRED)
+    target_link_libraries(${ORI_NAME} PRIVATE md4c::md4c-html)
+    target_compile_definitions(${ORI_NAME} PRIVATE ORI_USE_MD4C_HELP)
 endif()
 
 target_include_directories(${ORI_NAME} INTERFACE

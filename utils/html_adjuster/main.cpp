@@ -5,8 +5,8 @@
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
-    a.setOrganizationName("orion-project.org");
-    a.setStyle("fusion");
+    app.setOrganizationName("orion-project.org");
+    app.setStyle("fusion");
 
     MainWindow w;
     w.show();
