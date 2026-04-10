@@ -97,6 +97,7 @@ SOURCES += \
     $$PWD/widgets/OriStatusBar.cpp \
     $$PWD/widgets/OriStylesMenu.cpp \
     $$PWD/widgets/OriValueEdit.cpp \
+    $$PWD/tools/OriDebug.cpp \
     $$PWD/tools/OriHelpWindow.cpp \
     $$PWD/tools/OriLoremIpsum.cpp \
     $$PWD/tools/OriSettings.cpp \
