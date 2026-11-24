@@ -43,6 +43,11 @@ void info(const QString& msg)
     QMessageBox::information(qApp->activeWindow(), qApp->applicationName(), msg, QMessageBox::Ok, QMessageBox::Ok);
 }
 
+void _warning_(const QString& msg)
+{
+    QMessageBox::warning(qApp->activeWindow(), qApp->applicationName(), msg, QMessageBox::Ok, QMessageBox::Ok);
+}
+
 void warning(const QString& msg)
 {
     if (Mock::isActive)
@@ -75,6 +80,11 @@ namespace Defer {
 void error(const QString& msg)
 {
     QTimer::singleShot(0, [msg]{ _error_(msg); });
+}
+
+void warning(const QString& msg)
+{
+    QTimer::singleShot(0, [msg]{ _warning_(msg); });
 }
 
 }

@@ -34,6 +34,7 @@ std::optional<bool> yesNo(const QString& msg);
 namespace Defer {
 
 void error(const QString& msg);
+void warning(const QString& msg);
 
 }
 
